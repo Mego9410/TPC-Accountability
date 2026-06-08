@@ -9,13 +9,7 @@ import { env } from "@/lib/env";
 
 type Mode = "signin" | "signup";
 
-export function AuthForm({
-  mode,
-  previewAvailable = false,
-}: {
-  mode: Mode;
-  previewAvailable?: boolean;
-}) {
+export function AuthForm({ mode }: { mode: Mode }) {
   const router = useRouter();
   const params = useSearchParams();
   const next = params.get("next") || "/dashboard";
@@ -191,11 +185,9 @@ export function AuthForm({
           Continue with Google
         </Button>
 
-        {(!configured || previewAvailable) && (
-          <a href="/api/preview" className="btn ghost on-dark" style={{ alignSelf: "center" }}>
-            Bypass — tour the House
-          </a>
-        )}
+        <a href="/api/preview" className="btn ghost on-dark" style={{ alignSelf: "center" }}>
+          Bypass — tour the House
+        </a>
 
         <div
           style={{

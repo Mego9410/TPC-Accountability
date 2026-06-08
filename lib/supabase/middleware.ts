@@ -3,7 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { env } from "@/lib/env";
 
 /** Routes reachable without an authenticated session. */
-const PUBLIC_PATHS = ["/", "/login", "/signup", "/auth", "/api/auth"];
+const PUBLIC_PATHS = ["/", "/login", "/signup", "/auth", "/api/auth", "/api/preview"];
 
 function isPublic(pathname: string) {
   return PUBLIC_PATHS.some(
