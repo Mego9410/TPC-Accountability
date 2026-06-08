@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { Body, Button, Caption, Divider, Eyebrow, H2, H3 } from "@/components/ui";
+import { isPreviewAvailable } from "@/lib/preview";
 
 export default function TheDoor() {
+  const previewAvailable = isPreviewAvailable();
   return (
     <div>
       {/* ---- Header ---- */}
@@ -81,6 +83,13 @@ export default function TheDoor() {
               I am already a member
             </Button>
           </div>
+          {previewAvailable && (
+            <div className="row center" style={{ marginTop: 20 }}>
+              <a href="/api/preview" className="btn ghost on-dark">
+                Bypass — tour the House
+              </a>
+            </div>
+          )}
         </div>
       </section>
 
