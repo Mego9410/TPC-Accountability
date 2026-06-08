@@ -22,7 +22,7 @@ export default async function OnboardingPage() {
         }}
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/brand/monogram.svg" alt="The Principals Club" style={{ height: 40 }} />
+        <img src="/brand/monogram-gold.png" alt="The Principals Club" style={{ height: 44 }} />
       </div>
 
       <div

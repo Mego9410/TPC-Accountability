@@ -69,7 +69,7 @@ export function MeetingRoom({
             ) : (
               <>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/brand/monogram.svg" alt="" style={{ height: 56, opacity: 0.7 }} />
+                <img src="/brand/monogram-gold.png" alt="" style={{ height: 56, opacity: 0.7 }} />
                 <p className="body" style={{ color: "var(--fg-muted)" }}>
                   The room is ready when you are.
                 </p>

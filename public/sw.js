@@ -3,13 +3,14 @@
 // Everything else (pages, API, auth, Supabase, Daily) is always network-first
 // so authentication and live data are never served stale.
 
-const CACHE = "tpc-static-v1";
+const CACHE = "tpc-static-v2";
 const ASSETS = [
-  "/icon.svg",
+  "/icon-192.png",
+  "/icon-512.png",
   "/manifest.webmanifest",
-  "/brand/monogram.svg",
-  "/brand/monogram-on-midnight.svg",
-  "/brand/wordmark.svg",
+  "/brand/monogram-gold.png",
+  "/brand/monogram-on-navy.jpg",
+  "/brand/wordmark-gold.png",
 ];
 
 self.addEventListener("install", (event) => {

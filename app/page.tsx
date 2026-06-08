@@ -20,9 +20,9 @@ export default function TheDoor() {
       >
         <Link href="/" style={{ display: "flex", alignItems: "center", gap: 12, textDecoration: "none" }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/brand/monogram.svg" alt="" style={{ height: 34 }} />
+          <img src="/brand/monogram-gold.png" alt="" style={{ height: 34 }} />
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/brand/wordmark.svg" alt="The Principals Club" style={{ height: 12 }} />
+          <img src="/brand/wordmark-gold.png" alt="The Principals Club" style={{ height: 14 }} />
         </Link>
         <Button href="/login" variant="secondary" size="sm" onDark>
           Sign in
@@ -44,14 +44,14 @@ export default function TheDoor() {
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src="/brand/monogram.svg"
+          src="/brand/monogram-gold.png"
           alt=""
           style={{
             position: "absolute",
             inset: "auto -8% -22% auto",
             width: 680,
             maxWidth: "92vw",
-            opacity: 0.05,
+            opacity: 0.06,
             pointerEvents: "none",
           }}
         />

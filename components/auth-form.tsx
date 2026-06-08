@@ -100,11 +100,11 @@ export function AuthForm({ mode }: { mode: Mode }) {
   return (
     <div className="signin-scene">
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img className="watermark" src="/brand/monogram.svg" alt="" />
+      <img className="watermark" src="/brand/monogram-gold.png" alt="" />
       <div className="signin-card fade-enter">
         <div className="mark">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/brand/monogram-on-midnight.svg" alt="" style={{ borderRadius: 999 }} />
+          <img src="/brand/monogram-on-navy.jpg" alt="" style={{ borderRadius: 999 }} />
         </div>
         <Eyebrow onDark>An invitation, not an introduction</Eyebrow>
         <H2 style={{ color: "var(--fg)", fontWeight: 400 }}>

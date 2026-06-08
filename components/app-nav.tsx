@@ -27,9 +27,9 @@ export function AppNav({
       <header className="tpc-topnav">
         <Link href="/dashboard" className="brand">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img className="mark" src="/brand/monogram.svg" alt="" />
+          <img className="mark" src="/brand/monogram-gold.png" alt="" />
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img className="w" src="/brand/wordmark.svg" alt="The Principals Club" />
+          <img className="w" src="/brand/wordmark-gold.png" alt="The Principals Club" />
         </Link>
         <nav className="links">
           {LINKS.slice(0, 4).map((l) => (
