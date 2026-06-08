@@ -1,6 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { env } from "@/lib/env";
+import { PREVIEW_COOKIE } from "@/lib/preview";
 
 /** Routes reachable without an authenticated session. */
 const PUBLIC_PATHS = ["/", "/login", "/signup", "/auth", "/api/auth", "/api/preview"];
@@ -17,6 +18,11 @@ export async function updateSession(request: NextRequest) {
   // Without Supabase configured we cannot gate routes; let everything through
   // so the design and stubs remain demoable. The UI shows a setup notice.
   if (!env.supabase.isConfigured) {
+    return response;
+  }
+
+  // Preview (demo tour) mode bypasses auth entirely.
+  if (request.cookies.get(PREVIEW_COOKIE)?.value === "1") {
     return response;
   }
 
