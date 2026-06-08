@@ -3,6 +3,8 @@ import type { Metadata } from "next";
 import { format } from "date-fns";
 import { requireUserProfile } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { isPreviewMode } from "@/lib/preview";
+import { demoGoalBlocks } from "@/lib/accountability-demo";
 import { Body, Badge, Card, Caption, Divider, Eyebrow, H1, H3 } from "@/components/ui";
 import { CreateBlockForm } from "@/components/accountability/create-block-form";
 import { BLOCK_WEEKS, clampWeek, currentBlockWeek } from "@/lib/accountability";
@@ -18,12 +20,17 @@ const STATUS_VARIANT: Record<string, string> = {
 
 export default async function BlocksPage() {
   await requireUserProfile();
-  const supabase = await createClient();
-  const { data } = await supabase
-    .from("goal_blocks")
-    .select("*")
-    .order("created_at", { ascending: false });
-  const blocks = (data ?? []) as GoalBlock[];
+  let blocks: GoalBlock[];
+  if (await isPreviewMode()) {
+    blocks = demoGoalBlocks;
+  } else {
+    const supabase = await createClient();
+    const { data } = await supabase
+      .from("goal_blocks")
+      .select("*")
+      .order("created_at", { ascending: false });
+    blocks = (data ?? []) as GoalBlock[];
+  }
 
   const today = format(new Date(), "yyyy-MM-dd");
 

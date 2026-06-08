@@ -14,8 +14,15 @@ const SUPABASE_ANON_KEY =
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ??
   "";
 
+const PREVIEW_ENABLED = process.env.NEXT_PUBLIC_ENABLE_PREVIEW === "true";
+
 export const env = {
   siteUrl: process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000",
+
+  // The demo "bypass" tour. Normally available only when Supabase is
+  // unconfigured; set NEXT_PUBLIC_ENABLE_PREVIEW=true to keep it available even
+  // once real records are connected (useful for showing a furnished example).
+  previewEnabled: PREVIEW_ENABLED,
 
   supabase: {
     // Placeholder values keep the client constructor from throwing during

@@ -185,7 +185,7 @@ export function AuthForm({ mode }: { mode: Mode }) {
           Continue with Google
         </Button>
 
-        {!configured && (
+        {(!configured || env.previewEnabled) && (
           <a href="/api/preview" className="btn ghost on-dark" style={{ alignSelf: "center" }}>
             Bypass — tour the House
           </a>

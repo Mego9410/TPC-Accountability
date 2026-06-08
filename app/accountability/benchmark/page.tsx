@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { requireUserProfile } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { isPreviewMode } from "@/lib/preview";
+import { demoBenchmarkEntries, demoCohortStats } from "@/lib/accountability-demo";
 import { Body, Button, Card, Caption, Divider, Eyebrow, H1, H3 } from "@/components/ui";
 import { BenchmarkEntryForm } from "@/components/accountability/benchmark-entry-form";
 import { BENCHMARK_METRICS, formatMetric, formatPeriod } from "@/lib/benchmarks";
@@ -47,14 +49,21 @@ async function cohortFor(
 
 export default async function BenchmarkPage() {
   const { profile } = await requireUserProfile();
-  const supabase = await createClient();
+  const preview = await isPreviewMode();
   const needsProfile = !profile.region || !profile.practice_type;
 
-  const { data: entryRows } = await supabase
-    .from("benchmark_entries")
-    .select("*")
-    .order("period", { ascending: true });
-  const entries = (entryRows ?? []) as BenchmarkEntry[];
+  const supabase = preview ? null : await createClient();
+
+  let entries: BenchmarkEntry[];
+  if (preview) {
+    entries = demoBenchmarkEntries;
+  } else {
+    const { data: entryRows } = await supabase!
+      .from("benchmark_entries")
+      .select("*")
+      .order("period", { ascending: true });
+    entries = (entryRows ?? []) as BenchmarkEntry[];
+  }
 
   const byMetric = new Map<string, BenchmarkEntry[]>();
   for (const e of entries) byMetric.set(e.metric_key, [...(byMetric.get(e.metric_key) ?? []), e]);
@@ -67,7 +76,12 @@ export default async function BenchmarkPage() {
     metricsWithData.map(async (m) => {
       const series = byMetric.get(m.key)!;
       const latest = series[series.length - 1];
-      cohorts.set(m.key, await cohortFor(supabase, m.key, latest.period, profile));
+      cohorts.set(
+        m.key,
+        preview
+          ? demoCohortStats[m.key] ?? null
+          : await cohortFor(supabase!, m.key, latest.period, profile),
+      );
     }),
   );
 

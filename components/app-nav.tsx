@@ -7,6 +7,7 @@ import { cn } from "@/components/ui";
 const LINKS = [
   { href: "/dashboard", label: "The House", icon: IconHouse },
   { href: "/goals", label: "Goals", icon: IconTarget },
+  { href: "/accountability", label: "Accountability", icon: IconLedger },
   { href: "/messages", label: "Correspondence", icon: IconMessage },
   { href: "/calendar", label: "Calendar", icon: IconCalendar },
   { href: "/settings", label: "Settings", icon: IconCog },
@@ -32,7 +33,7 @@ export function AppNav({
           <img className="w" src="/brand/wordmark-gold.png" alt="The Principals Club" />
         </Link>
         <nav className="links">
-          {LINKS.slice(0, 4).map((l) => (
+          {LINKS.filter((l) => l.href !== "/settings").map((l) => (
             <Link key={l.href} href={l.href} className={cn(isActive(l.href) && "active")}>
               {l.label}
             </Link>
@@ -52,7 +53,15 @@ export function AppNav({
           return (
             <Link key={l.href} href={l.href} className={cn(isActive(l.href) && "active")}>
               <Icon />
-              <span>{l.label === "Correspondence" ? "Post" : l.label === "The House" ? "House" : l.label}</span>
+              <span>
+                {l.label === "Correspondence"
+                  ? "Post"
+                  : l.label === "The House"
+                  ? "House"
+                  : l.label === "Accountability"
+                  ? "Society"
+                  : l.label}
+              </span>
             </Link>
           );
         })}
@@ -85,6 +94,11 @@ function IconTarget() {
 }
 function IconMessage() {
   return base({ children: <path d="M4 5h16v11H8l-4 4V5Z" /> });
+}
+function IconLedger() {
+  return base({
+    children: (<><path d="M5 4h11a2 2 0 0 1 2 2v14H7a2 2 0 0 1-2-2V4Z" /><path d="M9 8h6M9 12h6M9 16h4" /></>),
+  });
 }
 function IconCalendar() {
   return base({

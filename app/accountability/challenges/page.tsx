@@ -2,6 +2,13 @@ import type { Metadata } from "next";
 import { format } from "date-fns";
 import { requireUserProfile } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { isPreviewMode } from "@/lib/preview";
+import {
+  DEMO_CHALLENGE_ID,
+  demoChallenge,
+  demoLeaderboard,
+  demoMyParticipation,
+} from "@/lib/accountability-demo";
 import { Badge, Body, Button, Card, Caption, Divider, Eyebrow, H1, H3 } from "@/components/ui";
 import { CreateChallengeForm } from "@/components/accountability/create-challenge-form";
 import {
@@ -19,31 +26,50 @@ type LeaderRow = { display_name: string; progress: number; rank: number };
 export default async function ChallengesPage() {
   const { profile } = await requireUserProfile();
   const isAdmin = profile.role === "house";
-  const supabase = await createClient();
+  const preview = await isPreviewMode();
   const today = format(new Date(), "yyyy-MM-dd");
 
-  const { data: challengeRows } = await supabase
-    .from("challenges")
-    .select("*")
-    .order("start_date", { ascending: false });
-  const challenges = (challengeRows ?? []) as Challenge[];
-
-  const { data: myRows } = await supabase
-    .from("challenge_participants")
-    .select("challenge_id, progress, leaderboard_opt_in");
-  const mine = new Map(
-    ((myRows ?? []) as Pick<ChallengeParticipant, "challenge_id" | "progress" | "leaderboard_opt_in">[]).map(
-      (r) => [r.challenge_id, r],
-    ),
-  );
-
+  let challenges: Challenge[];
+  const mine = new Map<
+    string,
+    Pick<ChallengeParticipant, "challenge_id" | "progress" | "leaderboard_opt_in">
+  >();
   const boards = new Map<string, LeaderRow[]>();
-  await Promise.all(
-    challenges.map(async (c) => {
-      const { data } = await supabase.rpc("challenge_leaderboard", { p_challenge: c.id });
-      boards.set(c.id, (data ?? []) as LeaderRow[]);
-    }),
-  );
+
+  if (preview) {
+    challenges = [demoChallenge];
+    mine.set(DEMO_CHALLENGE_ID, {
+      challenge_id: DEMO_CHALLENGE_ID,
+      progress: demoMyParticipation.progress,
+      leaderboard_opt_in: demoMyParticipation.leaderboard_opt_in,
+    });
+    boards.set(DEMO_CHALLENGE_ID, demoLeaderboard);
+  } else {
+    const supabase = await createClient();
+
+    const { data: challengeRows } = await supabase
+      .from("challenges")
+      .select("*")
+      .order("start_date", { ascending: false });
+    challenges = (challengeRows ?? []) as Challenge[];
+
+    const { data: myRows } = await supabase
+      .from("challenge_participants")
+      .select("challenge_id, progress, leaderboard_opt_in");
+    for (const r of (myRows ?? []) as Pick<
+      ChallengeParticipant,
+      "challenge_id" | "progress" | "leaderboard_opt_in"
+    >[]) {
+      mine.set(r.challenge_id, r);
+    }
+
+    await Promise.all(
+      challenges.map(async (c) => {
+        const { data } = await supabase.rpc("challenge_leaderboard", { p_challenge: c.id });
+        boards.set(c.id, (data ?? []) as LeaderRow[]);
+      }),
+    );
+  }
 
   return (
     <div className="section fade-enter">

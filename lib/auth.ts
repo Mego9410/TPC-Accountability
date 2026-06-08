@@ -15,10 +15,12 @@ export async function requireUserProfile(): Promise<{
   email: string | null;
   profile: Profile;
 }> {
+  // Preview (bypass) tour — furnished demo data, no real session required.
+  if (await isPreviewMode()) {
+    return { userId: DEMO_USER_ID, email: "guest@preview", profile: demoProfile };
+  }
+
   if (!env.supabase.isConfigured) {
-    if (await isPreviewMode()) {
-      return { userId: DEMO_USER_ID, email: "guest@preview", profile: demoProfile };
-    }
     redirect("/login");
   }
 

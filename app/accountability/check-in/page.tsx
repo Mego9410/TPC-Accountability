@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { format } from "date-fns";
 import { requireUserProfile } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { isPreviewMode } from "@/lib/preview";
+import { demoCheckIns, demoGoalBlock } from "@/lib/accountability-demo";
 import { Body, Card, Caption, Divider, Eyebrow, H1, H3 } from "@/components/ui";
 import { CheckInForm } from "@/components/accountability/check-in-form";
 import { clampWeek, currentBlockWeek } from "@/lib/accountability";
@@ -11,26 +13,34 @@ export const metadata: Metadata = { title: "Weekly check-in" };
 
 export default async function CheckInPage() {
   await requireUserProfile();
-  const supabase = await createClient();
 
-  const { data: activeBlock } = await supabase
-    .from("goal_blocks")
-    .select("*")
-    .eq("status", "active")
-    .order("start_date", { ascending: false })
-    .limit(1)
-    .maybeSingle();
+  let defaultWeek: number | null;
+  let checkIns: CheckIn[];
 
-  const defaultWeek = activeBlock
-    ? clampWeek(currentBlockWeek(activeBlock as GoalBlock))
-    : null;
+  if (await isPreviewMode()) {
+    defaultWeek = clampWeek(currentBlockWeek(demoGoalBlock));
+    checkIns = demoCheckIns;
+  } else {
+    const supabase = await createClient();
+    const { data: activeBlock } = await supabase
+      .from("goal_blocks")
+      .select("*")
+      .eq("status", "active")
+      .order("start_date", { ascending: false })
+      .limit(1)
+      .maybeSingle();
 
-  const { data: history } = await supabase
-    .from("check_ins")
-    .select("*")
-    .order("completed_at", { ascending: false })
-    .limit(12);
-  const checkIns = (history ?? []) as CheckIn[];
+    defaultWeek = activeBlock
+      ? clampWeek(currentBlockWeek(activeBlock as GoalBlock))
+      : null;
+
+    const { data: history } = await supabase
+      .from("check_ins")
+      .select("*")
+      .order("completed_at", { ascending: false })
+      .limit(12);
+    checkIns = (history ?? []) as CheckIn[];
+  }
 
   return (
     <div className="section fade-enter">

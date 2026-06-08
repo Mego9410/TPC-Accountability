@@ -2,6 +2,14 @@ import type { Metadata } from "next";
 import { format, subMonths } from "date-fns";
 import { requireUserProfile, surnameAddress } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { isPreviewMode } from "@/lib/preview";
+import {
+  demoBenchmarkEntries,
+  demoCheckIns,
+  demoCommitments,
+  demoGoalBlocks,
+  demoWins,
+} from "@/lib/accountability-demo";
 import { Body, Button, Card, Caption, Display, Divider, Eyebrow, H3 } from "@/components/ui";
 import { PrintButton } from "@/components/accountability/print-button";
 import { checkInStreak } from "@/lib/accountability";
@@ -23,22 +31,38 @@ export default async function ReviewPage({
   const label = isQuarter ? "quarter" : "year";
 
   const { profile } = await requireUserProfile();
-  const supabase = await createClient();
+  const preview = await isPreviewMode();
 
-  const [{ data: blockRows }, { data: commitmentRows }, { data: checkInRows }, { data: winRows }, { data: benchRows }] =
-    await Promise.all([
-      supabase.from("goal_blocks").select("*").gte("created_at", sinceISO),
-      supabase.from("commitments").select("status, created_at").gte("created_at", sinceISO),
-      supabase.from("check_ins").select("completed_at").order("completed_at", { ascending: false }).limit(80),
-      supabase.from("wins").select("*").is("archived_at", null).gte("created_at", sinceISO),
-      supabase.from("benchmark_entries").select("*").order("period", { ascending: true }),
-    ]);
+  let blocks: GoalBlock[];
+  let commitments: Pick<Commitment, "status" | "created_at">[];
+  let checkIns: Pick<CheckIn, "completed_at">[];
+  let wins: Win[];
+  let benchmarks: BenchmarkEntry[];
 
-  const blocks = (blockRows ?? []) as GoalBlock[];
-  const commitments = (commitmentRows ?? []) as Pick<Commitment, "status" | "created_at">[];
-  const checkIns = (checkInRows ?? []) as Pick<CheckIn, "completed_at">[];
-  const wins = (winRows ?? []) as Win[];
-  const benchmarks = (benchRows ?? []) as BenchmarkEntry[];
+  if (preview) {
+    blocks = demoGoalBlocks;
+    commitments = demoCommitments.map((c) => ({ status: c.status, created_at: c.created_at }));
+    checkIns = demoCheckIns.map((c) => ({ completed_at: c.completed_at }));
+    wins = demoWins;
+    benchmarks = demoBenchmarkEntries;
+  } else {
+    const supabase = await createClient();
+
+    const [{ data: blockRows }, { data: commitmentRows }, { data: checkInRows }, { data: winRows }, { data: benchRows }] =
+      await Promise.all([
+        supabase.from("goal_blocks").select("*").gte("created_at", sinceISO),
+        supabase.from("commitments").select("status, created_at").gte("created_at", sinceISO),
+        supabase.from("check_ins").select("completed_at").order("completed_at", { ascending: false }).limit(80),
+        supabase.from("wins").select("*").is("archived_at", null).gte("created_at", sinceISO),
+        supabase.from("benchmark_entries").select("*").order("period", { ascending: true }),
+      ]);
+
+    blocks = (blockRows ?? []) as GoalBlock[];
+    commitments = (commitmentRows ?? []) as Pick<Commitment, "status" | "created_at">[];
+    checkIns = (checkInRows ?? []) as Pick<CheckIn, "completed_at">[];
+    wins = (winRows ?? []) as Win[];
+    benchmarks = (benchRows ?? []) as BenchmarkEntry[];
+  }
 
   const blocksCompleted = blocks.filter((b) => b.status === "completed").length;
   const counted = commitments.filter((c) => c.status !== "carried");

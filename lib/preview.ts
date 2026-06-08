@@ -4,11 +4,17 @@ import { env } from "@/lib/env";
 export const PREVIEW_COOKIE = "tpc_preview";
 
 /**
- * Preview (demo) mode is available only when Supabase is not configured — once
- * real records are connected, authentication takes over and the bypass is gone.
+ * Whether the demo "bypass" tour is offered at all. Available when Supabase is
+ * unconfigured, OR when explicitly enabled via NEXT_PUBLIC_ENABLE_PREVIEW so the
+ * furnished example can be toured even once real records are connected.
  */
+export function isPreviewAvailable(): boolean {
+  return env.previewEnabled || !env.supabase.isConfigured;
+}
+
+/** True when the visitor has chosen to tour the furnished example. */
 export async function isPreviewMode(): Promise<boolean> {
-  if (env.supabase.isConfigured) return false;
+  if (!isPreviewAvailable()) return false;
   const store = await cookies();
   return store.get(PREVIEW_COOKIE)?.value === "1";
 }

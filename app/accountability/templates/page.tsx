@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { format } from "date-fns";
 import { requireUserProfile } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { isPreviewMode } from "@/lib/preview";
+import { demoTemplateCommitments, demoTemplates } from "@/lib/accountability-demo";
 import { Body, Button, Card, Caption, Divider, Eyebrow, H1, H3 } from "@/components/ui";
 import { instantiateTemplate } from "@/lib/actions/templates";
 import type { GoalBlockTemplate, TemplateCommitment } from "@/lib/types";
@@ -10,14 +12,22 @@ export const metadata: Metadata = { title: "Goal templates" };
 
 export default async function TemplatesPage() {
   await requireUserProfile();
-  const supabase = await createClient();
 
-  const [{ data: templateRows }, { data: tcRows }] = await Promise.all([
-    supabase.from("goal_block_templates").select("*").order("sort", { ascending: true }),
-    supabase.from("template_commitments").select("*").order("week_number", { ascending: true }),
-  ]);
-  const templates = (templateRows ?? []) as GoalBlockTemplate[];
-  const commitments = (tcRows ?? []) as TemplateCommitment[];
+  let templates: GoalBlockTemplate[];
+  let commitments: TemplateCommitment[];
+
+  if (await isPreviewMode()) {
+    templates = demoTemplates;
+    commitments = demoTemplateCommitments;
+  } else {
+    const supabase = await createClient();
+    const [{ data: templateRows }, { data: tcRows }] = await Promise.all([
+      supabase.from("goal_block_templates").select("*").order("sort", { ascending: true }),
+      supabase.from("template_commitments").select("*").order("week_number", { ascending: true }),
+    ]);
+    templates = (templateRows ?? []) as GoalBlockTemplate[];
+    commitments = (tcRows ?? []) as TemplateCommitment[];
+  }
   const today = format(new Date(), "yyyy-MM-dd");
 
   const byTemplate = new Map<string, TemplateCommitment[]>();

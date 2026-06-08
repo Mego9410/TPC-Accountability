@@ -1,15 +1,14 @@
 import { NextResponse } from "next/server";
-import { env } from "@/lib/env";
-import { PREVIEW_COOKIE } from "@/lib/preview";
+import { PREVIEW_COOKIE, isPreviewAvailable } from "@/lib/preview";
 
 /**
- * Enter preview (demo) mode. Available only while Supabase is unconfigured —
- * once real records are connected, this redirects to the proper sign-in.
+ * Enter preview (demo) mode. Available while Supabase is unconfigured or when
+ * NEXT_PUBLIC_ENABLE_PREVIEW is set; otherwise redirects to the proper sign-in.
  */
 export async function GET(request: Request) {
   const origin = new URL(request.url).origin;
 
-  if (env.supabase.isConfigured) {
+  if (!isPreviewAvailable()) {
     return NextResponse.redirect(`${origin}/login`);
   }
 

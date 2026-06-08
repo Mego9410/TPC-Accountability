@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { format } from "date-fns";
 import { requireUserProfile } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { isPreviewMode } from "@/lib/preview";
+import { demoGoalBlocks, demoWins } from "@/lib/accountability-demo";
 import { Body, Button, Card, Caption, Divider, Eyebrow, H1, H3 } from "@/components/ui";
 import { LogWinForm } from "@/components/accountability/log-win-form";
 import { archiveWin, restoreWin } from "@/lib/actions/accountability";
@@ -11,21 +13,30 @@ export const metadata: Metadata = { title: "Win log" };
 
 export default async function WinsPage() {
   await requireUserProfile();
-  const supabase = await createClient();
 
-  const { data: winRows } = await supabase
-    .from("wins")
-    .select("*")
-    .order("created_at", { ascending: false });
-  const wins = (winRows ?? []) as Win[];
+  let wins: Win[];
+  let blocks: Pick<GoalBlock, "id" | "title">[];
+
+  if (await isPreviewMode()) {
+    wins = demoWins;
+    blocks = demoGoalBlocks.map((b) => ({ id: b.id, title: b.title }));
+  } else {
+    const supabase = await createClient();
+    const { data: winRows } = await supabase
+      .from("wins")
+      .select("*")
+      .order("created_at", { ascending: false });
+    wins = (winRows ?? []) as Win[];
+
+    const { data: blockRows } = await supabase
+      .from("goal_blocks")
+      .select("id, title")
+      .order("created_at", { ascending: false });
+    blocks = (blockRows ?? []) as Pick<GoalBlock, "id" | "title">[];
+  }
+
   const active = wins.filter((w) => !w.archived_at);
   const archived = wins.filter((w) => w.archived_at);
-
-  const { data: blockRows } = await supabase
-    .from("goal_blocks")
-    .select("id, title")
-    .order("created_at", { ascending: false });
-  const blocks = (blockRows ?? []) as Pick<GoalBlock, "id" | "title">[];
 
   return (
     <div className="section fade-enter">

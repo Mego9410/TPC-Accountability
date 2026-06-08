@@ -4,6 +4,8 @@ import type { Metadata } from "next";
 import { format } from "date-fns";
 import { requireUserProfile } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { isPreviewMode } from "@/lib/preview";
+import { demoCommitments, demoGoalBlock } from "@/lib/accountability-demo";
 import { Badge, Body, Button, Card, Caption, Divider, Eyebrow, H1 } from "@/components/ui";
 import { AddCommitmentForm } from "@/components/accountability/add-commitment-form";
 import {
@@ -28,19 +30,27 @@ const STATUS_VARIANT: Record<CommitmentStatus, string> = {
 export default async function BlockDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   await requireUserProfile();
-  const supabase = await createClient();
 
-  const { data: block } = await supabase.from("goal_blocks").select("*").eq("id", id).maybeSingle();
-  if (!block) notFound();
-  const b = block as GoalBlock;
+  let b: GoalBlock;
+  let commitments: Commitment[];
 
-  const { data: commitmentRows } = await supabase
-    .from("commitments")
-    .select("*")
-    .eq("goal_block_id", id)
-    .order("week_number", { ascending: true })
-    .order("created_at", { ascending: true });
-  const commitments = (commitmentRows ?? []) as Commitment[];
+  if (await isPreviewMode()) {
+    b = demoGoalBlock;
+    commitments = demoCommitments;
+  } else {
+    const supabase = await createClient();
+    const { data: block } = await supabase.from("goal_blocks").select("*").eq("id", id).maybeSingle();
+    if (!block) notFound();
+    b = block as GoalBlock;
+
+    const { data: commitmentRows } = await supabase
+      .from("commitments")
+      .select("*")
+      .eq("goal_block_id", id)
+      .order("week_number", { ascending: true })
+      .order("created_at", { ascending: true });
+    commitments = (commitmentRows ?? []) as Commitment[];
+  }
 
   const currentWeek = clampWeek(currentBlockWeek(b));
   const byWeek = new Map<number, Commitment[]>();

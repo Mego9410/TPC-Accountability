@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { requireUserProfile, surnameAddress } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { isPreviewMode } from "@/lib/preview";
+import { demoCheckIns, demoGoalBlock } from "@/lib/accountability-demo";
 import { Body, Button, Card, Caption, Divider, Eyebrow, Display, H3 } from "@/components/ui";
 import {
   BLOCK_WEEKS,
@@ -17,32 +19,43 @@ export const metadata: Metadata = { title: "Accountability" };
 export default async function AccountabilityHome() {
   const { profile } = await requireUserProfile();
   const needsSetup = !profile.region || !profile.practice_type;
-  const supabase = await createClient();
+  const preview = await isPreviewMode();
 
-  const { data: activeBlock } = await supabase
-    .from("goal_blocks")
-    .select("*")
-    .eq("status", "active")
-    .order("start_date", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-  const block = (activeBlock ?? null) as GoalBlock | null;
+  let block: GoalBlock | null;
+  let checkIns: Pick<CheckIn, "completed_at">[];
+  let inPod: boolean;
 
-  const { data: checkInRows } = await supabase
-    .from("check_ins")
-    .select("completed_at")
-    .order("completed_at", { ascending: false })
-    .limit(60);
-  const checkIns = (checkInRows ?? []) as Pick<CheckIn, "completed_at">[];
+  if (preview) {
+    block = demoGoalBlock;
+    checkIns = demoCheckIns;
+    inPod = true;
+  } else {
+    const supabase = await createClient();
+    const { data: activeBlock } = await supabase
+      .from("goal_blocks")
+      .select("*")
+      .eq("status", "active")
+      .order("start_date", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    block = (activeBlock ?? null) as GoalBlock | null;
 
-  const { data: membership } = await supabase
-    .from("pod_members")
-    .select("pod_id")
-    .eq("user_id", profile.id)
-    .is("left_at", null)
-    .limit(1)
-    .maybeSingle();
-  const inPod = Boolean(membership?.pod_id);
+    const { data: checkInRows } = await supabase
+      .from("check_ins")
+      .select("completed_at")
+      .order("completed_at", { ascending: false })
+      .limit(60);
+    checkIns = (checkInRows ?? []) as Pick<CheckIn, "completed_at">[];
+
+    const { data: membership } = await supabase
+      .from("pod_members")
+      .select("pod_id")
+      .eq("user_id", profile.id)
+      .is("left_at", null)
+      .limit(1)
+      .maybeSingle();
+    inPod = Boolean(membership?.pod_id);
+  }
 
   const streak = checkInStreak(checkIns);
   const checkedInThisWeek = checkIns.some(
