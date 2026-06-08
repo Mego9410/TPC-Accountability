@@ -14,7 +14,7 @@ const SUPABASE_ANON_KEY =
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ??
   "";
 
-const PREVIEW_ENABLED = process.env.NEXT_PUBLIC_ENABLE_PREVIEW === "true";
+const PREVIEW_ENABLED = process.env.NEXT_PUBLIC_ENABLE_PREVIEW !== "false";
 
 export const env = {
   siteUrl: process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000",
