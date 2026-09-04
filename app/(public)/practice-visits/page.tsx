@@ -81,6 +81,32 @@ export default function VisitsPage() {
         </div>
       </LandingSection>
 
+      <LandingSection tone="paper" narrow>
+        <SectionHead eyebrow="How it is arranged" title="Four steps, and either of you may stop at the second." />
+        <ol className="lp-steps" style={{ marginTop: 40 }}>
+          <li className="lp-step">
+            <span className="lp-step-no" aria-hidden="true">I</span>
+            <H3>One of you proposes a morning</H3>
+            <Body>Either principal may ask to visit or offer to receive. The proposal carries a date and, usually, a line about what you hope to see.</Body>
+          </li>
+          <li className="lp-step">
+            <span className="lp-step-no" aria-hidden="true">II</span>
+            <H3>The other agrees, or declines</H3>
+            <Body>Declining takes one click and needs no reason. Agreeing means both of you have given the same confidentiality undertaking, which the Club records.</Body>
+          </li>
+          <li className="lp-step">
+            <span className="lp-step-no" aria-hidden="true">III</span>
+            <H3>The host sets the practicalities</H3>
+            <Body>Where to park, who to ask for at reception, when the coffee is on. The morning then sits in both diaries until it happens.</Body>
+          </li>
+          <li className="lp-step">
+            <span className="lp-step-no" aria-hidden="true">IV</span>
+            <H3>Both of you write it up</H3>
+            <Body>The visitor records what they saw, what they are taking back, and what struck them that the host may not see. The host records what they took from being asked. A takeaway can be set down as a commitment in your own block, which is where a visit stops being a nice morning and starts being work.</Body>
+          </li>
+        </ol>
+      </LandingSection>
+
       <LandingSection tone="paper">
         <SectionHead
           eyebrow="What it returns"

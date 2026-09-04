@@ -1,28 +1,15 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { requireViewer } from "@/lib/session";
-import { CIRCLE_ROLE_LABEL, SITTING_KIND_LABEL, address, isMentorIn, type CircleWithMembers } from "@/lib/domain";
+import { CIRCLE_ROLE_LABEL, address, isMentorIn, type CircleWithMembers } from "@/lib/domain";
 import type { Repo } from "@/lib/repo/types";
 import { circleTitle, memberSnapshot } from "@/lib/queries";
 import { currentWeekKey, formatAppointment, formatShortDate, relativeDays, weekLabel } from "@/lib/weeks";
-import { Body, Button, Caption, Card, CommitmentBadge, EmptyState, Eyebrow, HairlineList, HairlineRow, PageHeader, Person, RoleBadge, Section, SittingBadge, SittingKindBadge, TextLink } from "@/components/ui";
+import { Body, Button, Caption, Card, CommitmentBadge, EmptyState, Eyebrow, HairlineList, HairlineRow, PageHeader, Person, RoleBadge, Section, SittingBadge, TextLink } from "@/components/ui";
 import { Form, QuickAction, SubmitButton, FField as Field, FTextArea as TextArea } from "@/components/ui/form";
 import { updateSitting } from "@/lib/actions/sittings";
 
 export const metadata: Metadata = { title: "Sitting" };
-
-/**
- * The shape of a companion practice visit. A suggestion, not a timetable: the
- * visitor sets the agenda, within whatever the host is willing to show.
- */
-const PROGRAMME: Array<{ at: string; what: string }> = [
-  { at: "8.15", what: "Arrive, coffee, and what the host wants a second pair of eyes on" },
-  { at: "8.30", what: "The morning huddle, standing at the back" },
-  { at: "9.00", what: "The surgeries: how the day is set up and who does what" },
-  { at: "10.30", what: "The diary, chair by chair, six weeks out" },
-  { at: "11.30", what: "Reception: the phone, the recall list, the first conversation a patient has" },
-  { at: "12.30", what: "Lunch, and three things each of you will take home" },
-];
 
 export default async function SittingPage({ params }: { params: Promise<{ id: string }> }) {
   const { profile, repo, userId } = await requireViewer();
@@ -35,22 +22,12 @@ export default async function SittingPage({ params }: { params: Promise<{ id: st
 
   const others = circle.members.filter((m) => m.userId !== userId);
   const scheduled = sitting.status === "scheduled";
-  const isVisit = sitting.kind === "visit";
-  const host = isVisit ? circle.members.find((m) => m.userId === sitting.hostId) ?? null : null;
-  const hosting = isVisit && sitting.hostId === userId;
-  const withWhom =
+  const lede =
     circle.kind === "pair"
       ? others[0]
         ? `With ${address(others[0].profile)}, your ${CIRCLE_ROLE_LABEL[others[0].role].toLowerCase()}.`
         : "Your partner has not yet taken their seat."
       : `${circle.members.length} principals of ${circle.name}.`;
-  const lede = isVisit
-    ? hosting
-      ? `The circle comes to you. ${withWhom}`
-      : host
-        ? `A morning inside ${address(host.profile)}'s practice. ${withWhom}`
-        : `A morning inside a member's practice. ${withWhom}`
-    : withWhom;
 
   const previous = (await repo.listSittings([circle.id]))
     .filter((s) => s.id !== sitting.id && s.scheduledAt < sitting.scheduledAt)
@@ -70,37 +47,13 @@ export default async function SittingPage({ params }: { params: Promise<{ id: st
       <PageHeader
         eyebrow={
           <span className="row gap-3">
-            {isVisit && <span>{SITTING_KIND_LABEL.visit}</span>}
             <SittingBadge status={sitting.status} /> {circleTitle(circle, userId)}
           </span>
         }
         title={<time dateTime={sitting.scheduledAt}>{formatAppointment(sitting.scheduledAt)}</time>}
         lede={`${lede} ${scheduled ? capitalise(relativeDays(sitting.scheduledAt)) + "." : ""}`}
-        actions={
-          scheduled && !isVisit && sitting.joinUrl ? <Button href={sitting.joinUrl} external>Join</Button> : undefined
-        }
+        actions={scheduled && sitting.joinUrl ? <Button href={sitting.joinUrl} external>Join</Button> : undefined}
       />
-
-      {isVisit && (
-        <Card emphasis={scheduled}>
-          <Eyebrow>{hosting ? "You are the host" : "The practice"}</Eyebrow>
-          {host ? (
-            <Person
-              name={hosting ? `${host.profile.fullName} (you)` : host.profile.fullName}
-              size="lg"
-              meta={sitting.location ?? host.profile.practiceName ?? "Principal"}
-              trailing={<RoleBadge role={host.role} />}
-            />
-          ) : (
-            <Person name={sitting.location ?? "A practice"} size="lg" meta="The host has left this circle." />
-          )}
-          <Caption>
-            {[host?.profile.region, host?.profile.practiceType, host?.profile.chairCount ? `${host.profile.chairCount} chairs` : null]
-              .filter(Boolean)
-              .join(" · ") || "A morning in the practice, not a meeting room."}
-          </Caption>
-        </Card>
-      )}
 
       <div className="row gap-5 wrap">
         {circle.members.map((m) => (
@@ -108,32 +61,16 @@ export default async function SittingPage({ params }: { params: Promise<{ id: st
         ))}
       </div>
 
-      {isVisit ? (
-        <Section title="The morning" aside={<Caption>A suggested shape</Caption>}>
-          <Card>
-            <ol className="programme">
-              {PROGRAMME.map((item) => (
-                <li key={item.at}>
-                  <span className="at">{item.at}</span>
-                  <span className="what">{item.what}</span>
-                </li>
-              ))}
-            </ol>
-            <Caption>The visitor sets the agenda, within whatever the host is willing to show.</Caption>
-          </Card>
-        </Section>
-      ) : (
-        <Section title="Prepare" aside={<Caption>{weekLabel(currentWeekKey())}</Caption>}>
-          <div className="card-grid">
-            {prepFor.map((m) => (
-              <PrepareCard key={m.userId} circle={circle} userId={m.userId} viewerId={userId} repo={repo} />
-            ))}
-          </div>
-          {circle.kind === "pod" && (
-            <Caption>Each principal brings their own week to a pod sitting. {isMentorIn(circle, userId) ? "As lead, you can see everyone's check-ins on the circle page." : ""}</Caption>
-          )}
-        </Section>
-      )}
+      <Section title="Prepare" aside={<Caption>{weekLabel(currentWeekKey())}</Caption>}>
+        <div className="card-grid">
+          {prepFor.map((m) => (
+            <PrepareCard key={m.userId} circle={circle} userId={m.userId} viewerId={userId} repo={repo} />
+          ))}
+        </div>
+        {circle.kind === "pod" && (
+          <Caption>Each principal brings their own week to a pod sitting. {isMentorIn(circle, userId) ? "As lead, you can see everyone's check-ins on the circle page." : ""}</Caption>
+        )}
+      </Section>
 
       <Section title="Notes from the sitting">
         {!scheduled && sitting.notes && (
@@ -199,13 +136,8 @@ export default async function SittingPage({ params }: { params: Promise<{ id: st
                 href={`/sittings/${s.id}`}
                 date={<time dateTime={s.scheduledAt}>{formatShortDate(s.scheduledAt)}</time>}
                 title={formatAppointment(s.scheduledAt)}
-                meta={[s.kind === "visit" ? s.location : null, s.notes ? excerpt(s.notes, 140) : "No notes were kept."].filter(Boolean).join(" · ")}
-                right={
-                  <span className="badge-row">
-                    <SittingKindBadge kind={s.kind} />
-                    <SittingBadge status={s.status} />
-                  </span>
-                }
+                meta={s.notes ? excerpt(s.notes, 140) : "No notes were kept."}
+                right={<SittingBadge status={s.status} />}
               />
             ))}
           </HairlineList>

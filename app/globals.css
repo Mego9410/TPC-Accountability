@@ -980,3 +980,18 @@ a.person:hover .person-name { color: var(--tpc-gold-deep); }
   .programme li { grid-template-columns: 44px minmax(0, 1fr); gap: 10px; }
   .programme .what { font-size: 14.5px; }
 }
+
+/* =========================================================================
+   ADDITIONS — companion practice visits
+   ------------------------------------------------------------------------- */
+/* A morning in a practice, marked out from a sitting over video in the month
+   grid: gold, and a square pip rather than a round one, so the two do not
+   depend on colour alone. */
+.cal .day .ev.visit { color: var(--tpc-gold-deep); }
+.cal .day .ev.visit .d { border-radius: 2px; }
+
+/* The four parts of a visit's record, and the ledger rows beside them. */
+.visit-note-actions { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: flex-end; }
+@media (max-width: 720px) {
+  .visit-note-actions { justify-content: flex-start; }
+}

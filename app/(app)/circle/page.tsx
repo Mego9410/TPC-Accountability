@@ -10,12 +10,14 @@ import {
   type CircleWithMembers,
   type Profile,
   type Sitting,
+  type Visit,
+  type VisitLedger,
 } from "@/lib/domain";
 import type { Repo } from "@/lib/repo/types";
 import { circleTitle, memberSnapshot } from "@/lib/queries";
 import { currentWeekKey, formatAppointment, formatDayMonth, formatShortDate, relativeDays, weekLabel } from "@/lib/weeks";
 import {
-  Avatar, Body, Button, Caption, Card, EmptyState, Eyebrow, H2, H3, HairlineList, HairlineRow, Person, RoleBadge, Section, SittingBadge, SittingKindBadge, TextLink,
+  Avatar, Body, Button, Caption, Card, EmptyState, Eyebrow, H2, H3, HairlineList, HairlineRow, Person, PracticeVisitBadge, RoleBadge, Section, SittingBadge, TextLink, VisitBadge,
 } from "@/components/ui";
 
 export const metadata: Metadata = { title: "Your circle" };
@@ -59,11 +61,13 @@ async function CircleSection({ circle, viewer, repo }: { circle: CircleWithMembe
   const visible = visibleMemberIds(circle, userId);
   const eyebrow = `${circle.kind === "pair" ? "Your pair" : "Your pod"} · ${CADENCE_LABEL[circle.cadence].toLowerCase()}`;
 
-  const [checkIns, wins, sittings] = await Promise.all([
+  const [checkIns, wins, sittings, allVisits] = await Promise.all([
     repo.listCheckInsFor(visible, 100),
     repo.listWinsFor(visible),
     repo.listSittings([circle.id]),
+    repo.listVisitsFor(userId),
   ]);
+  const visits = allVisits.filter((v) => v.circleId === circle.id);
   const weekKey = currentWeekKey();
   const thisWeek = checkIns.filter((c) => c.weekKey === weekKey);
   const byId = new Map(circle.members.map((m) => [m.userId, m.profile]));
@@ -117,7 +121,7 @@ async function CircleSection({ circle, viewer, repo }: { circle: CircleWithMembe
         )}
       </Section>
 
-      <Visits sittings={sittings} circle={circle} userId={userId} />
+      <Visits visits={visits} circle={circle} userId={userId} />
 
       <Sittings sittings={sittings} circle={circle} userId={userId} />
     </section>
@@ -130,38 +134,42 @@ async function CircleSection({ circle, viewer, repo }: { circle: CircleWithMembe
  * Every principal spends a morning inside every other practice in the circle,
  * and has each of them inside their own. This is the state of that account.
  */
-function Visits({ sittings, circle, userId }: { sittings: Sitting[]; circle: CircleWithMembers; userId: string }) {
-  const ledger = visitLedger(circle, sittings, userId);
+function Visits({ visits, circle, userId }: { visits: Visit[]; circle: CircleWithMembers; userId: string }) {
+  const ledger = visitLedger(circle, visits, userId);
   const total = ledger.visited.length + ledger.toVisit.length;
   if (total === 0) return null;
 
-  const visits = sittings.filter((s) => s.kind === "visit");
-  /** The page for the most recent held visit to a given practice. */
-  const heldAt = (hostId: string): string | undefined =>
-    visits
-      .filter((s) => s.status === "completed" && s.hostId === hostId)
-      .sort((a, b) => b.scheduledAt.localeCompare(a.scheduledAt))[0]?.id;
+  const waiting = visits.filter((v) => v.status === "proposed");
   const booked = visits
-    .filter((s) => s.status === "scheduled" && new Date(s.scheduledAt).getTime() > Date.now() - 3_600_000)
+    .filter((v) => v.status === "agreed" && new Date(v.scheduledAt).getTime() > Date.now() - 3_600_000)
     .sort((a, b) => a.scheduledAt.localeCompare(b.scheduledAt));
 
   return (
-    <Section title="Practice visits" aside={<TextLink href="/calendar#arrange">Arrange a visit</TextLink>}>
+    <Section title="Practice visits" aside={<TextLink href="/visits">All visits</TextLink>}>
       <Card>
         <Body>{visitSummary(ledger, total)}</Body>
         <Caption>A morning inside someone else&rsquo;s practice, and in turn one inside yours.</Caption>
+        <div className="row gap-4 wrap">
+          <Button href="/visits#propose" size="sm" variant="secondary">Propose a morning</Button>
+          {waiting.length > 0 && <Caption>{waiting.length} {waiting.length === 1 ? "proposal is" : "proposals are"} waiting on an answer.</Caption>}
+        </div>
       </Card>
 
       {booked.length > 0 && (
         <HairlineList>
-          {booked.map((s) => (
+          {booked.map((v) => (
             <HairlineRow
-              key={s.id}
-              href={`/sittings/${s.id}`}
-              date={<time dateTime={s.scheduledAt}>{formatShortDate(s.scheduledAt)}</time>}
-              title={s.hostId === userId ? "Your practice" : s.location ?? "A practice"}
-              meta={`${formatAppointment(s.scheduledAt)} · ${s.hostId === userId ? "the circle comes to you" : "you go to them"}`}
-              right={<SittingKindBadge kind={s.kind} />}
+              key={v.id}
+              href={`/visits/${v.id}`}
+              date={<time dateTime={v.scheduledAt}>{formatShortDate(v.scheduledAt)}</time>}
+              title={v.hostId === userId ? "Your practice" : v.practiceName ?? "A practice"}
+              meta={`${formatAppointment(v.scheduledAt)} · ${v.hostId === userId ? "they come to you" : "you go to them"}`}
+              right={
+                <span className="badge-row">
+                  <PracticeVisitBadge />
+                  <VisitBadge status={v.status} />
+                </span>
+              }
             />
           ))}
         </HairlineList>
@@ -174,10 +182,10 @@ function Visits({ sittings, circle, userId }: { sittings: Sitting[]; circle: Cir
             <Caption>None yet. The first one changes how you read your own.</Caption>
           ) : (
             <HairlineList>
-              {ledger.visited.map(({ profile, at }) => (
+              {ledger.visited.map(({ profile, at, visitId }) => (
                 <HairlineRow
                   key={profile.id}
-                  href={heldAt(profile.id) ? `/sittings/${heldAt(profile.id)}` : undefined}
+                  href={`/visits/${visitId}`}
                   date={<time dateTime={at}>{formatDayMonth(at)}</time>}
                   title={profile.fullName}
                   meta={profile.practiceName ?? "Principal"}
@@ -193,10 +201,10 @@ function Visits({ sittings, circle, userId }: { sittings: Sitting[]; circle: Cir
             <Caption>Nobody yet. Open a morning and the circle will come.</Caption>
           ) : (
             <HairlineList>
-              {ledger.hosted.map(({ profile, at }) => (
+              {ledger.hosted.map(({ profile, at, visitId }) => (
                 <HairlineRow
                   key={profile.id}
-                  href={heldAt(userId) ? `/sittings/${heldAt(userId)}` : undefined}
+                  href={`/visits/${visitId}`}
                   date={<time dateTime={at}>{formatDayMonth(at)}</time>}
                   title={profile.fullName}
                   meta={profile.practiceName ?? "Principal"}
@@ -212,7 +220,7 @@ function Visits({ sittings, circle, userId }: { sittings: Sitting[]; circle: Cir
 }
 
 /** "You have visited two of the five. Three practices to go, and two principals still to see yours." */
-function visitSummary(ledger: ReturnType<typeof visitLedger>, total: number): string {
+function visitSummary(ledger: VisitLedger, total: number): string {
   const seen = ledger.visited.length;
   const toVisit = ledger.toVisit.length;
   const toHost = ledger.toHost.length;
@@ -328,9 +336,8 @@ function CheckInItem({ checkIn, who }: { checkIn: CheckIn; who: Profile | null }
 
 /* ---------- Sittings ---------- */
 
-function Sittings({ sittings: all, circle, userId }: { sittings: Sitting[]; circle: CircleWithMembers; userId: string }) {
-  // Visits keep their own block above; this is the circle's conversations.
-  const sittings = all.filter((s) => s.kind === "video");
+function Sittings({ sittings, circle, userId }: { sittings: Sitting[]; circle: CircleWithMembers; userId: string }) {
+  // Practice visits keep their own block above; this is the circle's standing hour.
   const now = Date.now();
   const upcoming = sittings
     .filter((s) => s.status === "scheduled" && new Date(s.scheduledAt).getTime() > now - 3_600_000)

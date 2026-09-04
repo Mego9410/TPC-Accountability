@@ -14,20 +14,18 @@ import type {
   Note,
   Profile,
   Sitting,
-  SittingKind,
+  Visit,
+  VisitNote,
   Template,
   Win,
 } from "@/lib/domain";
 
 /**
  * Arranging a sitting. A video sitting needs nothing beyond the circle and the
- * hour; a visit also carries whose practice is opened and where it is.
+ * hour, held over video. A practice visit is a Visit, not a sitting.
  */
 export type CreateSittingInput = Pick<Sitting, "circleId" | "scheduledAt" | "createdBy"> & {
   joinUrl?: string | null;
-  kind?: SittingKind;
-  hostId?: string | null;
-  location?: string | null;
 };
 
 /**
@@ -55,6 +53,20 @@ export interface Repo {
   getSitting(id: string): Promise<Sitting | null>;
   createSitting(input: CreateSittingInput): Promise<Sitting>;
   updateSitting(id: string, patch: Partial<Sitting>): Promise<Sitting>;
+
+  /* practice visits */
+  listVisits(circleIds: string[]): Promise<Visit[]>;
+  listVisitsFor(userId: string): Promise<Visit[]>;
+  getVisit(id: string): Promise<Visit | null>;
+  createVisit(input: Pick<Visit, "circleId" | "visitorId" | "hostId" | "proposedById" | "scheduledAt"> & {
+    practiceName?: string | null;
+    proposalNote?: string | null;
+  }): Promise<Visit>;
+  updateVisit(id: string, patch: Partial<Visit>): Promise<Visit>;
+  listVisitNotes(visitIds: string[]): Promise<VisitNote[]>;
+  createVisitNote(input: Pick<VisitNote, "visitId" | "authorId" | "kind" | "body">): Promise<VisitNote>;
+  updateVisitNote(id: string, patch: Partial<VisitNote>): Promise<VisitNote>;
+  deleteVisitNote(id: string): Promise<void>;
 
   /* blocks + commitments */
   listBlocks(userId: string): Promise<GoalBlock[]>;

@@ -18,6 +18,8 @@ import type {
   Note,
   Profile,
   Sitting,
+  Visit,
+  VisitNote,
   Template,
   Win,
 } from "@/lib/domain";
@@ -231,14 +233,10 @@ export const circleMembers: CircleMember[] = [
 ];
 
 /* ---------- Sittings ----------
-   A sitting is held over video or inside somebody's practice. Every principal
-   visits every other principal in their circle, and has each of them inside
-   their own practice in turn; those mornings are `kind: "visit"`. */
-function video(s: Omit<Sitting, "kind" | "hostId" | "location">): Sitting {
-  return { ...s, kind: "video", hostId: null, location: null };
-}
-function visit(s: Omit<Sitting, "kind" | "joinUrl"> & { hostId: string; location: string }): Sitting {
-  return { ...s, kind: "visit", joinUrl: null };
+   The standing hour, held over video. A morning inside a practice is a Visit,
+   below, and keeps its own record. */
+function video(s: Sitting): Sitting {
+  return s;
 }
 
 export const sittings: Sitting[] = [
@@ -313,41 +311,123 @@ export const sittings: Sitting[] = [
     createdAt: iso(-55),
   }),
 
-  /* Practice visits */
+];
+
+/* ---------- Practice visits ----------
+   Every principal spends a morning inside every other practice in their
+   circle, and opens their own in turn. One is held and written up, one is
+   agreed and in the diary, one is proposed and awaiting an answer. */
+function visit(v: Omit<Visit, "createdAt"> & { createdAt?: string }): Visit {
+  return { createdAt: v.createdAt ?? v.scheduledAt, ...v } as Visit;
+}
+
+export const visits: Visit[] = [
+  // Held, and written up on both sides.
   visit({
-    id: "s-visit-adesanya",
+    id: "v-adesanya",
     circleId: IDS.pairCheng,
-    scheduledAt: iso(-40, 8, 30),
-    status: "completed",
+    visitorId: IDS.cheng,
     hostId: IDS.adesanya,
-    location: "Adesanya Dental, Leeds",
-    notes: "Amara's huddle runs to nine minutes and everyone stands. Ours runs to twenty and everyone sits. Changing it on Monday.",
-    createdBy: IDS.adesanya,
+    proposedById: IDS.adesanya,
+    scheduledAt: iso(-40, 8, 30),
+    status: "held",
+    practiceName: "Adesanya Dental, Leeds",
+    proposalNote: "Come and see the huddle and the recall. Bring the acceptance numbers.",
+    arrivalNote: "Park on Belgrave Street, not the practice car park. Ask for Nadia at reception; she knows you are coming. Coffee from 8.30.",
+    visitorAgreedAt: iso(-58),
+    hostAgreedAt: iso(-60),
+    heldAt: iso(-40, 13, 0),
     createdAt: iso(-62),
   }),
+  // Held: the pod's morning in Didsbury.
   visit({
-    id: "s-visit-cheng",
-    circleId: IDS.pairCheng,
-    scheduledAt: iso(21, 8, 30),
-    status: "scheduled",
-    hostId: IDS.cheng,
-    location: "Cheng Dental, Marylebone",
-    notes: null,
-    createdBy: IDS.cheng,
-    createdAt: iso(-11),
-  }),
-  visit({
-    id: "s-visit-shah",
+    id: "v-shah",
     circleId: IDS.pod,
-    scheduledAt: iso(-70, 9, 0),
-    status: "completed",
+    visitorId: IDS.cheng,
     hostId: IDS.shah,
-    location: "Shah & Associates, Didsbury",
-    notes: "Six of us in Didsbury for the morning. Priya runs two hygienists off one nurse and the diary never breaks. Marcus counted eleven minutes between patients; we average nineteen.",
-    createdBy: IDS.adesanya,
+    proposedById: IDS.shah,
+    scheduledAt: iso(-70, 9, 0),
+    status: "held",
+    practiceName: "Shah & Associates, Didsbury",
+    proposalNote: null,
+    arrivalNote: "Front door is locked before nine. Ring the bell and Deborah will let you in.",
+    visitorAgreedAt: iso(-88),
+    hostAgreedAt: iso(-90),
+    heldAt: iso(-70, 13, 30),
     createdAt: iso(-95),
   }),
+  // Agreed, in the diary: Amara comes to Marylebone.
+  visit({
+    id: "v-cheng",
+    circleId: IDS.pairCheng,
+    visitorId: IDS.adesanya,
+    hostId: IDS.cheng,
+    proposedById: IDS.cheng,
+    scheduledAt: iso(21, 8, 30),
+    status: "agreed",
+    practiceName: "Cheng Dental, Marylebone",
+    proposalNote: "I would like you to see the morning before you tell me what you think of the diary.",
+    arrivalNote: null,
+    visitorAgreedAt: iso(-9),
+    hostAgreedAt: iso(-11),
+    heldAt: null,
+    createdAt: iso(-11),
+  }),
+  // Proposed, and waiting on an answer from Jordan.
+  visit({
+    id: "v-field",
+    circleId: IDS.pod,
+    visitorId: IDS.cheng,
+    hostId: IDS.field,
+    proposedById: IDS.field,
+    scheduledAt: iso(34, 8, 45),
+    status: "proposed",
+    practiceName: "Field Dental, Clifton",
+    proposalNote: "You said you wanted to see how the ads convert. Come on a Tuesday, that is when they land.",
+    arrivalNote: null,
+    visitorAgreedAt: null,
+    hostAgreedAt: iso(-2),
+    heldAt: null,
+    createdAt: iso(-2),
+  }),
 ];
+
+/* ---------- What was written down afterwards ---------- */
+function note(
+  id: string,
+  visitId: string,
+  authorId: string,
+  kind: VisitNote["kind"],
+  body: string,
+  daysAgo: number,
+  commitmentId: string | null = null,
+): VisitNote {
+  return { id, visitId, authorId, kind, body, commitmentId, createdAt: iso(-daysAgo, 20, 30) };
+}
+
+export const visitNotes: VisitNote[] = [
+  note("vn-1", "v-adesanya", IDS.cheng, "observation",
+    "The huddle runs to nine minutes and everyone stands. Ours runs to twenty and everyone sits.", 40),
+  note("vn-2", "v-adesanya", IDS.cheng, "observation",
+    "Two hygienists to one nurse, and the nurse turns both rooms. Nobody waits on anybody.", 40),
+  note("vn-3", "v-adesanya", IDS.cheng, "observation",
+    "Reception answers the phone with the patient's name before the reason for the call. It changes the whole conversation.", 40),
+  note("vn-4", "v-adesanya", IDS.cheng, "takeaway",
+    "Stand the huddle up and cap it at ten minutes.", 40, "cm-3"),
+  note("vn-5", "v-adesanya", IDS.cheng, "takeaway",
+    "Move the recall list off the front desk and onto one named person.", 39),
+  note("vn-6", "v-adesanya", IDS.cheng, "for_host",
+    "Your surgery two is doing the work of a store cupboard. From the corridor it is the first room a new patient sees.", 39),
+  note("vn-7", "v-adesanya", IDS.adesanya, "host_note",
+    "Jordan asked why we still take the deposit at the second visit. I did not have an answer. Nobody here has asked me that in six years.", 39),
+  note("vn-8", "v-shah", IDS.cheng, "observation",
+    "Eleven minutes between patients. We average nineteen and I would have sworn we were quicker.", 70),
+  note("vn-9", "v-shah", IDS.cheng, "takeaway",
+    "Time the turnaround for a fortnight before changing anything.", 69),
+  note("vn-10", "v-shah", IDS.shah, "host_note",
+    "Six principals in the building and not one of them asked about turnover. They asked about the nurse.", 69),
+];
+
 
 /* ---------- Blocks ---------- */
 const chengStart = day(-28); // week 5
@@ -597,7 +677,7 @@ export const templates: Template[] = [
 ];
 
 export const world = {
-  profiles, circles, circleMembers, sittings, blocks, commitments, checkIns, wins, messages, notes,
+  profiles, circles, circleMembers, sittings, visits, visitNotes, blocks, commitments, checkIns, wins, messages, notes,
   benchmarkEntries, cohortStats, challenges, participants, templates,
 };
 export type World = typeof world;

@@ -13,6 +13,8 @@ import type {
   Profile,
   Sitting,
   Template,
+  Visit,
+  VisitNote,
   Win,
 } from "@/lib/domain";
 import type {
@@ -31,6 +33,8 @@ import type {
   SittingRow,
   TemplateRow,
   TemplateWeekRow,
+  VisitNoteRow,
+  VisitRow,
   WinRow,
 } from "./database.types";
 
@@ -96,9 +100,37 @@ export function toSitting(r: SittingRow): Sitting {
     notes: r.notes,
     createdBy: r.created_by,
     createdAt: r.created_at,
-    kind: r.kind,
+  };
+}
+
+export function toVisit(r: VisitRow): Visit {
+  return {
+    id: r.id,
+    circleId: r.circle_id,
+    visitorId: r.visitor_id,
     hostId: r.host_id,
-    location: r.location,
+    proposedById: r.proposed_by_id,
+    scheduledAt: r.scheduled_at,
+    status: r.status,
+    practiceName: r.practice_name,
+    proposalNote: r.proposal_note,
+    arrivalNote: r.arrival_note,
+    visitorAgreedAt: r.visitor_agreed_at,
+    hostAgreedAt: r.host_agreed_at,
+    heldAt: r.held_at,
+    createdAt: r.created_at,
+  };
+}
+
+export function toVisitNote(r: VisitNoteRow): VisitNote {
+  return {
+    id: r.id,
+    visitId: r.visit_id,
+    authorId: r.author_id,
+    kind: r.kind,
+    body: r.body,
+    commitmentId: r.commitment_id,
+    createdAt: r.created_at,
   };
 }
 
@@ -287,9 +319,33 @@ export const sittingCols: ColumnMap<Sitting, SittingRow> = {
   notes: "notes",
   createdBy: "created_by",
   createdAt: "created_at",
-  kind: "kind",
+};
+
+export const visitCols: ColumnMap<Visit, VisitRow> = {
+  id: "id",
+  circleId: "circle_id",
+  visitorId: "visitor_id",
   hostId: "host_id",
-  location: "location",
+  proposedById: "proposed_by_id",
+  scheduledAt: "scheduled_at",
+  status: "status",
+  practiceName: "practice_name",
+  proposalNote: "proposal_note",
+  arrivalNote: "arrival_note",
+  visitorAgreedAt: "visitor_agreed_at",
+  hostAgreedAt: "host_agreed_at",
+  heldAt: "held_at",
+  createdAt: "created_at",
+};
+
+export const visitNoteCols: ColumnMap<VisitNote, VisitNoteRow> = {
+  id: "id",
+  visitId: "visit_id",
+  authorId: "author_id",
+  kind: "kind",
+  body: "body",
+  commitmentId: "commitment_id",
+  createdAt: "created_at",
 };
 
 export const blockCols: ColumnMap<GoalBlock, GoalBlockRow> = {

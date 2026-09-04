@@ -16,7 +16,7 @@ const PUBLIC_PATHS = [
   "/for-mentors",
   "/for-mentees",
   "/membership",
-  "/visits",
+  "/practice-visits",
   "/house-rules",
   "/privacy",
   "/tour",

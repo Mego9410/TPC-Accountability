@@ -116,7 +116,7 @@ export function VisitsSection() {
       </ul>
 
       <div className="lp-cta">
-        <Button href="/visits" variant="secondary" onDark>How a visit works</Button>
+        <Button href="/practice-visits" variant="secondary" onDark>How a visit works</Button>
         <Caption>Twenty years in the same building, and you stop seeing it.</Caption>
       </div>
     </LandingSection>

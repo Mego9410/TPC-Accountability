@@ -21,6 +21,7 @@ const DESCRIPTION: Record<string, string> = {
   "/home": "Your week at a glance.",
   "/mentor": "The principals you mentor, and how their weeks are going.",
   "/circle": "Your pair and your pod: who is in them, and what they have been up to.",
+  "/visits": "Mornings inside other principals' practices, and the record of each one.",
   "/blocks": "Twelve-week blocks and the commitments beneath them.",
   "/check-in": "Four short questions, once a week.",
   "/wins": "The ledger of what went right.",
