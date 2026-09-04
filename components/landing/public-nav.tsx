@@ -6,10 +6,11 @@ import { usePathname } from "next/navigation";
 const LINKS = [
   { href: "/for-mentees", label: "For mentees" },
   { href: "/for-mentors", label: "For mentors" },
+  { href: "/visits", label: "Practice visits" },
   { href: "/membership", label: "Membership" },
 ];
 
-/** The public header's three links, with aria-current on the one you are reading. */
+/** The public header's links, with aria-current on the one you are reading. */
 export function PublicNav() {
   const pathname = usePathname();
   return (

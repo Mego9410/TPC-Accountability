@@ -2,10 +2,10 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { addDays, addMonths, addWeeks, endOfMonth, format, isSameDay, isSameMonth, startOfMonth, startOfWeek } from "date-fns";
 import { requireViewer } from "@/lib/session";
-import { CADENCE_LABEL, type Cadence, type CircleWithMembers, type Sitting } from "@/lib/domain";
+import { CADENCE_LABEL, SITTING_KIND_LABEL, othersIn, type Cadence, type CircleWithMembers, type Profile, type Sitting } from "@/lib/domain";
 import { circleTitle, nextSitting } from "@/lib/queries";
 import { formatAppointment, formatShortDate, relativeDays } from "@/lib/weeks";
-import { Button, Caption, Card, EmptyState, Eyebrow, H2, H3, HairlineList, HairlineRow, PageHeader, Section, SittingBadge, TextLink } from "@/components/ui";
+import { Button, Caption, Card, EmptyState, Eyebrow, H2, H3, HairlineList, HairlineRow, PageHeader, Section, SittingBadge, SittingKindBadge, TextLink } from "@/components/ui";
 import { Form, SubmitButton, FField as Field, FSelect as Select } from "@/components/ui/form";
 import { scheduleSitting } from "@/lib/actions/sittings";
 
@@ -38,7 +38,7 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
       <PageHeader
         eyebrow="Sittings"
         title="The diary."
-        lede="Every sitting across your circles, and the place to hold the next one."
+        lede="Every sitting and every practice visit across your circles, and the place to arrange the next one."
       />
 
       <div className="grid-cal">
@@ -74,11 +74,12 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
 
         <div className="stack gap-6">
           <Card emphasis={Boolean(next)}>
-            <Eyebrow>{next ? "Next" : "No sitting held"}</Eyebrow>
+            <Eyebrow>{next ? (next.sitting.kind === "visit" ? "Next visit" : "Next") : "No sitting held"}</Eyebrow>
             {next ? (
               <>
                 <H3><time dateTime={next.sitting.scheduledAt}>{formatAppointment(next.sitting.scheduledAt)}</time></H3>
                 <Caption>{relativeDays(next.sitting.scheduledAt)} · {circleTitle(next.circle, userId)}</Caption>
+                {next.sitting.kind === "visit" && next.sitting.location && <Caption>{next.sitting.location}</Caption>}
                 <div className="row gap-4 wrap">
                   <Button href={`/sittings/${next.sitting.id}`} size="sm">Prepare</Button>
                   {next.sitting.joinUrl && <Button href={next.sitting.joinUrl} external size="sm" variant="secondary">Join</Button>}
@@ -92,7 +93,7 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
             )}
           </Card>
 
-          <Card>
+          <Card id="arrange">
             <Eyebrow>Arrange a sitting</Eyebrow>
             {circles.length === 0 ? (
               <EmptyState title="You are not yet in a circle.">The House will seat you first; sittings follow.</EmptyState>
@@ -138,7 +139,7 @@ function MonthGrid({ shown, today, sittings, titleOf }: { shown: Date; today: Da
             >
               <time className="n" dateTime={format(d, "yyyy-MM-dd")} aria-label={format(d, "EEEE d MMMM")}>{format(d, "d")}</time>
               {events.map((s) => (
-                <Link key={s.id} href={`/sittings/${s.id}`} className={`ev ${s.status === "completed" ? "held" : s.status}`} title={`${formatAppointment(s.scheduledAt)} · ${titleOf(s.circleId)}`}>
+                <Link key={s.id} href={`/sittings/${s.id}`} className={`ev ${s.status === "completed" ? "held" : s.status}`} title={`${SITTING_KIND_LABEL[s.kind]} · ${formatAppointment(s.scheduledAt)} · ${titleOf(s.circleId)}`}>
                   <span className="d" aria-hidden="true" />
                   <span className="t">{format(new Date(s.scheduledAt), "h:mm a").toLowerCase()} {titleOf(s.circleId)}</span>
                 </Link>
@@ -157,6 +158,9 @@ function MonthGrid({ shown, today, sittings, titleOf }: { shown: Date; today: Da
 function ArrangeForm({ circles, sittings, userId }: { circles: CircleWithMembers[]; sittings: Sitting[]; userId: string }) {
   const firstCircle = circles[0];
   const suggested = suggestNext(firstCircle, sittings.filter((s) => s.circleId === firstCircle.id));
+  // Everyone the viewer sits with, once each: any of them may open their practice.
+  const hosts = new Map<string, Profile>();
+  for (const c of circles) for (const m of othersIn(c, userId)) hosts.set(m.userId, m.profile);
   return (
     <Form action={scheduleSitting}>
       <>
@@ -164,6 +168,23 @@ function ArrangeForm({ circles, sittings, userId }: { circles: CircleWithMembers
           label="Circle"
           name="circle_id"
           options={circles.map((c) => ({ value: c.id, label: `${circleTitle(c, userId)} · ${CADENCE_LABEL[c.cadence].toLowerCase()}` }))}
+        />
+        <Select
+          label="What kind"
+          name="kind"
+          defaultValue="video"
+          options={[
+            { value: "video", label: `${SITTING_KIND_LABEL.video} · over video` },
+            { value: "visit", label: `${SITTING_KIND_LABEL.visit} · a morning in a practice` },
+          ]}
+          help="Every principal spends a morning inside every other practice in their circle, and has each of them inside theirs."
+        />
+        <Select
+          label="Whose practice"
+          name="host_id"
+          placeholder="Not a visit"
+          options={[...hosts.values()].map((p) => ({ value: p.id, label: p.practiceName ? `${p.fullName} · ${p.practiceName}` : p.fullName }))}
+          help="For a practice visit only. The place is taken from their particulars."
         />
         <Field
           label="Date and time"
@@ -179,10 +200,10 @@ function ArrangeForm({ circles, sittings, userId }: { circles: CircleWithMembers
           type="url"
           inputMode="url"
           placeholder="https://"
-          help="Google Meet, Teams or Zoom link. Optional."
+          help="Google Meet, Teams or Zoom link. For a sitting over video, and optional."
         />
         <div className="form-actions">
-          <SubmitButton>Hold the sitting</SubmitButton>
+          <SubmitButton>Put it in the diary</SubmitButton>
         </div>
       </>
     </Form>
@@ -205,13 +226,23 @@ function suggestNext(circle: CircleWithMembers, sittings: Sitting[]): string {
 /* ---------- Rows ---------- */
 
 function SittingRow({ sitting, title }: { sitting: Sitting; title: string }) {
+  const meta = [
+    formatAppointment(sitting.scheduledAt),
+    sitting.kind === "visit" ? sitting.location : null,
+    sitting.notes ? excerpt(sitting.notes, 100) : null,
+  ].filter(Boolean).join(" · ");
   return (
     <HairlineRow
       href={`/sittings/${sitting.id}`}
       date={<time dateTime={sitting.scheduledAt}>{formatShortDate(sitting.scheduledAt)}</time>}
       title={title}
-      meta={`${formatAppointment(sitting.scheduledAt)}${sitting.notes ? ` · ${excerpt(sitting.notes, 100)}` : ""}`}
-      right={<SittingBadge status={sitting.status} />}
+      meta={meta}
+      right={
+        <span className="badge-row">
+          <SittingKindBadge kind={sitting.kind} />
+          <SittingBadge status={sitting.status} />
+        </span>
+      }
     />
   );
 }

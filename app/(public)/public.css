@@ -35,6 +35,17 @@
 .lp-section.paper { background: var(--bg-paper); }
 .lp-section.parchment { background: var(--bg-paper-raise); }
 .lp-section.midnight { background: var(--tpc-midnight); color: var(--fg); }
+/* The card room. Gold on bottle green is the club-bindery pairing, and it
+   breaks the paper/midnight alternation exactly once, where the visit is. */
+.lp-section.baize {
+  background:
+    radial-gradient(120% 90% at 22% 0%, #33453c 0%, #2b3b34 52%, #22302a 100%);
+  color: var(--fg);
+  border-top: 1px solid #4d6558; border-bottom: 1px solid #4d6558;
+}
+.lp-section.baize .h2, .lp-section.baize .h3 { color: var(--fg); }
+.lp-section.baize .body, .lp-section.baize .caption, .lp-section.baize .body-lg { color: color-mix(in oklab, var(--tpc-cream) 74%, transparent); }
+.lp-section.baize .eyebrow { color: var(--tpc-gold-bright); }
 .lp-section.midnight .h2, .lp-section.midnight .h3 { color: var(--fg); }
 .lp-section.midnight .caption, .lp-section.midnight .body { color: var(--fg-muted); }
 .lp-container { max-width: var(--container); margin: 0 auto; }
@@ -46,41 +57,121 @@
 .lp-prose .body { font-family: var(--font-serif); font-size: 19px; line-height: 1.6; }
 .lp-cta { display: flex; gap: 20px; align-items: center; flex-wrap: wrap; margin-top: 40px; }
 
-/* ---------- Hero ---------- */
+/* ---------- Hero: an engraved invitation ---------- */
+/* A deeper ground than the book's midnight. Gold runs hotter against it, which
+   is the whole reason for the departure; it is used on this page only. */
 .lp-hero {
-  background: var(--tpc-midnight); color: var(--fg);
-  position: relative; overflow: hidden;
-  padding: clamp(64px, 9vw, 112px) clamp(20px, 5vw, 64px) clamp(56px, 7vw, 88px);
+  --hero-ink: #131c22;
+  --hero-ink-deep: #0b1116;
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  color: var(--fg);
+  background:
+    radial-gradient(120% 78% at 50% 26%, #1f2f39 0%, var(--hero-ink) 46%, var(--hero-ink-deep) 100%);
+  padding: clamp(56px, 8vw, 104px) clamp(20px, 5vw, 64px) clamp(52px, 7vw, 84px);
 }
-.lp-hero-mark { position: absolute; inset: auto -8% -24% auto; width: 680px; max-width: 92vw; opacity: 0.06; pointer-events: none; }
+/* Vignette and a warm bloom behind the word, so the ground has a middle. */
+.lp-hero::after {
+  content: "";
+  position: absolute; inset: 0; z-index: 1; pointer-events: none;
+  background:
+    radial-gradient(46% 34% at 50% 27%, rgba(197,183,147,0.13) 0%, rgba(197,183,147,0) 70%),
+    radial-gradient(100% 100% at 50% 45%, rgba(0,0,0,0) 52%, rgba(0,0,0,0.45) 100%);
+}
+.lp-hero-ground { position: absolute; inset: 0; z-index: 0; pointer-events: none; }
+/* Centred on the word, not on the section, so it reads as a halo struck
+   behind "Kept." rather than an ornament sitting under the doors. */
+.lp-hero-engraving {
+  position: absolute;
+  left: 50%; top: clamp(-260px, -14vw, -80px);
+  width: min(880px, 124vw); aspect-ratio: 1;
+  transform: translateX(-50%);
+}
+.lp-hero-mark {
+  position: absolute; inset: auto -10% -30% auto;
+  width: 620px; max-width: 88vw; opacity: 0.05;
+}
+/* The ruled frame of a certificate: a hairline inset, doubled at the corners. */
+.lp-hero-frame {
+  position: absolute; z-index: 2; pointer-events: none;
+  inset: clamp(12px, 1.8vw, 22px);
+  border: 1px solid color-mix(in oklab, var(--tpc-gold) 22%, transparent);
+}
+.lp-hero-frame::before {
+  content: ""; position: absolute; inset: 6px;
+  border: 1px solid color-mix(in oklab, var(--tpc-gold) 11%, transparent);
+}
+
 .lp-hero-inner {
-  position: relative; z-index: 1;
-  max-width: var(--container); margin: 0 auto;
-  display: flex; flex-direction: column; align-items: center; text-align: center; gap: 22px;
+  position: relative; z-index: 3;
+  max-width: 1080px; margin: 0 auto;
+  display: flex; flex-direction: column; align-items: center; text-align: center;
+  gap: 18px;
 }
-.lp-hero .lp-kept {
+
+/* The word. A vertical gradient through the gold so it has a lit edge and a
+   shadowed foot, and a soft halo so it sits on the ground rather than over it. */
+.lp-kept { margin: 4px 0 0; line-height: 0.9; }
+.lp-kept > span {
+  display: inline-block;
   font-family: var(--font-display); font-weight: 400;
-  font-size: var(--fs-display-2xl); line-height: 0.95; letter-spacing: -0.01em;
-  color: var(--accent); margin: 0;
+  font-size: clamp(84px, 15.5vw, 210px);
+  letter-spacing: -0.015em;
+  background: linear-gradient(174deg, #efe6cd 4%, var(--tpc-gold) 44%, #8d7d59 96%);
+  -webkit-background-clip: text; background-clip: text;
+  color: transparent; -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 1px 0 rgba(255,255,255,0.10)) drop-shadow(0 18px 42px rgba(0,0,0,0.55));
+  padding: 0 0.06em;
 }
+@supports not (background-clip: text) { .lp-kept > span { color: var(--accent); -webkit-text-fill-color: currentColor; } }
+
 .lp-thesis {
-  font-family: var(--font-serif); font-size: clamp(20px, 2.4vw, 26px); line-height: 1.5;
-  color: var(--fg-muted); max-width: 620px; margin: 0; text-wrap: balance;
+  font-family: var(--font-serif); font-size: clamp(20px, 2.3vw, 27px); line-height: 1.45;
+  color: var(--fg); max-width: 620px; margin: 6px 0 0; text-wrap: balance;
 }
-.lp-doors { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; width: 100%; max-width: 980px; margin-top: 22px; text-align: left; }
+.lp-thesis-2 {
+  font: 400 15px/1.6 var(--font-sans);
+  color: var(--fg-faint); max-width: 560px; margin: 0; text-wrap: balance;
+}
+
+/* The doors, laid on the table rather than drawn on it. */
+.lp-doors {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 18px;
+  width: 100%; max-width: 940px; margin-top: 26px; text-align: left;
+}
 .lp-door {
-  display: flex; flex-direction: column; gap: 12px;
-  padding: 28px 30px; min-height: 100%;
-  border: 1px solid var(--rule);
-  background: color-mix(in oklab, var(--tpc-cream) 4%, transparent);
+  position: relative;
+  display: flex; flex-direction: column; gap: 11px;
+  padding: 26px 28px 22px;
   color: var(--fg); text-decoration: none;
-  transition: border-color var(--dur-2) var(--ease-out), background var(--dur-2) var(--ease-out);
+  background: linear-gradient(180deg, rgba(246,241,230,0.075) 0%, rgba(246,241,230,0.028) 100%);
+  border: 1px solid color-mix(in oklab, var(--tpc-gold) 26%, transparent);
+  box-shadow: 0 22px 44px rgba(0,0,0,0.34), inset 0 1px 0 rgba(246,241,230,0.10);
+  transition: transform var(--dur-2) var(--ease-out), border-color var(--dur-2) var(--ease-out),
+              box-shadow var(--dur-2) var(--ease-out), background var(--dur-2) var(--ease-out);
 }
-.lp-door:hover { border-color: var(--accent); background: color-mix(in oklab, var(--tpc-cream) 7%, transparent); }
-.lp-door-title { font: 400 clamp(22px, 2.4vw, 28px)/1.25 var(--font-serif); color: var(--fg); text-wrap: balance; }
+.lp-door:hover {
+  transform: translateY(-3px);
+  border-color: var(--accent);
+  background: linear-gradient(180deg, rgba(246,241,230,0.11) 0%, rgba(246,241,230,0.04) 100%);
+  box-shadow: 0 30px 56px rgba(0,0,0,0.42), inset 0 1px 0 rgba(246,241,230,0.16);
+}
+.lp-door-title { font: 400 clamp(21px, 2.2vw, 27px)/1.24 var(--font-serif); color: var(--fg); text-wrap: balance; }
 .lp-door-detail { font: 400 14px/1.55 var(--font-sans); color: var(--fg-muted); }
-.lp-door-go { margin-top: auto; padding-top: 8px; }
-.lp-quiet { display: flex; gap: 28px; align-items: center; justify-content: center; flex-wrap: wrap; margin-top: 6px; }
+.lp-door-go {
+  margin-top: auto; padding-top: 10px;
+  font: 500 10px/1 var(--font-sans); letter-spacing: 0.2em; text-transform: uppercase;
+  color: var(--accent);
+}
+.lp-door:hover .lp-door-go { color: var(--accent-hover); }
+
+.lp-quiet { display: flex; gap: 22px; align-items: center; justify-content: center; flex-wrap: wrap; margin-top: 26px; }
+.lp-quiet-link {
+  font: 500 10px/1 var(--font-sans); letter-spacing: 0.2em; text-transform: uppercase;
+  color: var(--fg-muted); text-decoration: none; border-bottom: 1px solid transparent; padding-bottom: 4px;
+}
+.lp-quiet-link:hover { color: var(--accent); border-bottom-color: var(--accent); }
 
 /* ---------- Three-up (what the Club is; house rules) ---------- */
 .lp-three { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 40px; margin-top: 44px; }
@@ -202,4 +293,99 @@
   .lp-rule-why { grid-column: 1; }
   .lp-faq summary { font-size: 18px; }
   .lp-main .signin-scene { min-height: calc(100dvh - 104px); }
+}
+
+/* =========================================================================
+   ADDITIONS — pillars, figures, the visit
+   ------------------------------------------------------------------------- */
+
+/* ---------- Four objects, each with a drawn mark ---------- */
+.lp-pillars { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 36px; margin-top: 46px; }
+.lp-pillars article { display: flex; flex-direction: column; gap: 12px; }
+.lp-mark { width: 44px; height: 44px; color: var(--tpc-gold-deep); margin-bottom: 4px; }
+.lp-pillars .body { color: var(--fg-on-paper-muted); font-size: 15.5px; }
+.lp-pillars .h3 { font-size: 21px; }
+
+/* ---------- The four figures ---------- */
+.lp-figures { background: var(--tpc-midnight); color: var(--fg); padding: clamp(30px, 4vw, 44px) clamp(20px, 5vw, 64px); }
+.lp-figures dl { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 24px 32px; margin: 0; }
+.lp-figures dt { display: flex; align-items: baseline; gap: 10px; }
+.lp-fig-n { font: 400 clamp(34px, 4vw, 46px)/1 var(--font-display); color: var(--accent); font-variant-numeric: tabular-nums; }
+.lp-fig-label { font: 500 11px/1.3 var(--font-sans); letter-spacing: 0.18em; text-transform: uppercase; color: var(--fg); }
+.lp-figures dd { margin: 6px 0 0; font: 400 13.5px/1.5 var(--font-sans); color: var(--fg-faint); }
+
+/* ---------- The visit ---------- */
+.lp-visit-grid { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: clamp(30px, 4.5vw, 64px); margin-top: 46px; align-items: start; }
+
+/* The programme, engraved: hours in the display serif, tracked and tabular. */
+.lp-programme { border-top: 1px solid var(--hair-baize, rgba(197,183,147,0.34)); padding-top: 18px; }
+.lp-programme-head { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; margin-bottom: 8px; }
+.lp-indicative { font: 500 10px/1 var(--font-sans); letter-spacing: 0.18em; text-transform: uppercase; color: color-mix(in oklab, var(--tpc-cream) 46%, transparent); }
+.lp-hours { list-style: none; margin: 0; padding: 0; }
+.lp-hours li {
+  display: grid; grid-template-columns: 92px minmax(0, 200px) minmax(0, 1fr);
+  gap: 4px 22px; align-items: baseline;
+  padding: 15px 0; border-top: 1px solid rgba(197,183,147,0.20);
+}
+.lp-hours li:first-child { border-top: 0; }
+.lp-hour {
+  font: 400 26px/1 var(--font-display); letter-spacing: 0.03em;
+  font-variant-numeric: tabular-nums; color: var(--tpc-gold-bright);
+}
+.lp-hour-what { font: 500 18px/1.3 var(--font-serif); color: var(--fg); }
+.lp-hour-detail { font: 400 14.5px/1.55 var(--font-sans); color: color-mix(in oklab, var(--tpc-cream) 66%, transparent); }
+.lp-programme-foot {
+  margin: 18px 0 0; max-width: 60ch;
+  font: 400 14px/1.6 var(--font-sans); color: color-mix(in oklab, var(--tpc-cream) 56%, transparent);
+}
+
+.lp-visit-aside { display: flex; flex-direction: column; gap: 26px; }
+
+/* The exclusion zone, drawn */
+.lp-zone { margin: 0; display: flex; flex-direction: column; gap: 12px; }
+.lp-zone svg { width: 100%; height: auto; overflow: visible; }
+.lp-zone-ring { fill: none; stroke: rgba(197,183,147,0.34); }
+.lp-zone-ring.outer { stroke-dasharray: 3 5; stroke: rgba(197,183,147,0.5); }
+.lp-zone-ring.faint { stroke: rgba(197,183,147,0.18); }
+.lp-zone-tick { stroke: rgba(197,183,147,0.28); stroke-dasharray: 2 4; }
+.lp-zone-label { font: 500 9.5px var(--font-sans); letter-spacing: 0.14em; text-transform: uppercase; fill: rgba(232,223,201,0.62); }
+.lp-zone-pin circle { fill: var(--tpc-gold); }
+.lp-zone-pin text { font: 500 9.5px var(--font-sans); letter-spacing: 0.16em; text-transform: uppercase; fill: var(--tpc-cream); }
+.lp-zone-pin.match circle { fill: none; stroke: var(--tpc-gold); stroke-width: 1.4; }
+.lp-zone-arc { fill: none; stroke: rgba(197,183,147,0.4); stroke-dasharray: 2 4; }
+.lp-zone figcaption { font: 400 13.5px/1.55 var(--font-sans); color: color-mix(in oklab, var(--tpc-cream) 58%, transparent); }
+
+.lp-terms { list-style: none; margin: 0; padding: 0; }
+.lp-terms li { padding: 13px 0; border-top: 1px solid rgba(197,183,147,0.2); display: flex; flex-direction: column; gap: 3px; }
+.lp-terms li:last-child { border-bottom: 1px solid rgba(197,183,147,0.2); }
+.lp-term-name { font: 500 15.5px/1.35 var(--font-serif); color: var(--fg); }
+.lp-term-def { font: 400 13.5px/1.5 var(--font-sans); color: color-mix(in oklab, var(--tpc-cream) 60%, transparent); }
+
+/* What a visit returns (the /visits page) */
+.lp-returns { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 40px; margin-top: 44px; }
+.lp-returns article { display: flex; flex-direction: column; gap: 10px; border-top: 1px solid var(--rule-strong); padding-top: 20px; }
+.lp-returns .body { color: var(--fg-on-paper-muted); font-size: 15.5px; }
+.lp-pull {
+  margin: 6px 0 0; padding-left: 16px; border-left: 2px solid var(--tpc-gold);
+  font: 400 17px/1.5 var(--font-serif); color: var(--fg-on-paper);
+}
+
+@media (max-width: 1024px) {
+  .lp-pillars { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 32px; }
+  .lp-figures dl { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 880px) {
+  .lp-visit-grid, .lp-returns { grid-template-columns: 1fr; }
+  .lp-hours li { grid-template-columns: 70px minmax(0, 1fr); }
+  .lp-hour-detail { grid-column: 2; }
+}
+@media (max-width: 720px) {
+  .lp-pillars { grid-template-columns: 1fr; gap: 26px; }
+  .lp-hero-frame { inset: 8px; }
+  .lp-kept > span { font-size: clamp(72px, 22vw, 120px); }
+  .lp-doors { grid-template-columns: 1fr; gap: 14px; }
+  .lp-door { padding: 22px 22px 20px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lp-door:hover { transform: none; }
 }

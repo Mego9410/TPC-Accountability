@@ -13,6 +13,7 @@ const MENTEE_GETS = [
   { term: "A weekly check-in", def: "Four questions. What went well, what did not, what is next, and how you are. It takes four minutes, and your mentor reads it." },
   { term: "The benchmark", def: "Five figures a month, set against practices like yours. Medians only, cohorts of five or more, and nobody sees yours." },
   { term: "The win log", def: "The things that went right, kept where you will find them on the days that did not." },
+  { term: "A morning in their practice", def: "You spend a morning inside each principal's practice in your circle, and they spend one inside yours. Two a year, and never a competitor." },
 ];
 
 export function MenteesSection({ full }: { full?: boolean }) {
@@ -23,9 +24,6 @@ export function MenteesSection({ full }: { full?: boolean }) {
         <div className="lp-prose">
           <Body>
             The first five years as a principal are not what the associate years suggested. You bought a practice and found you had bought a payroll, a lease, a CQC registration and a queue of people who need a decision from you before ten. The dentistry is the easy part. It is also the only part you were trained for.
-          </Body>
-          <Body>
-            Recruitment takes the evenings. The numbers you should be looking at, acceptance, hygiene share, what a chair actually earns in an hour, sit in a spreadsheet you open twice a year, usually the week before you see the accountant. The plan you wrote in January is still a good plan. It is also still January&rsquo;s plan.
           </Body>
           <Body>
             None of this is a failure of will. It is what happens when the only person who asks how the practice is going is you, and you are busy. The Club exists to make one other person ask, on a fixed day, and to write the answer down.
@@ -87,7 +85,7 @@ export function MentorsSection({ full }: { full?: boolean }) {
             Nobody is paid and nobody pays. A mentor&rsquo;s place in the Club is given, not sold, and it comes with the Society: your own block, your own benchmark, and the record of your own year.
           </Body>
           <Body>
-            The House seats you with principals whose focus matches your history. If you opened a second site, you will sit with someone trying to. If you rebuilt a team after losing one, you will sit with someone losing theirs now.
+            The House seats you with principals whose focus matches your history. If you opened a second site, you will sit with someone trying to. And in the course of a year you will spend a morning in their practice, and they in yours.
           </Body>
           {full && (
             <Body>
@@ -125,7 +123,7 @@ export function MentorsSection({ full }: { full?: boolean }) {
   );
 }
 
-/** A quiet hairline three-up: what the Club is. */
+/** Kept for the audience pages, where a shorter statement of the Club is wanted. */
 export function WhatTheClubIs() {
   return (
     <LandingSection tone="paper">

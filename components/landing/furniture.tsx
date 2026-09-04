@@ -9,7 +9,7 @@ import { Body, Button, Caption, Card, Eyebrow, H2, H3, TextLink, cn } from "@/co
 
 export function LandingSection({
   id, tone = "paper", narrow, children, className,
-}: { id?: string; tone?: "paper" | "parchment" | "midnight"; narrow?: boolean; children: ReactNode; className?: string }) {
+}: { id?: string; tone?: "paper" | "parchment" | "midnight" | "baize"; narrow?: boolean; children: ReactNode; className?: string }) {
   return (
     <section id={id} className={cn("lp-section", tone, className)}>
       <div className={cn("lp-container", narrow && "narrow")}>{children}</div>

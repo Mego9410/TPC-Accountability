@@ -27,6 +27,7 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
 
   const circles = await repo.listCirclesFor(userId);
   const [snap, next] = await Promise.all([memberSnapshot(repo, profile), nextSitting(repo, circles)]);
+  const nextIsVisit = next?.sitting.kind === "visit";
   const mentor = mentorOf(circles, userId);
   const society = canSeeSociety(profile);
 
@@ -62,11 +63,14 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
           </Card>
 
           <Card>
-            <Eyebrow>{next ? "Your next sitting" : "No sitting held"}</Eyebrow>
+            <Eyebrow>{next ? (next.sitting.kind === "visit" ? "Your next visit" : "Your next sitting") : "No sitting held"}</Eyebrow>
             {next ? (
               <>
                 <H3>{formatAppointment(next.sitting.scheduledAt)}</H3>
                 <Caption>{relativeDays(next.sitting.scheduledAt)} · {circleTitle(next.circle, userId)}</Caption>
+                {next.sitting.kind === "visit" && next.sitting.location && (
+                  <Caption>{next.sitting.hostId === userId ? "The circle comes to you" : next.sitting.location}</Caption>
+                )}
                 <div className="row gap-4 wrap" style={{ marginTop: 6 }}>
                   <Button href={`/sittings/${next.sitting.id}`} size="sm">Prepare</Button>
                   <TextLink href="/calendar">All sittings</TextLink>

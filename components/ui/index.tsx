@@ -5,11 +5,13 @@ import {
   BLOCK_WEEKS,
   CIRCLE_ROLE_LABEL,
   COMMITMENT_STATUS_LABEL,
+  SITTING_KIND_LABEL,
   SITTING_STATUS_LABEL,
   initials as toInitials,
   type BlockStatus,
   type CircleRole,
   type CommitmentStatus,
+  type SittingKind,
   type SittingStatus,
 } from "@/lib/domain";
 
@@ -278,6 +280,10 @@ export const BlockBadge = ({ status }: { status: BlockStatus }) => (
 );
 export const SittingBadge = ({ status }: { status: SittingStatus }) => (
   <Badge tone={SITTING_TONE[status]}>{SITTING_STATUS_LABEL[status]}</Badge>
+);
+/** Whether a sitting is held over video or inside somebody's practice. */
+export const SittingKindBadge = ({ kind }: { kind: SittingKind }) => (
+  <Badge tone={kind === "visit" ? "gold" : ""} dot={false}>{SITTING_KIND_LABEL[kind]}</Badge>
 );
 export const RoleBadge = ({ role }: { role: CircleRole }) => (
   <Badge tone={role === "mentor" || role === "lead" ? "gold" : ""} dot={false}>{CIRCLE_ROLE_LABEL[role]}</Badge>

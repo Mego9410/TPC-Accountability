@@ -20,7 +20,7 @@ import type {
 } from "@/lib/domain";
 import { blockEndDate } from "@/lib/weeks";
 import { MIN_COHORT } from "@/lib/benchmarks";
-import type { Repo } from "../types";
+import type { CreateSittingInput, Repo } from "../types";
 import { world } from "./world";
 import { type DemoDelta, writeDelta } from "./store";
 
@@ -143,14 +143,19 @@ export class DemoRepo implements Repo {
   async getSitting(id: string) {
     return this.all<Sitting>("sittings").find((s) => s.id === id) ?? null;
   }
-  async createSitting(input: Pick<Sitting, "circleId" | "scheduledAt" | "createdBy"> & { joinUrl?: string | null }) {
+  async createSitting(input: CreateSittingInput) {
     return this.add<Sitting>("sittings", {
       id: newId("s"),
+      circleId: input.circleId,
+      scheduledAt: input.scheduledAt,
+      createdBy: input.createdBy,
       status: "scheduled",
       notes: null,
       joinUrl: input.joinUrl ?? null,
+      kind: input.kind ?? "video",
+      hostId: input.hostId ?? null,
+      location: input.location ?? null,
       createdAt: now(),
-      ...input,
     });
   }
   async updateSitting(id: string, patch: Partial<Sitting>) {

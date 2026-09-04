@@ -18,6 +18,12 @@ export type Cadence = "weekly" | "fortnightly" | "monthly";
 export type CommitmentStatus = "open" | "done" | "partial" | "missed" | "carried";
 export type BlockStatus = "active" | "completed" | "abandoned";
 export type SittingStatus = "scheduled" | "completed" | "cancelled";
+/**
+ * A sitting is either held over video, or held inside somebody's practice.
+ * Every principal visits every other principal in their circle, and in turn
+ * has each of them inside their own practice for a morning.
+ */
+export type SittingKind = "video" | "visit";
 export type PracticeType = "NHS" | "Private" | "Mixed";
 export type CircleStatus = "active" | "archived";
 
@@ -78,6 +84,11 @@ export interface Sitting {
   notes: string | null;
   createdBy: string;
   createdAt: string;
+  kind: SittingKind;
+  /** For a visit: whose practice is being visited. */
+  hostId: string | null;
+  /** For a visit: the practice and town, denormalised for display. */
+  location: string | null;
 }
 
 export interface GoalBlock {
@@ -228,6 +239,11 @@ export const SITTING_STATUS_LABEL: Record<SittingStatus, string> = {
   cancelled: "Cancelled",
 };
 
+export const SITTING_KIND_LABEL: Record<SittingKind, string> = {
+  video: "Sitting",
+  visit: "Practice visit",
+};
+
 export const CIRCLE_ROLE_LABEL: Record<CircleRole, string> = {
   peer: "Partner",
   mentee: "Mentee",
@@ -258,6 +274,51 @@ export function circleRoleOf(circle: CircleWithMembers, userId: string): CircleR
 
 export function othersIn(circle: CircleWithMembers, userId: string) {
   return circle.members.filter((m) => m.userId !== userId);
+}
+
+export interface VisitLedger {
+  /** Members whose practice the viewer has not yet been inside. */
+  toVisit: Profile[];
+  /** Members who have not yet been inside the viewer's practice. */
+  toHost: Profile[];
+  visited: Array<{ profile: Profile; at: string }>;
+  hosted: Array<{ profile: Profile; at: string }>;
+}
+
+/**
+ * Who in this circle the viewer has yet to visit, and who has yet to visit
+ * them. A completed visit hosted by X means everyone else in the circle has
+ * been inside X's practice: a visit is the circle's morning, not a private
+ * appointment. Where a practice has been visited more than once, the most
+ * recent morning is the one on the ledger.
+ */
+export function visitLedger(
+  circle: CircleWithMembers,
+  sittings: Sitting[],
+  userId: string,
+): VisitLedger {
+  const held = sittings.filter(
+    (s) => s.circleId === circle.id && s.kind === "visit" && s.status === "completed" && s.hostId !== null,
+  );
+  /** The most recent completed visit to this principal's practice. */
+  const lastVisitTo = (hostId: string): string | null =>
+    held
+      .filter((s) => s.hostId === hostId)
+      .map((s) => s.scheduledAt)
+      .sort((a, b) => b.localeCompare(a))[0] ?? null;
+
+  const others = othersIn(circle, userId).map((m) => m.profile);
+  const mine = lastVisitTo(userId);
+
+  const ledger: VisitLedger = { toVisit: [], toHost: [], visited: [], hosted: [] };
+  for (const profile of others) {
+    const at = lastVisitTo(profile.id);
+    if (at) ledger.visited.push({ profile, at });
+    else ledger.toVisit.push(profile);
+    if (mine) ledger.hosted.push({ profile, at: mine });
+    else ledger.toHost.push(profile);
+  }
+  return ledger;
 }
 
 /** The mentees a mentor is responsible for, across all their circles. */

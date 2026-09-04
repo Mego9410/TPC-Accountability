@@ -72,6 +72,9 @@ export type SittingRow = {
   circle_id: string;
   scheduled_at: string;
   status: "scheduled" | "completed" | "cancelled";
+  kind: "video" | "visit";
+  host_id: string | null;
+  location: string | null;
   join_url: string | null;
   notes: string | null;
   created_by: string;
@@ -209,7 +212,9 @@ export type CircleInsert = Partial<Pick<CircleRow, "id" | "cadence" | "cohort_la
   Pick<CircleRow, "kind" | "name">;
 export type CircleMemberInsert = Partial<Pick<CircleMemberRow, "role" | "joined_at" | "left_at">> &
   Pick<CircleMemberRow, "circle_id" | "user_id">;
-export type SittingInsert = Partial<Pick<SittingRow, "id" | "status" | "join_url" | "notes" | Defaulted>> &
+export type SittingInsert = Partial<
+  Pick<SittingRow, "id" | "status" | "kind" | "host_id" | "location" | "join_url" | "notes" | Defaulted>
+> &
   Pick<SittingRow, "circle_id" | "scheduled_at" | "created_by">;
 export type GoalBlockInsert = Partial<Pick<GoalBlockRow, "id" | "description" | "status" | "template_id" | Defaulted>> &
   Pick<GoalBlockRow, "user_id" | "title" | "start_date" | "end_date">;

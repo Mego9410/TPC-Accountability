@@ -14,9 +14,21 @@ import type {
   Note,
   Profile,
   Sitting,
+  SittingKind,
   Template,
   Win,
 } from "@/lib/domain";
+
+/**
+ * Arranging a sitting. A video sitting needs nothing beyond the circle and the
+ * hour; a visit also carries whose practice is opened and where it is.
+ */
+export type CreateSittingInput = Pick<Sitting, "circleId" | "scheduledAt" | "createdBy"> & {
+  joinUrl?: string | null;
+  kind?: SittingKind;
+  hostId?: string | null;
+  location?: string | null;
+};
 
 /**
  * The one door to the data. Pages and actions talk to this interface and
@@ -41,7 +53,7 @@ export interface Repo {
   /* sittings */
   listSittings(circleIds: string[]): Promise<Sitting[]>;
   getSitting(id: string): Promise<Sitting | null>;
-  createSitting(input: Pick<Sitting, "circleId" | "scheduledAt" | "createdBy"> & { joinUrl?: string | null }): Promise<Sitting>;
+  createSitting(input: CreateSittingInput): Promise<Sitting>;
   updateSitting(id: string, patch: Partial<Sitting>): Promise<Sitting>;
 
   /* blocks + commitments */
