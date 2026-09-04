@@ -7,21 +7,47 @@ export const scheduleSitting = defineAction({
   schema: z.object({
     circle_id: z.string(),
     scheduled_at: z.string().min(10, "Pick a date and time."),
+    kind: z.enum(["video", "visit"]).optional().default("video"),
+    host_id: z.string().trim().optional(),
     join_url: z.string().trim().url("Enter a full link, starting https://").optional().or(z.literal("")),
+  }).superRefine((value, ctx) => {
+    if (value.kind === "visit" && !value.host_id) {
+      ctx.addIssue({ code: "custom", path: ["host_id"], message: "Choose whose practice is being visited." });
+    }
   }),
   run: async (ctx, input) => {
     const circles = await ctx.repo.listCirclesFor(ctx.userId);
-    if (!circles.some((c) => c.id === input.circle_id)) throw new Error("You are not in that circle.");
+    const circle = circles.find((c) => c.id === input.circle_id);
+    if (!circle) throw new Error("You are not in that circle.");
     const when = new Date(input.scheduled_at);
     if (Number.isNaN(when.getTime())) throw new Error("That date could not be read.");
     if (when.getTime() < Date.now() - 60_000) throw new Error("Pick a time in the future.");
+
+    // A visit is a morning inside somebody's practice, so it needs a host who
+    // sits in the same circle. The place is taken from their particulars.
+    let hostId: string | null = null;
+    let location: string | null = null;
+    if (input.kind === "visit") {
+      if (!input.host_id) throw new Error("Choose whose practice is being visited.");
+      const host = circle.members.find((m) => m.userId === input.host_id);
+      if (!host) throw new Error("That principal does not sit in this circle.");
+      hostId = host.userId;
+      location = host.profile.practiceName?.trim() || host.profile.fullName;
+    }
+
     const sitting = await ctx.repo.createSitting({
-      circleId: input.circle_id,
+      circleId: circle.id,
       scheduledAt: when.toISOString(),
       createdBy: ctx.userId,
-      joinUrl: input.join_url || null,
+      joinUrl: input.kind === "visit" ? null : input.join_url || null,
+      kind: input.kind,
+      hostId,
+      location,
     });
-    return { message: "The sitting is in the diary.", redirectTo: `/sittings/${sitting.id}` };
+    return {
+      message: input.kind === "visit" ? "The visit is in the diary." : "The sitting is in the diary.",
+      redirectTo: `/sittings/${sitting.id}`,
+    };
   },
 });
 

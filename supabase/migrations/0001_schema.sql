@@ -99,13 +99,20 @@ create table if not exists public.circle_members (
 create index if not exists circle_members_user_idx on public.circle_members (user_id) where left_at is null;
 
 -- -----------------------------------------------------------------------------
--- sittings — a circle's scheduled conversations.
+-- sittings — a circle's scheduled conversations, held over video or inside a
+-- member's practice. Every principal visits every other principal in their
+-- circle, and has each of them inside their own practice in turn; those
+-- mornings are recorded here as kind 'visit', with the host and the place.
 -- -----------------------------------------------------------------------------
 create table if not exists public.sittings (
   id           uuid primary key default gen_random_uuid(),
   circle_id    uuid not null references public.circles (id) on delete cascade,
   scheduled_at timestamptz not null,
   status       text not null default 'scheduled' check (status in ('scheduled', 'completed', 'cancelled')),
+  kind         text not null default 'video' check (kind in ('video', 'visit')),
+  -- For a visit: whose practice is opened, and the practice and town for display.
+  host_id      uuid references public.profiles (id) on delete set null,
+  location     text,
   join_url     text,
   notes        text,
   created_by   uuid not null references public.profiles (id) on delete cascade,
@@ -113,6 +120,7 @@ create table if not exists public.sittings (
   updated_at   timestamptz not null default now()
 );
 create index if not exists sittings_circle_idx on public.sittings (circle_id, scheduled_at);
+create index if not exists sittings_circle_kind_idx on public.sittings (circle_id, kind, scheduled_at);
 
 -- -----------------------------------------------------------------------------
 -- goal_blocks — twelve-week blocks; commitments hang off them by week.

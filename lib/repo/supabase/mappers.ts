@@ -96,6 +96,9 @@ export function toSitting(r: SittingRow): Sitting {
     notes: r.notes,
     createdBy: r.created_by,
     createdAt: r.created_at,
+    kind: r.kind,
+    hostId: r.host_id,
+    location: r.location,
   };
 }
 
@@ -284,6 +287,9 @@ export const sittingCols: ColumnMap<Sitting, SittingRow> = {
   notes: "notes",
   createdBy: "created_by",
   createdAt: "created_at",
+  kind: "kind",
+  hostId: "host_id",
+  location: "location",
 };
 
 export const blockCols: ColumnMap<GoalBlock, GoalBlockRow> = {

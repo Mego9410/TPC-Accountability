@@ -21,7 +21,7 @@ import type {
 } from "@/lib/domain";
 import { blockEndDate } from "@/lib/weeks";
 import { createClient, type ServerClient } from "@/lib/supabase/server";
-import type { Repo } from "../types";
+import type { CreateSittingInput, Repo } from "../types";
 import type { CircleRow, CohortStatsRow } from "./database.types";
 import {
   blockCols,
@@ -217,9 +217,7 @@ export class SupabaseRepo implements Repo {
     const row = ok(await this.db.from("sittings").select().eq("id", id).maybeSingle(), "getSitting");
     return row ? toSitting(row) : null;
   }
-  async createSitting(
-    input: Pick<Sitting, "circleId" | "scheduledAt" | "createdBy"> & { joinUrl?: string | null },
-  ): Promise<Sitting> {
+  async createSitting(input: CreateSittingInput): Promise<Sitting> {
     const row = must(
       await this.db
         .from("sittings")
@@ -228,6 +226,9 @@ export class SupabaseRepo implements Repo {
           scheduled_at: input.scheduledAt,
           created_by: input.createdBy,
           join_url: input.joinUrl ?? null,
+          kind: input.kind ?? "video",
+          host_id: input.hostId ?? null,
+          location: input.location ?? null,
         })
         .select()
         .single(),

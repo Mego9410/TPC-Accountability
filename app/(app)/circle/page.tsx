@@ -5,6 +5,7 @@ import {
   address,
   isMentorIn,
   othersIn,
+  visitLedger,
   type CheckIn,
   type CircleWithMembers,
   type Profile,
@@ -14,7 +15,7 @@ import type { Repo } from "@/lib/repo/types";
 import { circleTitle, memberSnapshot } from "@/lib/queries";
 import { currentWeekKey, formatAppointment, formatDayMonth, formatShortDate, relativeDays, weekLabel } from "@/lib/weeks";
 import {
-  Avatar, Body, Button, Caption, Card, EmptyState, Eyebrow, H2, H3, HairlineList, HairlineRow, Person, RoleBadge, Section, SittingBadge, TextLink,
+  Avatar, Body, Button, Caption, Card, EmptyState, Eyebrow, H2, H3, HairlineList, HairlineRow, Person, RoleBadge, Section, SittingBadge, SittingKindBadge, TextLink,
 } from "@/components/ui";
 
 export const metadata: Metadata = { title: "Your circle" };
@@ -116,9 +117,137 @@ async function CircleSection({ circle, viewer, repo }: { circle: CircleWithMembe
         )}
       </Section>
 
+      <Visits sittings={sittings} circle={circle} userId={userId} />
+
       <Sittings sittings={sittings} circle={circle} userId={userId} />
     </section>
   );
+}
+
+/* ---------- Practice visits ---------- */
+
+/**
+ * Every principal spends a morning inside every other practice in the circle,
+ * and has each of them inside their own. This is the state of that account.
+ */
+function Visits({ sittings, circle, userId }: { sittings: Sitting[]; circle: CircleWithMembers; userId: string }) {
+  const ledger = visitLedger(circle, sittings, userId);
+  const total = ledger.visited.length + ledger.toVisit.length;
+  if (total === 0) return null;
+
+  const visits = sittings.filter((s) => s.kind === "visit");
+  /** The page for the most recent held visit to a given practice. */
+  const heldAt = (hostId: string): string | undefined =>
+    visits
+      .filter((s) => s.status === "completed" && s.hostId === hostId)
+      .sort((a, b) => b.scheduledAt.localeCompare(a.scheduledAt))[0]?.id;
+  const booked = visits
+    .filter((s) => s.status === "scheduled" && new Date(s.scheduledAt).getTime() > Date.now() - 3_600_000)
+    .sort((a, b) => a.scheduledAt.localeCompare(b.scheduledAt));
+
+  return (
+    <Section title="Practice visits" aside={<TextLink href="/calendar#arrange">Arrange a visit</TextLink>}>
+      <Card>
+        <Body>{visitSummary(ledger, total)}</Body>
+        <Caption>A morning inside someone else&rsquo;s practice, and in turn one inside yours.</Caption>
+      </Card>
+
+      {booked.length > 0 && (
+        <HairlineList>
+          {booked.map((s) => (
+            <HairlineRow
+              key={s.id}
+              href={`/sittings/${s.id}`}
+              date={<time dateTime={s.scheduledAt}>{formatShortDate(s.scheduledAt)}</time>}
+              title={s.hostId === userId ? "Your practice" : s.location ?? "A practice"}
+              meta={`${formatAppointment(s.scheduledAt)} · ${s.hostId === userId ? "the circle comes to you" : "you go to them"}`}
+              right={<SittingKindBadge kind={s.kind} />}
+            />
+          ))}
+        </HairlineList>
+      )}
+
+      <div className="grid-even">
+        <div className="stack gap-3">
+          <Eyebrow>Practices you have been inside</Eyebrow>
+          {ledger.visited.length === 0 ? (
+            <Caption>None yet. The first one changes how you read your own.</Caption>
+          ) : (
+            <HairlineList>
+              {ledger.visited.map(({ profile, at }) => (
+                <HairlineRow
+                  key={profile.id}
+                  href={heldAt(profile.id) ? `/sittings/${heldAt(profile.id)}` : undefined}
+                  date={<time dateTime={at}>{formatDayMonth(at)}</time>}
+                  title={profile.fullName}
+                  meta={profile.practiceName ?? "Principal"}
+                />
+              ))}
+            </HairlineList>
+          )}
+          {ledger.toVisit.length > 0 && <Caption>Still to see: {ledger.toVisit.map((p) => p.fullName).join(", ")}.</Caption>}
+        </div>
+        <div className="stack gap-3">
+          <Eyebrow>Principals who have been inside yours</Eyebrow>
+          {ledger.hosted.length === 0 ? (
+            <Caption>Nobody yet. Open a morning and the circle will come.</Caption>
+          ) : (
+            <HairlineList>
+              {ledger.hosted.map(({ profile, at }) => (
+                <HairlineRow
+                  key={profile.id}
+                  href={heldAt(userId) ? `/sittings/${heldAt(userId)}` : undefined}
+                  date={<time dateTime={at}>{formatDayMonth(at)}</time>}
+                  title={profile.fullName}
+                  meta={profile.practiceName ?? "Principal"}
+                />
+              ))}
+            </HairlineList>
+          )}
+          {ledger.toHost.length > 0 && <Caption>Still to see yours: {ledger.toHost.map((p) => p.fullName).join(", ")}.</Caption>}
+        </div>
+      </div>
+    </Section>
+  );
+}
+
+/** "You have visited two of the five. Three practices to go, and two principals still to see yours." */
+function visitSummary(ledger: ReturnType<typeof visitLedger>, total: number): string {
+  const seen = ledger.visited.length;
+  const toVisit = ledger.toVisit.length;
+  const toHost = ledger.toHost.length;
+
+  // A pair reads as two people, not as an account of practices.
+  if (total === 1) {
+    if (seen === 1 && toHost === 0) return "You have been inside their practice, and they have been inside yours. The account is settled.";
+    if (seen === 1) return "You have been inside their practice. They have not yet been inside yours.";
+    if (toHost === 0) return "They have been inside your practice. You have not yet been inside theirs.";
+    return "Neither of you has yet spent a morning in the other's practice.";
+  }
+
+  const first =
+    seen === 0
+      ? `You have not yet been inside any of the ${count(total)}.`
+      : seen === total
+        ? `You have been inside all ${count(total)} practices.`
+        : `You have visited ${count(seen)} of the ${count(total)}.`;
+  const second =
+    toVisit === 0 && toHost === 0
+      ? "The account is settled, both ways."
+      : toVisit === 0
+        ? `Every practice seen, and ${count(toHost)} ${toHost === 1 ? "principal" : "principals"} still to see yours.`
+        : toHost === 0
+          ? `${capitalise(count(toVisit))} ${toVisit === 1 ? "practice" : "practices"} to go, and everyone has seen yours.`
+          : `${capitalise(count(toVisit))} ${toVisit === 1 ? "practice" : "practices"} to go, and ${count(toHost)} ${toHost === 1 ? "principal" : "principals"} still to see yours.`;
+  return `${first} ${second}`;
+}
+
+const NUMBERS = ["none", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten"];
+function count(n: number): string {
+  return NUMBERS[n] ?? String(n);
+}
+function capitalise(s: string): string {
+  return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
 /* ---------- Members ---------- */
@@ -199,7 +328,9 @@ function CheckInItem({ checkIn, who }: { checkIn: CheckIn; who: Profile | null }
 
 /* ---------- Sittings ---------- */
 
-function Sittings({ sittings, circle, userId }: { sittings: Sitting[]; circle: CircleWithMembers; userId: string }) {
+function Sittings({ sittings: all, circle, userId }: { sittings: Sitting[]; circle: CircleWithMembers; userId: string }) {
+  // Visits keep their own block above; this is the circle's conversations.
+  const sittings = all.filter((s) => s.kind === "video");
   const now = Date.now();
   const upcoming = sittings
     .filter((s) => s.status === "scheduled" && new Date(s.scheduledAt).getTime() > now - 3_600_000)

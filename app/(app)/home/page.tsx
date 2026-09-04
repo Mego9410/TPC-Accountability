@@ -27,6 +27,7 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
 
   const circles = await repo.listCirclesFor(userId);
   const [snap, next] = await Promise.all([memberSnapshot(repo, profile), nextSitting(repo, circles)]);
+  const nextIsVisit = next?.sitting.kind === "visit";
   const mentor = mentorOf(circles, userId);
   const society = canSeeSociety(profile);
 
@@ -38,7 +39,7 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
       <div>
         <Eyebrow>{today}</Eyebrow>
         <Display>{greeting()}, {firstName(profile)}.</Display>
-        <Body lg className="muted maxw-prose" style={{ marginTop: 12 }}>{headline(snap, next?.sitting.scheduledAt ?? null, mentor)}</Body>
+        <Body lg className="muted maxw-prose" style={{ marginTop: 12 }}>{headline(snap, next?.sitting.scheduledAt ?? null, mentor, nextIsVisit, next?.sitting.location ?? null)}</Body>
       </div>
 
       <Divider />
@@ -62,11 +63,14 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
           </Card>
 
           <Card>
-            <Eyebrow>{next ? "Your next sitting" : "No sitting held"}</Eyebrow>
+            <Eyebrow>{next ? (next.sitting.kind === "visit" ? "Your next visit" : "Your next sitting") : "No sitting held"}</Eyebrow>
             {next ? (
               <>
                 <H3>{formatAppointment(next.sitting.scheduledAt)}</H3>
                 <Caption>{relativeDays(next.sitting.scheduledAt)} · {circleTitle(next.circle, userId)}</Caption>
+                {next.sitting.kind === "visit" && next.sitting.location && (
+                  <Caption>{next.sitting.hostId === userId ? "The circle comes to you" : next.sitting.location}</Caption>
+                )}
                 <div className="row gap-4 wrap" style={{ marginTop: 6 }}>
                   <Button href={`/sittings/${next.sitting.id}`} size="sm">Prepare</Button>
                   <TextLink href="/calendar">All sittings</TextLink>
@@ -92,7 +96,13 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
   );
 }
 
-function headline(snap: MemberSnapshot, nextAt: string | null, mentor: Profile | null): string {
+function headline(
+  snap: MemberSnapshot,
+  nextAt: string | null,
+  mentor: Profile | null,
+  nextIsVisit = false,
+  nextLocation: string | null = null,
+): string {
   const parts: string[] = [];
   if (snap.block && snap.week) {
     parts.push(`Week ${snap.week} of ${BLOCK_WEEKS} on “${snap.block.title}”.`);
@@ -102,7 +112,13 @@ function headline(snap: MemberSnapshot, nextAt: string | null, mentor: Profile |
     parts.push("No block is running. Twelve weeks starts with one outcome.");
   }
   if (!snap.checkedInThisWeek) parts.push("Your check-in is waiting.");
-  if (nextAt) parts.push(`You sit ${mentor ? `with ${address(mentor)} ` : ""}${relativeDays(nextAt)}.`);
+  if (nextAt) {
+    parts.push(
+      nextIsVisit
+        ? `You are ${nextLocation ? `at ${nextLocation}` : "inside another practice"} ${relativeDays(nextAt)}.`
+        : `You sit ${mentor ? `with ${address(mentor)} ` : ""}${relativeDays(nextAt)}.`,
+    );
+  }
   return parts.join(" ");
 }
 

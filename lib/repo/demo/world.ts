@@ -164,7 +164,7 @@ export const profiles: Profile[] = [
     membershipNo: "0171",
     focusAreas: ["Preparing to sell", "Work and life in balance"],
     consistencyScore: 66,
-    createdAt: iso(-70),
+    createdAt: iso(-95),
   }),
   profile({
     id: IDS.delaney,
@@ -214,7 +214,7 @@ export const profiles: Profile[] = [
 export const circles: Circle[] = [
   { id: IDS.pairCheng, kind: "pair", name: "Cheng · Adesanya", cadence: "fortnightly", cohortLabel: null, status: "active", createdAt: iso(-90) },
   { id: IDS.pairDelaney, kind: "pair", name: "Delaney · Adesanya", cadence: "weekly", cohortLabel: null, status: "active", createdAt: iso(-40) },
-  { id: IDS.pod, kind: "pod", name: "The Marylebone Six", cadence: "monthly", cohortLabel: "2026 Q3", status: "active", createdAt: iso(-60) },
+  { id: IDS.pod, kind: "pod", name: "The Marylebone Six", cadence: "monthly", cohortLabel: "2026 Q3", status: "active", createdAt: iso(-80) },
 ];
 
 export const circleMembers: CircleMember[] = [
@@ -222,17 +222,27 @@ export const circleMembers: CircleMember[] = [
   { circleId: IDS.pairCheng, userId: IDS.adesanya, role: "mentor", joinedAt: iso(-90) },
   { circleId: IDS.pairDelaney, userId: IDS.delaney, role: "mentee", joinedAt: iso(-40) },
   { circleId: IDS.pairDelaney, userId: IDS.adesanya, role: "mentor", joinedAt: iso(-40) },
-  { circleId: IDS.pod, userId: IDS.adesanya, role: "lead", joinedAt: iso(-60) },
-  { circleId: IDS.pod, userId: IDS.cheng, role: "peer", joinedAt: iso(-60) },
-  { circleId: IDS.pod, userId: IDS.field, role: "peer", joinedAt: iso(-60) },
-  { circleId: IDS.pod, userId: IDS.shah, role: "peer", joinedAt: iso(-60) },
-  { circleId: IDS.pod, userId: IDS.hart, role: "peer", joinedAt: iso(-58) },
+  { circleId: IDS.pod, userId: IDS.adesanya, role: "lead", joinedAt: iso(-80) },
+  { circleId: IDS.pod, userId: IDS.cheng, role: "peer", joinedAt: iso(-80) },
+  { circleId: IDS.pod, userId: IDS.field, role: "peer", joinedAt: iso(-80) },
+  { circleId: IDS.pod, userId: IDS.shah, role: "peer", joinedAt: iso(-80) },
+  { circleId: IDS.pod, userId: IDS.hart, role: "peer", joinedAt: iso(-78) },
   { circleId: IDS.pod, userId: IDS.delaney, role: "peer", joinedAt: iso(-40) },
 ];
 
-/* ---------- Sittings ---------- */
+/* ---------- Sittings ----------
+   A sitting is held over video or inside somebody's practice. Every principal
+   visits every other principal in their circle, and has each of them inside
+   their own practice in turn; those mornings are `kind: "visit"`. */
+function video(s: Omit<Sitting, "kind" | "hostId" | "location">): Sitting {
+  return { ...s, kind: "video", hostId: null, location: null };
+}
+function visit(s: Omit<Sitting, "kind" | "joinUrl"> & { hostId: string; location: string }): Sitting {
+  return { ...s, kind: "visit", joinUrl: null };
+}
+
 export const sittings: Sitting[] = [
-  {
+  video({
     id: "s-cheng-past-2",
     circleId: IDS.pairCheng,
     scheduledAt: iso(-32, 18, 30),
@@ -241,8 +251,8 @@ export const sittings: Sitting[] = [
     notes: "Agreed the twelve-week turnover block. Jordan to audit acceptance for the last quarter before the next sitting.",
     createdBy: IDS.adesanya,
     createdAt: iso(-46),
-  },
-  {
+  }),
+  video({
     id: "s-cheng-past",
     circleId: IDS.pairCheng,
     scheduledAt: iso(-18, 18, 30),
@@ -251,8 +261,8 @@ export const sittings: Sitting[] = [
     notes: "Acceptance is at 64%, up from 60. The lab contract is the sticking point: Jordan has been putting the call off. Agreed it carries to next week with a date in the diary.",
     createdBy: IDS.adesanya,
     createdAt: iso(-32),
-  },
-  {
+  }),
+  video({
     id: "s-cheng-next",
     circleId: IDS.pairCheng,
     scheduledAt: iso(9, 18, 30),
@@ -261,8 +271,8 @@ export const sittings: Sitting[] = [
     notes: null,
     createdBy: IDS.adesanya,
     createdAt: iso(-18),
-  },
-  {
+  }),
+  video({
     id: "s-delaney-next",
     circleId: IDS.pairDelaney,
     scheduledAt: iso(2, 7, 30),
@@ -271,8 +281,8 @@ export const sittings: Sitting[] = [
     notes: null,
     createdBy: IDS.adesanya,
     createdAt: iso(-5),
-  },
-  {
+  }),
+  video({
     id: "s-delaney-past",
     circleId: IDS.pairDelaney,
     scheduledAt: iso(-5, 7, 30),
@@ -281,8 +291,8 @@ export const sittings: Sitting[] = [
     notes: "Sam has written the TCO job description. Next: agree the salary band and post it.",
     createdBy: IDS.adesanya,
     createdAt: iso(-12),
-  },
-  {
+  }),
+  video({
     id: "s-pod-next",
     circleId: IDS.pod,
     scheduledAt: iso(5, 19, 0),
@@ -291,8 +301,8 @@ export const sittings: Sitting[] = [
     notes: null,
     createdBy: IDS.adesanya,
     createdAt: iso(-25),
-  },
-  {
+  }),
+  video({
     id: "s-pod-past",
     circleId: IDS.pod,
     scheduledAt: iso(-25, 19, 0),
@@ -301,7 +311,42 @@ export const sittings: Sitting[] = [
     notes: "Round the table on recruitment. Priya's associate interview questions shared with the pod.",
     createdBy: IDS.adesanya,
     createdAt: iso(-55),
-  },
+  }),
+
+  /* Practice visits */
+  visit({
+    id: "s-visit-adesanya",
+    circleId: IDS.pairCheng,
+    scheduledAt: iso(-40, 8, 30),
+    status: "completed",
+    hostId: IDS.adesanya,
+    location: "Adesanya Dental, Leeds",
+    notes: "Amara's huddle runs to nine minutes and everyone stands. Ours runs to twenty and everyone sits. Changing it on Monday.",
+    createdBy: IDS.adesanya,
+    createdAt: iso(-62),
+  }),
+  visit({
+    id: "s-visit-cheng",
+    circleId: IDS.pairCheng,
+    scheduledAt: iso(21, 8, 30),
+    status: "scheduled",
+    hostId: IDS.cheng,
+    location: "Cheng Dental, Marylebone",
+    notes: null,
+    createdBy: IDS.cheng,
+    createdAt: iso(-11),
+  }),
+  visit({
+    id: "s-visit-shah",
+    circleId: IDS.pod,
+    scheduledAt: iso(-70, 9, 0),
+    status: "completed",
+    hostId: IDS.shah,
+    location: "Shah & Associates, Didsbury",
+    notes: "Six of us in Didsbury for the morning. Priya runs two hygienists off one nurse and the diary never breaks. Marcus counted eleven minutes between patients; we average nineteen.",
+    createdBy: IDS.adesanya,
+    createdAt: iso(-95),
+  }),
 ];
 
 /* ---------- Blocks ---------- */
