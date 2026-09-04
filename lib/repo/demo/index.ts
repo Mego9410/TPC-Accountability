@@ -16,7 +16,6 @@ import type {
   Note,
   Profile,
   Sitting,
-  Template,
   Win,
 } from "@/lib/domain";
 import { blockEndDate } from "@/lib/weeks";
