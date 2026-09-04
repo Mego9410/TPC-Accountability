@@ -3,8 +3,8 @@ import Link from "next/link";
 import { requireViewer } from "@/lib/session";
 import { firstName, othersIn, type CircleWithMembers, type Message } from "@/lib/domain";
 import { circleTitle } from "@/lib/queries";
-import { Avatar, Caption, EmptyState, PageHeader, Person, TextArea, TextLink, cn } from "@/components/ui";
-import { Form, SubmitButton } from "@/components/ui/form";
+import { Avatar, Caption, EmptyState, PageHeader, Person, TextLink, cn } from "@/components/ui";
+import { Form, SubmitButton, FTextArea as TextArea } from "@/components/ui/form";
 import { sendMessage } from "@/lib/actions/messages";
 import { MarkRead } from "@/components/mark-read";
 
@@ -131,13 +131,11 @@ function ThreadView({ thread, userId }: { thread: Thread; userId: string }) {
       </div>
 
       <Form action={sendMessage} resetOnSuccess successNotice={false} className="composer">
-        {(state) => (
-          <>
-            <input type="hidden" name="circle_id" value={circle.id} />
-            <TextArea label="Your note" name="body" hideLabel rows={2} placeholder={placeholder} required maxLength={2000} error={state.errors.body} />
-            <SubmitButton size="sm" pendingText="Sending…">Send</SubmitButton>
-          </>
-        )}
+        <>
+          <input type="hidden" name="circle_id" value={circle.id} />
+          <TextArea label="Your note" name="body" hideLabel rows={2} placeholder={placeholder} required maxLength={2000} />
+          <SubmitButton size="sm" pendingText="Sending…">Send</SubmitButton>
+        </>
       </Form>
     </section>
   );

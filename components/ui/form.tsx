@@ -1,12 +1,18 @@
 "use client";
 
-import { useActionState, useEffect, useRef, type ReactNode } from "react";
+import { createContext, useActionState, useContext, useEffect, useRef, type ReactNode, type InputHTMLAttributes, type SelectHTMLAttributes, type TextareaHTMLAttributes, type ComponentProps } from "react";
 import { useFormStatus } from "react-dom";
 import { useRouter } from "next/navigation";
-import { Button, Notice, cn } from "@/components/ui";
+import { Button, Field, Notice, Select, TextArea, cn } from "@/components/ui";
 import { EMPTY_STATE, type ActionState } from "@/lib/actions/state";
 
 type ServerAction = (prev: ActionState, formData: FormData) => Promise<ActionState>;
+
+const FormStateContext = createContext<ActionState>(EMPTY_STATE);
+/** The enclosing form's state, for client children that need field errors. */
+export function useFormState(): ActionState {
+  return useContext(FormStateContext);
+}
 
 /**
  * The one form. Wires useActionState, shows the outcome once, resets on
@@ -46,7 +52,9 @@ export function Form({
       {!inline && state.message && (state.ok ? successNotice : true) && (
         <Notice tone={state.ok ? "ok" : "err"}>{state.message}</Notice>
       )}
-      {typeof children === "function" ? children(state) : children}
+      <FormStateContext.Provider value={state}>
+        {typeof children === "function" ? children(state) : children}
+      </FormStateContext.Provider>
     </form>
   );
 }
@@ -123,4 +131,24 @@ function ConfirmSubmit({ confirm, children, ...rest }: { confirm?: string; child
       {pending ? rest.pendingText : children}
     </Button>
   );
+}
+
+/* ---------- Fields that read their error from the enclosing Form ----------
+   Server components cannot pass a render function to <Form>; they use these
+   instead and the error arrives through context. */
+export function FField(props: ComponentProps<typeof Field> & InputHTMLAttributes<HTMLInputElement>) {
+  const state = useFormState();
+  return <Field {...props} error={props.error ?? (props.name ? state.errors[props.name] : undefined)} />;
+}
+export function FTextArea(props: ComponentProps<typeof TextArea> & TextareaHTMLAttributes<HTMLTextAreaElement>) {
+  const state = useFormState();
+  return <TextArea {...props} error={props.error ?? (props.name ? state.errors[props.name] : undefined)} />;
+}
+export function FSelect(props: ComponentProps<typeof Select> & SelectHTMLAttributes<HTMLSelectElement>) {
+  const state = useFormState();
+  return <Select {...props} error={props.error ?? (props.name ? state.errors[props.name] : undefined)} />;
+}
+export function FieldError({ name }: { name: string }) {
+  const state = useFormState();
+  return state.errors[name] ? <div className="help err" role="alert">{state.errors[name]}</div> : null;
 }

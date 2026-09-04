@@ -3,10 +3,8 @@ import { redirect } from "next/navigation";
 import { canSeeSociety, requireViewer } from "@/lib/session";
 import type { BenchmarkEntry, CohortStat } from "@/lib/domain";
 import { BENCHMARK_METRICS, MIN_COHORT, formatMetric, formatPeriod, monthPeriod, recentMonthPeriods, type BenchmarkMetric } from "@/lib/benchmarks";
-import {
-  Button, Caption, Card, Eyebrow, Field, H3, HairlineList, HairlineRow, PageHeader, RangeBar, Section, Select, Sparkline, Stat,
-} from "@/components/ui";
-import { Form, SubmitButton } from "@/components/ui/form";
+import { Button, Caption, Card, Eyebrow, H3, HairlineList, HairlineRow, PageHeader, RangeBar, Section, Sparkline, Stat } from "@/components/ui";
+import { Form, SubmitButton, FField as Field, FSelect as Select } from "@/components/ui/form";
 import { saveBenchmarkEntry } from "@/lib/actions/benchmarks";
 
 export const metadata: Metadata = { title: "The benchmark" };
@@ -65,21 +63,18 @@ export default async function BenchmarkPage() {
           <Card>
             <Eyebrow>Record a figure</Eyebrow>
             <Form action={saveBenchmarkEntry} resetOnSuccess>
-              {(state) => (
-                <>
-                  <Select
-                    label="Figure"
-                    name="metric_key"
-                    options={BENCHMARK_METRICS.map((m) => ({ value: m.key, label: m.label }))}
-                    error={state.errors.metric_key}
-                  />
-                  <Select label="Month" name="period" options={periods} defaultValue={monthPeriod()} error={state.errors.period} />
-                  <Field label="Value" name="value" type="number" step="any" inputMode="decimal" min={0} required help="Pounds, a percentage, or a count, as the figure asks." error={state.errors.value} />
-                  <div className="form-actions">
-                    <SubmitButton>Record the figure</SubmitButton>
-                  </div>
-                </>
-              )}
+              <>
+                <Select
+                  label="Figure"
+                  name="metric_key"
+                  options={BENCHMARK_METRICS.map((m) => ({ value: m.key, label: m.label }))}
+                />
+                <Select label="Month" name="period" options={periods} defaultValue={monthPeriod()} />
+                <Field label="Value" name="value" type="number" step="any" inputMode="decimal" min={0} required help="Pounds, a percentage, or a count, as the figure asks." />
+                <div className="form-actions">
+                  <SubmitButton>Record the figure</SubmitButton>
+                </div>
+              </>
             </Form>
           </Card>
 

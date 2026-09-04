@@ -5,10 +5,8 @@ import { requireViewer } from "@/lib/session";
 import { CADENCE_LABEL, type Cadence, type CircleWithMembers, type Sitting } from "@/lib/domain";
 import { circleTitle, nextSitting } from "@/lib/queries";
 import { formatAppointment, formatShortDate, relativeDays } from "@/lib/weeks";
-import {
-  Button, Caption, Card, EmptyState, Eyebrow, H2, H3, HairlineList, HairlineRow, PageHeader, Section, Select, Field, SittingBadge, TextLink,
-} from "@/components/ui";
-import { Form, SubmitButton } from "@/components/ui/form";
+import { Button, Caption, Card, EmptyState, Eyebrow, H2, H3, HairlineList, HairlineRow, PageHeader, Section, SittingBadge, TextLink } from "@/components/ui";
+import { Form, SubmitButton, FField as Field, FSelect as Select } from "@/components/ui/form";
 import { scheduleSitting } from "@/lib/actions/sittings";
 
 export const metadata: Metadata = { title: "Sittings" };
@@ -161,37 +159,32 @@ function ArrangeForm({ circles, sittings, userId }: { circles: CircleWithMembers
   const suggested = suggestNext(firstCircle, sittings.filter((s) => s.circleId === firstCircle.id));
   return (
     <Form action={scheduleSitting}>
-      {(state) => (
-        <>
-          <Select
-            label="Circle"
-            name="circle_id"
-            options={circles.map((c) => ({ value: c.id, label: `${circleTitle(c, userId)} · ${CADENCE_LABEL[c.cadence].toLowerCase()}` }))}
-            error={state.errors.circle_id}
-          />
-          <Field
-            label="Date and time"
-            name="scheduled_at"
-            type="datetime-local"
-            defaultValue={suggested}
-            required
-            help={`Suggested from the ${CADENCE_LABEL[firstCircle.cadence].toLowerCase()} rhythm of ${circleTitle(firstCircle, userId)}.`}
-            error={state.errors.scheduled_at}
-          />
-          <Field
-            label="Meeting link"
-            name="join_url"
-            type="url"
-            inputMode="url"
-            placeholder="https://"
-            help="Google Meet, Teams or Zoom link. Optional."
-            error={state.errors.join_url}
-          />
-          <div className="form-actions">
-            <SubmitButton>Hold the sitting</SubmitButton>
-          </div>
-        </>
-      )}
+      <>
+        <Select
+          label="Circle"
+          name="circle_id"
+          options={circles.map((c) => ({ value: c.id, label: `${circleTitle(c, userId)} · ${CADENCE_LABEL[c.cadence].toLowerCase()}` }))}
+        />
+        <Field
+          label="Date and time"
+          name="scheduled_at"
+          type="datetime-local"
+          defaultValue={suggested}
+          required
+          help={`Suggested from the ${CADENCE_LABEL[firstCircle.cadence].toLowerCase()} rhythm of ${circleTitle(firstCircle, userId)}.`}
+        />
+        <Field
+          label="Meeting link"
+          name="join_url"
+          type="url"
+          inputMode="url"
+          placeholder="https://"
+          help="Google Meet, Teams or Zoom link. Optional."
+        />
+        <div className="form-actions">
+          <SubmitButton>Hold the sitting</SubmitButton>
+        </div>
+      </>
     </Form>
   );
 }
