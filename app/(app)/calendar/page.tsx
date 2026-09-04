@@ -1,237 +1,235 @@
-import Link from "next/link";
 import type { Metadata } from "next";
-import { requireUserProfile, surnameAddress } from "@/lib/auth";
-import { createClient } from "@/lib/supabase/server";
-import { getActivePartnership, getUpcomingMeetings } from "@/lib/data";
-import { disconnectCalendar } from "@/lib/actions/calendar";
-import { scheduleMeeting } from "@/lib/actions/meetings";
-import { env } from "@/lib/env";
-import { isPreviewMode } from "@/lib/preview";
-import { Badge, Body, Button, Card, Caption, Divider, Eyebrow, H1, H3 } from "@/components/ui";
-import { CADENCE_LABEL, formatAppointment } from "@/lib/cadence";
-import type { CalendarConnection, Meeting } from "@/lib/types";
+import Link from "next/link";
+import { addDays, addMonths, addWeeks, endOfMonth, format, isSameDay, isSameMonth, startOfMonth, startOfWeek } from "date-fns";
+import { requireViewer } from "@/lib/session";
+import { CADENCE_LABEL, type Cadence, type CircleWithMembers, type Sitting } from "@/lib/domain";
+import { circleTitle, nextSitting } from "@/lib/queries";
+import { formatAppointment, formatShortDate, relativeDays } from "@/lib/weeks";
+import {
+  Button, Caption, Card, EmptyState, Eyebrow, H2, H3, HairlineList, HairlineRow, PageHeader, Section, Select, Field, SittingBadge, TextLink,
+} from "@/components/ui";
+import { Form, SubmitButton } from "@/components/ui/form";
+import { scheduleSitting } from "@/lib/actions/sittings";
 
-export const metadata: Metadata = { title: "Calendar" };
+export const metadata: Metadata = { title: "Sittings" };
 
-export default async function CalendarPage() {
-  const { userId } = await requireUserProfile();
-  const preview = await isPreviewMode();
-  const partnership = await getActivePartnership(userId);
+const DOW = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
-  let connections: CalendarConnection[] = [];
-  if (!preview) {
-    const supabase = await createClient();
-    const { data: conns } = await supabase
-      .from("calendar_connections")
-      .select("*")
-      .eq("user_id", userId);
-    connections = (conns as CalendarConnection[]) ?? [];
-  }
+export default async function CalendarPage({ searchParams }: { searchParams: Promise<{ month?: string }> }) {
+  const { repo, userId } = await requireViewer();
+  const { month } = await searchParams;
+  const circles = (await repo.listCirclesFor(userId)).filter((c) => c.status === "active");
+  const [sittings, next] = await Promise.all([repo.listSittings(circles.map((c) => c.id)), nextSitting(repo, circles)]);
+  const titleOf = (circleId: string) => {
+    const c = circles.find((x) => x.id === circleId);
+    return c ? circleTitle(c, userId) : "A circle";
+  };
 
-  const meetings = partnership ? await getUpcomingMeetings(partnership.id) : [];
-  const upcoming = meetings.filter(
-    (m) => m.status === "scheduled" && new Date(m.scheduled_at) >= new Date(Date.now() - 864e5),
-  );
+  const today = new Date();
+  const shown = parseMonth(month) ?? startOfMonth(today);
+  const now = today.getTime();
+  const upcoming = sittings
+    .filter((s) => s.status === "scheduled" && new Date(s.scheduledAt).getTime() > now - 3_600_000)
+    .sort((a, b) => a.scheduledAt.localeCompare(b.scheduledAt));
+  const past = sittings
+    .filter((s) => !upcoming.some((u) => u.id === s.id))
+    .sort((a, b) => b.scheduledAt.localeCompare(a.scheduledAt));
 
   return (
     <div className="section fade-enter">
-      <Eyebrow>Appointments</Eyebrow>
-      <H1>The calendar.</H1>
-      <Body className="muted" style={{ maxWidth: 640 }}>
-        Your sittings, held in the Club and, if you wish, in your own calendar.
-      </Body>
+      <PageHeader
+        eyebrow="Sittings"
+        title="The diary."
+        lede="Every sitting across your circles, and the place to hold the next one."
+      />
 
-      <Divider />
+      <div className="grid-cal">
+        <div className="stack gap-6">
+          <MonthGrid shown={shown} today={today} sittings={sittings} titleOf={titleOf} />
 
-      {/* ---- Calendar connections ---- */}
-      <div className="stack gap-4">
-        <Eyebrow>Your calendars</Eyebrow>
-        <div className="grid-even">
-          <CalendarConnect
-            provider="google"
-            label="Google Calendar"
-            configured={env.google.isConfigured}
-            connection={connections.find((c) => c.provider === "google")}
-          />
-          <CalendarConnect
-            provider="microsoft"
-            label="Outlook Calendar"
-            configured={env.microsoft.isConfigured}
-            connection={connections.find((c) => c.provider === "microsoft")}
-          />
+          <Section title="Upcoming">
+            {upcoming.length === 0 ? (
+              <EmptyState title="Nothing in the diary.">
+                {circles.length === 0 ? "Sittings appear here once you are seated in a circle." : "Hold the next sitting and it will appear here."}
+              </EmptyState>
+            ) : (
+              <HairlineList>
+                {upcoming.map((s) => (
+                  <SittingRow key={s.id} sitting={s} title={titleOf(s.circleId)} />
+                ))}
+              </HairlineList>
+            )}
+          </Section>
+
+          <Section title="Past">
+            {past.length === 0 ? (
+              <EmptyState title="No sitting has been held yet.">Once one is marked as held, its notes live here.</EmptyState>
+            ) : (
+              <HairlineList>
+                {past.slice(0, 12).map((s) => (
+                  <SittingRow key={s.id} sitting={s} title={titleOf(s.circleId)} />
+                ))}
+              </HairlineList>
+            )}
+          </Section>
+        </div>
+
+        <div className="stack gap-6">
+          <Card emphasis={Boolean(next)}>
+            <Eyebrow>{next ? "Next" : "No sitting held"}</Eyebrow>
+            {next ? (
+              <>
+                <H3><time dateTime={next.sitting.scheduledAt}>{formatAppointment(next.sitting.scheduledAt)}</time></H3>
+                <Caption>{relativeDays(next.sitting.scheduledAt)} · {circleTitle(next.circle, userId)}</Caption>
+                <div className="row gap-4 wrap">
+                  <Button href={`/sittings/${next.sitting.id}`} size="sm">Prepare</Button>
+                  {next.sitting.joinUrl && <Button href={next.sitting.joinUrl} external size="sm" variant="secondary">Join</Button>}
+                </div>
+              </>
+            ) : (
+              <>
+                <H3>Arrange your next sitting.</H3>
+                <Caption>A standing time is the whole point.</Caption>
+              </>
+            )}
+          </Card>
+
+          <Card>
+            <Eyebrow>Arrange a sitting</Eyebrow>
+            {circles.length === 0 ? (
+              <EmptyState title="You are not yet in a circle.">The House will seat you first; sittings follow.</EmptyState>
+            ) : (
+              <ArrangeForm circles={circles} sittings={sittings} userId={userId} />
+            )}
+          </Card>
         </div>
       </div>
-
-      <Divider />
-
-      {!partnership ? (
-        <div className="notice" style={{ maxWidth: 560 }}>
-          Sittings are arranged once you are matched with a partner.
-        </div>
-      ) : (
-        <div className="grid-cal">
-          <MonthGrid meetings={upcoming} />
-
-          <div className="stack gap-6">
-            <Card>
-              <Eyebrow>Arrange a sitting</Eyebrow>
-              <H3 style={{ fontSize: 20 }}>A standing appointment.</H3>
-              <Caption>
-                With {surnameAddress(partnership.partner)} · {CADENCE_LABEL[partnership.cadence]} cadence
-              </Caption>
-              <form action={scheduleMeeting} className="stack gap-4" style={{ marginTop: 8 }}>
-                <input type="hidden" name="partnership_id" value={partnership.id} />
-                <input type="hidden" name="cadence" value={partnership.cadence} />
-                <div className="field">
-                  <label htmlFor="scheduled_at">Date and time</label>
-                  <input id="scheduled_at" name="scheduled_at" type="datetime-local" required />
-                </div>
-                <div className="row">
-                  <Button type="submit" size="sm">
-                    Hold the appointment
-                  </Button>
-                </div>
-              </form>
-            </Card>
-
-            <div className="stack gap-4">
-              <Eyebrow>Upcoming sittings</Eyebrow>
-              {upcoming.length === 0 ? (
-                <Caption>No sittings presently held.</Caption>
-              ) : (
-                <div className="hairline-list">
-                  {upcoming.map((m) => (
-                    <Link key={m.id} href={`/meetings/${m.id}`} className="row">
-                      <div className="date">{formatAppointment(m.scheduled_at)}</div>
-                      <div>
-                        <div className="title" style={{ fontSize: 18 }}>
-                          A sitting with {surnameAddress(partnership.partner)}
-                        </div>
-                        <div className="meta">
-                          {CADENCE_LABEL[m.cadence]} cadence
-                          {m.google_event_id ? " · in Google" : ""}
-                          {m.microsoft_event_id ? " · in Outlook" : ""}
-                        </div>
-                      </div>
-                      <div className="right">
-                        <Badge variant="gold">Held</Badge>
-                      </div>
-                    </Link>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
 
-function CalendarConnect({
-  provider,
-  label,
-  configured,
-  connection,
-}: {
-  provider: "google" | "microsoft";
-  label: string;
-  configured: boolean;
-  connection?: CalendarConnection;
-}) {
-  return (
-    <Card>
-      <div className="row between">
-        <H3 style={{ fontSize: 20 }}>{label}</H3>
-        {connection ? (
-          <Badge variant="confirmed">Connected</Badge>
-        ) : (
-          <Badge variant="gold">Not linked</Badge>
-        )}
-      </div>
-      {connection ? (
-        <>
-          <Caption>{connection.account_email ?? "Connected account"}</Caption>
-          <form action={disconnectCalendar.bind(null, provider)}>
-            <Button type="submit" variant="ghost">
-              Disconnect
-            </Button>
-          </form>
-        </>
-      ) : configured ? (
-        <>
-          <Caption>Hold your sittings in {label} automatically.</Caption>
-          <div className="row">
-            <Button href={`/api/calendar/${provider}`} variant="secondary" size="sm">
-              Connect
-            </Button>
-          </div>
-        </>
-      ) : (
-        <Caption>
-          Add the {provider === "google" ? "GOOGLE" : "MICROSOFT"} client credentials to enable
-          this connection.
-        </Caption>
-      )}
-    </Card>
-  );
-}
+/* ---------- Month grid ---------- */
 
-function MonthGrid({ meetings }: { meetings: Meeting[] }) {
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = now.getMonth();
-  const monthLabel = now.toLocaleDateString("en-GB", { month: "long", year: "numeric" });
-
-  const first = new Date(year, month, 1);
-  const startWeekday = first.getDay();
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
-
-  const eventDays = new Map<number, string>();
-  for (const m of meetings) {
-    const d = new Date(m.scheduled_at);
-    if (d.getFullYear() === year && d.getMonth() === month) {
-      eventDays.set(
-        d.getDate(),
-        d
-          .toLocaleTimeString("en-GB", { hour: "numeric", minute: "2-digit", hour12: true })
-          .replace(/\s?([ap])m/i, (_x, p) => `${p}m`),
-      );
-    }
-  }
-
-  const heads = ["S", "M", "T", "W", "T", "F", "S"];
-  const cells: Array<{ n: number | null }> = [];
-  for (let i = 0; i < startWeekday; i++) cells.push({ n: null });
-  for (let d = 1; d <= daysInMonth; d++) cells.push({ n: d });
-  while (cells.length % 7 !== 0) cells.push({ n: null });
+function MonthGrid({ shown, today, sittings, titleOf }: { shown: Date; today: Date; sittings: Sitting[]; titleOf: (circleId: string) => string }) {
+  const first = startOfWeek(startOfMonth(shown), { weekStartsOn: 1 });
+  const last = endOfMonth(shown);
+  const cells: Date[] = [];
+  for (let d = first; d <= last || cells.length % 7 !== 0; d = addDays(d, 1)) cells.push(d);
+  const prev = format(addMonths(shown, -1), "yyyy-MM");
+  const nextM = format(addMonths(shown, 1), "yyyy-MM");
 
   return (
     <div className="stack gap-4">
-      <Eyebrow>{monthLabel}</Eyebrow>
-      <div className="cal">
-        {heads.map((h, i) => (
-          <div key={`h${i}`} className="head">
-            {h}
-          </div>
+      <div className="cal-nav">
+        <TextLink href={`/calendar?month=${prev}`} back>{format(addMonths(shown, -1), "MMMM")}</TextLink>
+        <H2><time dateTime={format(shown, "yyyy-MM")}>{format(shown, "MMMM yyyy")}</time></H2>
+        <TextLink href={`/calendar?month=${nextM}`}>{format(addMonths(shown, 1), "MMMM")} →</TextLink>
+      </div>
+      <div className="cal static">
+        {DOW.map((d) => (
+          <div key={d} className="head" aria-hidden="true">{d}</div>
         ))}
-        {cells.map((c, i) => {
-          const ev = c.n ? eventDays.get(c.n) : undefined;
-          const isToday = c.n === now.getDate();
+        {cells.map((d) => {
+          const isToday = isSameDay(d, today);
+          const events = sittings.filter((s) => isSameDay(new Date(s.scheduledAt), d));
           return (
-            <div key={i} className={`day${c.n === null ? " muted" : ""}${ev ? " selected" : ""}`}>
-              {c.n !== null && (
-                <>
-                  <div className="n" style={isToday && !ev ? { color: "var(--tpc-gold-deep)" } : undefined}>
-                    {c.n}
-                  </div>
-                  {ev && <div className="ev">Sitting · {ev}</div>}
-                </>
-              )}
+            <div
+              key={d.toISOString()}
+              className={["day", !isSameMonth(d, shown) && "muted", isToday && "selected today"].filter(Boolean).join(" ")}
+              aria-current={isToday ? "date" : undefined}
+            >
+              <time className="n" dateTime={format(d, "yyyy-MM-dd")} aria-label={format(d, "EEEE d MMMM")}>{format(d, "d")}</time>
+              {events.map((s) => (
+                <Link key={s.id} href={`/sittings/${s.id}`} className={`ev ${s.status === "completed" ? "held" : s.status}`} title={`${formatAppointment(s.scheduledAt)} · ${titleOf(s.circleId)}`}>
+                  <span className="d" aria-hidden="true" />
+                  <span className="t">{format(new Date(s.scheduledAt), "h:mm a").toLowerCase()} {titleOf(s.circleId)}</span>
+                </Link>
+              ))}
             </div>
           );
         })}
       </div>
+      {!isSameMonth(shown, today) && <TextLink href="/calendar">This month</TextLink>}
     </div>
   );
+}
+
+/* ---------- Arrange ---------- */
+
+function ArrangeForm({ circles, sittings, userId }: { circles: CircleWithMembers[]; sittings: Sitting[]; userId: string }) {
+  const firstCircle = circles[0];
+  const suggested = suggestNext(firstCircle, sittings.filter((s) => s.circleId === firstCircle.id));
+  return (
+    <Form action={scheduleSitting}>
+      {(state) => (
+        <>
+          <Select
+            label="Circle"
+            name="circle_id"
+            options={circles.map((c) => ({ value: c.id, label: `${circleTitle(c, userId)} · ${CADENCE_LABEL[c.cadence].toLowerCase()}` }))}
+            error={state.errors.circle_id}
+          />
+          <Field
+            label="Date and time"
+            name="scheduled_at"
+            type="datetime-local"
+            defaultValue={suggested}
+            required
+            help={`Suggested from the ${CADENCE_LABEL[firstCircle.cadence].toLowerCase()} rhythm of ${circleTitle(firstCircle, userId)}.`}
+            error={state.errors.scheduled_at}
+          />
+          <Field
+            label="Meeting link"
+            name="join_url"
+            type="url"
+            inputMode="url"
+            placeholder="https://"
+            help="Google Meet, Teams or Zoom link. Optional."
+            error={state.errors.join_url}
+          />
+          <div className="form-actions">
+            <SubmitButton>Hold the sitting</SubmitButton>
+          </div>
+        </>
+      )}
+    </Form>
+  );
+}
+
+/** The next slot on the circle's cadence, at half past six in the evening. */
+function suggestNext(circle: CircleWithMembers, sittings: Sitting[]): string {
+  const weeks: Record<Cadence, number> = { weekly: 1, fortnightly: 2, monthly: 4 };
+  const latest = sittings
+    .filter((s) => s.status !== "cancelled")
+    .sort((a, b) => b.scheduledAt.localeCompare(a.scheduledAt))[0];
+  const now = new Date();
+  let candidate = latest ? addWeeks(new Date(latest.scheduledAt), weeks[circle.cadence]) : addWeeks(now, 1);
+  while (candidate.getTime() < now.getTime() + 3_600_000) candidate = addWeeks(candidate, weeks[circle.cadence]);
+  candidate.setHours(18, 30, 0, 0);
+  return format(candidate, "yyyy-MM-dd'T'HH:mm");
+}
+
+/* ---------- Rows ---------- */
+
+function SittingRow({ sitting, title }: { sitting: Sitting; title: string }) {
+  return (
+    <HairlineRow
+      href={`/sittings/${sitting.id}`}
+      date={<time dateTime={sitting.scheduledAt}>{formatShortDate(sitting.scheduledAt)}</time>}
+      title={title}
+      meta={`${formatAppointment(sitting.scheduledAt)}${sitting.notes ? ` · ${excerpt(sitting.notes, 100)}` : ""}`}
+      right={<SittingBadge status={sitting.status} />}
+    />
+  );
+}
+
+function parseMonth(value: string | undefined): Date | null {
+  if (!value || !/^\d{4}-\d{2}$/.test(value)) return null;
+  const d = new Date(`${value}-01T00:00:00`);
+  return Number.isNaN(d.getTime()) ? null : startOfMonth(d);
+}
+
+function excerpt(text: string, max: number): string {
+  const t = text.trim();
+  return t.length <= max ? t : `${t.slice(0, max - 1).trimEnd()}…`;
 }

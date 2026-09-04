@@ -19,9 +19,9 @@ const PREVIEW_ENABLED = process.env.NEXT_PUBLIC_ENABLE_PREVIEW !== "false";
 export const env = {
   siteUrl: process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000",
 
-  // The demo "bypass" tour. Normally available only when Supabase is
-  // unconfigured; set NEXT_PUBLIC_ENABLE_PREVIEW=true to keep it available even
-  // once real records are connected (useful for showing a furnished example).
+  // The furnished example ("the tour"). Normally available only when Supabase
+  // is unconfigured; set NEXT_PUBLIC_ENABLE_PREVIEW=true to keep it available
+  // even once real records are connected.
   previewEnabled: PREVIEW_ENABLED,
 
   supabase: {
@@ -33,49 +33,11 @@ export const env = {
     isConfigured: Boolean(SUPABASE_URL && SUPABASE_ANON_KEY),
   },
 
-  daily: {
-    apiKey: process.env.DAILY_API_KEY ?? "",
-    domain: process.env.NEXT_PUBLIC_DAILY_DOMAIN ?? "",
-    get isConfigured() {
-      return Boolean(process.env.DAILY_API_KEY);
-    },
-  },
-
-  deepgram: {
-    apiKey: process.env.DEEPGRAM_API_KEY ?? "",
-    get isConfigured() {
-      return Boolean(process.env.DEEPGRAM_API_KEY);
-    },
-  },
-
   openai: {
     apiKey: process.env.OPENAI_API_KEY ?? "",
     model: process.env.OPENAI_MODEL ?? "gpt-4o-mini",
     get isConfigured() {
       return Boolean(process.env.OPENAI_API_KEY);
-    },
-  },
-
-  google: {
-    clientId: process.env.GOOGLE_CLIENT_ID ?? "",
-    clientSecret: process.env.GOOGLE_CLIENT_SECRET ?? "",
-    redirectUri:
-      process.env.GOOGLE_REDIRECT_URI ??
-      "http://localhost:3000/api/calendar/google/callback",
-    get isConfigured() {
-      return Boolean(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET);
-    },
-  },
-
-  microsoft: {
-    clientId: process.env.MICROSOFT_CLIENT_ID ?? "",
-    clientSecret: process.env.MICROSOFT_CLIENT_SECRET ?? "",
-    tenantId: process.env.MICROSOFT_TENANT_ID ?? "common",
-    redirectUri:
-      process.env.MICROSOFT_REDIRECT_URI ??
-      "http://localhost:3000/api/calendar/microsoft/callback",
-    get isConfigured() {
-      return Boolean(process.env.MICROSOFT_CLIENT_ID && process.env.MICROSOFT_CLIENT_SECRET);
     },
   },
 };

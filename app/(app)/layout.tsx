@@ -1,56 +1,23 @@
-import { redirect } from "next/navigation";
-import { requireUserProfile, initials } from "@/lib/auth";
-import { isPreviewMode } from "@/lib/preview";
-import { AppNav } from "@/components/app-nav";
-import { AppFooter } from "@/components/app-footer";
+import { requireViewer, canSeeSociety } from "@/lib/session";
+import { initials } from "@/lib/domain";
+import { TopNav, BottomNav } from "@/components/shell/nav";
+import { navFor } from "@/components/shell/nav-items";
+import { Footer, TourBar } from "@/components/shell/chrome";
 
-export default async function AppLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  const { profile } = await requireUserProfile();
-  const preview = await isPreviewMode();
-
-  if (!profile.onboarded) {
-    redirect("/onboarding");
-  }
+export default async function AppLayout({ children }: { children: React.ReactNode }) {
+  const viewer = await requireViewer();
+  const { profile, repo, userId } = viewer;
+  const circles = await repo.listCirclesFor(userId);
+  const unread = await repo.countUnread(circles.map((c) => c.id), userId);
+  const items = navFor(profile.role, canSeeSociety(profile));
 
   return (
     <div className="tpc-frame">
-      {preview && <PreviewBar />}
-      <AppNav
-        membershipNo={profile.membership_no ?? "————"}
-        initials={initials(profile.full_name)}
-      />
-      <main className="tpc-page">{children}</main>
-      <AppFooter />
-    </div>
-  );
-}
-
-function PreviewBar() {
-  return (
-    <div
-      style={{
-        background: "var(--tpc-midnight-deep)",
-        color: "var(--fg-muted)",
-        borderBottom: "1px solid var(--rule)",
-        padding: "8px 24px",
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        gap: 16,
-        font: "500 10px/1.4 var(--font-sans)",
-        letterSpacing: "0.16em",
-        textTransform: "uppercase",
-        textAlign: "center",
-      }}
-    >
-      <span>You are touring a furnished example — nothing here is saved.</span>
-      <a href="/auth/signout" style={{ color: "var(--accent)", textDecoration: "none" }}>
-        Exit preview
-      </a>
+      {viewer.isTour && viewer.persona && <TourBar persona={viewer.persona} />}
+      <TopNav items={items} membershipNo={profile.membershipNo} initials={initials(profile.fullName)} unread={unread} />
+      <main className="tpc-page" id="main">{children}</main>
+      <Footer signedIn />
+      <BottomNav items={items} />
     </div>
   );
 }
