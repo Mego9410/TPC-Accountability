@@ -88,7 +88,7 @@ async function CircleSection({ circle, viewer, repo }: { circle: CircleWithMembe
               ? "Check-ins from the pod appear here as they come in. Yours can be the first."
               : leads
                 ? "Your mentee has not checked in yet this week. It will appear here when they do."
-                : `Your check-in appears here, and ${address(otherOf(circle, userId))} reads it before you sit.`}
+                : `Your check-in appears here, and ${partnerName(circle, userId)} reads it before you sit.`}
           </EmptyState>
         ) : (
           <div className="feed">
@@ -255,8 +255,9 @@ function visibleMemberIds(circle: CircleWithMembers, userId: string): string[] {
   return [userId];
 }
 
-function otherOf(circle: CircleWithMembers, userId: string): Profile {
-  return othersIn(circle, userId)[0]?.profile ?? { fullName: "your partner", honorific: "" };
+function partnerName(circle: CircleWithMembers, userId: string): string {
+  const other = othersIn(circle, userId)[0]?.profile;
+  return other ? address(other) : "your partner";
 }
 
 function excerpt(text: string, max: number): string {

@@ -94,7 +94,8 @@
 .lp-example-note { margin-top: 24px; display: flex; gap: 16px; align-items: baseline; flex-wrap: wrap; }
 
 /* ---------- Audience sections ---------- */
-.lp-split { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: clamp(32px, 6vw, 88px); align-items: start; margin-top: 8px; }
+.lp-split { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: clamp(32px, 6vw, 88px); align-items: start; margin-top: 40px; }
+.lp-sequence { margin-top: 64px; }
 .lp-split-aside { display: flex; flex-direction: column; gap: 14px; }
 .lp-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
 .lp-list li { display: grid; grid-template-columns: 200px 1fr; gap: 8px 24px; padding: 18px 0; border-top: 1px solid var(--rule-on-paper); }

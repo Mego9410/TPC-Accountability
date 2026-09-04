@@ -3,9 +3,10 @@ import { redirect } from "next/navigation";
 import { requireViewer, canSeeSociety } from "@/lib/session";
 import type { GoalBlock, Win } from "@/lib/domain";
 import { formatDayMonth, formatLongDate } from "@/lib/weeks";
-import { archiveWin, logWin } from "@/lib/actions/wins";
-import { Caption, Card, EmptyState, Eyebrow, Field, HairlineList, HairlineRow, PageHeader, Section, Select, Stat, TextArea } from "@/components/ui";
-import { Form, QuickAction, SubmitButton } from "@/components/ui/form";
+import { archiveWin } from "@/lib/actions/wins";
+import { Caption, Card, EmptyState, Eyebrow, HairlineList, HairlineRow, PageHeader, Section, Stat } from "@/components/ui";
+import { QuickAction } from "@/components/ui/form";
+import { LogWinForm } from "./log-win-form";
 
 export const metadata: Metadata = { title: "The win log" };
 
@@ -35,28 +36,7 @@ export default async function WinsPage() {
 
       <Card>
         <Eyebrow>Log a win</Eyebrow>
-        <Form action={logWin} resetOnSuccess>
-          {(state) => (
-            <>
-              <Field label="The win" name="title" required maxLength={140} placeholder="Treatment plan acceptance crossed 68%" error={state.errors.title} />
-              <TextArea label="Detail" name="detail" rows={2} maxLength={600} placeholder="What made it happen, or what it made possible." error={state.errors.detail} />
-              <div className="form-row">
-                <Select
-                  label="Block"
-                  name="block_id"
-                  options={blocks.map((b) => ({ value: b.id, label: b.title }))}
-                  placeholder="Not part of a block"
-                  defaultValue={active?.id ?? ""}
-                  error={state.errors.block_id}
-                  help="Wins belong to the block they came out of."
-                />
-              </div>
-              <div className="form-actions">
-                <SubmitButton size="sm" pendingText="Logging…">Log it</SubmitButton>
-              </div>
-            </>
-          )}
-        </Form>
+        <LogWinForm blocks={blocks.map((b) => ({ value: b.id, label: b.title }))} defaultBlockId={active?.id ?? null} />
       </Card>
 
       <Section title="The record">

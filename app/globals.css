@@ -893,7 +893,7 @@ a.person:hover .person-name { color: var(--tpc-gold-deep); }
 /* Correspondence: thread header, newest at the foot, composer as a form */
 .chat-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 14px 16px; border-bottom: 1px solid var(--rule-on-paper); flex-wrap: wrap; }
 .chat .stream.latest-first { flex-direction: column-reverse; justify-content: flex-start; }
-.chat .stream.latest-first .bubble.system { margin: auto 0; }
+.chat .stream.latest-first .bubble.system:only-child { margin: auto 0; }
 .chat .composer.form { flex-direction: row; flex-wrap: wrap; gap: 12px; }
 .chat .composer .field { flex: 1; min-width: 200px; gap: 0; }
 .chat .composer .field textarea { border-bottom: 0; padding: 8px 0; }

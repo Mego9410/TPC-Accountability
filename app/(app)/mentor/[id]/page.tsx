@@ -108,7 +108,7 @@ export default async function MenteePage({ params }: { params: Promise<{ id: str
                         : "No check-in on the record."}
                   </Caption>
                 </div>
-                <div className="stat-row" style={{ minWidth: 160 }}>
+                <div className="stat-row">
                   <Stat value={snap.streak} label="Streak" sub="weeks" />
                   <Stat value={snap.score} label="Consistency" sub="of 100" tone="gold" />
                 </div>
@@ -250,14 +250,14 @@ export default async function MenteePage({ params }: { params: Promise<{ id: str
               </>
             )}
             {pastSittings.length > 0 && (
-              <dl className="kv-list">
+              <div className="feed">
                 {pastSittings.map((s) => (
-                  <div key={s.id} className="stack gap-2" style={{ padding: "10px 0", borderTop: "1px solid var(--rule-on-paper)" }}>
-                    <dt className="eyebrow"><time dateTime={s.scheduledAt}>{formatShortDate(s.scheduledAt)}</time></dt>
-                    <dd style={{ margin: 0 }}><Caption>{s.notes ?? "No notes were kept."}</Caption></dd>
-                  </div>
+                  <article key={s.id} className="feed-item">
+                    <div className="feed-when"><time dateTime={s.scheduledAt}>{formatShortDate(s.scheduledAt)}</time></div>
+                    <Caption>{s.notes ?? "No notes were kept."}</Caption>
+                  </article>
                 ))}
-              </dl>
+              </div>
             )}
           </Card>
 

@@ -6,17 +6,17 @@ import {
 } from "@/lib/domain";
 import { weekStatusMap } from "@/lib/queries";
 import { clampWeek, currentBlockWeek, formatDayMonth, formatLongDate } from "@/lib/weeks";
-import { addCommitment, setBlockStatus } from "@/lib/actions/blocks";
-import { addNote } from "@/lib/actions/notes";
+import { setBlockStatus } from "@/lib/actions/blocks";
 import {
-  BlockBadge, Caption, Card, CommitmentBadge, EmptyState, Eyebrow, Field, H3, PageHeader, Section, Select, Stat, TextArea, TextLink, WeekStrip, cn,
+  BlockBadge, Caption, Card, CommitmentBadge, EmptyState, Eyebrow, H3, PageHeader, Section, Stat, TextLink, WeekStrip, cn,
 } from "@/components/ui";
-import { Form, QuickAction, SubmitButton } from "@/components/ui/form";
+import { QuickAction } from "@/components/ui/form";
 import { CommitmentQuickActions, ReopenCommitment } from "@/components/commitments";
+import { AddCommitmentForm, LeaveNoteForm } from "./forms";
 
 export const metadata: Metadata = { title: "Goal block" };
 
-const WEEK_OPTIONS = Array.from({ length: BLOCK_WEEKS }, (_, i) => ({ value: i + 1, label: `Week ${i + 1}` }));
+const WEEKS = Array.from({ length: BLOCK_WEEKS }, (_, i) => i + 1);
 
 export default async function BlockPage({ params }: { params: Promise<{ id: string }> }) {
   const { profile, repo, userId } = await requireViewer();
@@ -110,7 +110,7 @@ export default async function BlockPage({ params }: { params: Promise<{ id: stri
               {isOwner ? "Add the first commitment below. One or two a week is plenty." : `${address(owner)} has not set anything down for this block yet.`}
             </EmptyState>
           )}
-          {WEEK_OPTIONS.map(({ value: w }) => (
+          {WEEKS.map((w) => (
             <WeekGroup
               key={w}
               week={w}
@@ -130,21 +130,7 @@ export default async function BlockPage({ params }: { params: Promise<{ id: stri
             <div id="add">
               <Section title="Add a commitment">
                 <Card>
-                  <Form action={addCommitment} resetOnSuccess>
-                    {(state) => (
-                      <>
-                        <input type="hidden" name="block_id" value={block.id} />
-                        <div className="form-row">
-                          <Select label="Week" name="week" options={WEEK_OPTIONS} defaultValue={current} error={state.errors.week} />
-                          <Field label="Commitment" name="text" required maxLength={200} placeholder="One thing you will actually do" error={state.errors.text} />
-                        </div>
-                        <div className="form-actions">
-                          <SubmitButton size="sm" pendingText="Setting down…">Set it down</SubmitButton>
-                          <Caption>Short, specific, and finishable in a week.</Caption>
-                        </div>
-                      </>
-                    )}
-                  </Form>
+                  <AddCommitmentForm blockId={block.id} defaultWeek={current} />
                 </Card>
               </Section>
             </div>
@@ -302,18 +288,7 @@ function CommitmentRow({
           <details className="disclosure" style={{ marginTop: 8 }}>
             <summary>Leave a note</summary>
             <div className="disclosure-body">
-              <Form action={addNote} resetOnSuccess>
-                {(state) => (
-                  <>
-                    <input type="hidden" name="about_user_id" value={owner.id} />
-                    <input type="hidden" name="commitment_id" value={c.id} />
-                    <TextArea label={`Note for ${address(owner)}`} name="body" rows={2} required maxLength={1000} error={state.errors.body} placeholder="A question is usually more use than advice." />
-                    <div className="form-actions">
-                      <SubmitButton size="sm" variant="secondary" pendingText="Leaving…">Leave the note</SubmitButton>
-                    </div>
-                  </>
-                )}
-              </Form>
+              <LeaveNoteForm aboutUserId={owner.id} commitmentId={c.id} ownerName={address(owner)} />
             </div>
           </details>
         )}

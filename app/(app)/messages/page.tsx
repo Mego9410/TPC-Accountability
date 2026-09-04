@@ -3,7 +3,7 @@ import Link from "next/link";
 import { requireViewer } from "@/lib/session";
 import { firstName, othersIn, type CircleWithMembers, type Message } from "@/lib/domain";
 import { circleTitle } from "@/lib/queries";
-import { Avatar, Caption, EmptyState, Eyebrow, PageHeader, Person, TextArea, TextLink, cn } from "@/components/ui";
+import { Avatar, Caption, EmptyState, PageHeader, Person, TextArea, TextLink, cn } from "@/components/ui";
 import { Form, SubmitButton } from "@/components/ui/form";
 import { sendMessage } from "@/lib/actions/messages";
 import { MarkRead } from "@/components/mark-read";
@@ -149,5 +149,3 @@ function shortWhen(iso: string): string {
   const time = d.toLocaleTimeString("en-GB", { hour: "numeric", minute: "2-digit", hour12: true }).replace(/\s?([ap])m/i, (_m, p: string) => ` ${p.toLowerCase()}m`);
   return `${date} · ${time}`;
 }
-
-export { Eyebrow };

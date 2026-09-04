@@ -3,27 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/components/ui";
-import type { MemberRole } from "@/lib/domain";
-
-export type NavItem = { href: string; label: string; short?: string; icon: keyof typeof ICONS };
-
-export function navFor(role: MemberRole, society: boolean): NavItem[] {
-  const items: NavItem[] = [{ href: "/home", label: "Home", icon: "house" }];
-  if (role === "mentor") items.push({ href: "/mentor", label: "Mentees", icon: "people" });
-  items.push({ href: "/circle", label: "Circle", icon: "circle" });
-  if (society) {
-    items.push(
-      { href: "/blocks", label: "Blocks", icon: "target" },
-      { href: "/check-in", label: "Check-in", icon: "check" },
-      { href: "/wins", label: "Wins", icon: "star" },
-      { href: "/benchmark", label: "Benchmark", icon: "bars" },
-    );
-  }
-  items.push({ href: "/messages", label: "Correspondence", short: "Post", icon: "message" });
-  items.push({ href: "/calendar", label: "Calendar", icon: "calendar" });
-  if (role === "staff") items.push({ href: "/house", label: "The House", short: "House", icon: "key" });
-  return items;
-}
+import type { NavItem } from "./nav-items";
 
 export function TopNav({ items, membershipNo, initials, unread }: { items: NavItem[]; membershipNo: string; initials: string; unread: number }) {
   const pathname = usePathname();

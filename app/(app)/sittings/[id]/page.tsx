@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { requireViewer } from "@/lib/session";
-import { CIRCLE_ROLE_LABEL, address, isMentorIn, type CircleWithMembers, type Sitting } from "@/lib/domain";
+import { CIRCLE_ROLE_LABEL, address, isMentorIn, type CircleWithMembers } from "@/lib/domain";
 import type { Repo } from "@/lib/repo/types";
 import { circleTitle, memberSnapshot } from "@/lib/queries";
-import { formatAppointment, formatShortDate, relativeDays, weekLabel } from "@/lib/weeks";
+import { currentWeekKey, formatAppointment, formatShortDate, relativeDays, weekLabel } from "@/lib/weeks";
 import {
-  Body, Button, Caption, Card, CommitmentBadge, EmptyState, Eyebrow, Field, H3, HairlineList, HairlineRow, PageHeader, Person, RoleBadge, Section, SittingBadge, TextArea, TextLink, SittingBadge as Status,
+  Body, Button, Caption, Card, CommitmentBadge, EmptyState, Eyebrow, Field, HairlineList, HairlineRow, PageHeader, Person, RoleBadge, Section, SittingBadge, TextArea, TextLink,
 } from "@/components/ui";
 import { Form, QuickAction, SubmitButton } from "@/components/ui/form";
 import { updateSitting } from "@/lib/actions/sittings";
@@ -47,7 +47,7 @@ export default async function SittingPage({ params }: { params: Promise<{ id: st
     <div className="section fade-enter">
       <TextLink href="/calendar" back>The diary</TextLink>
       <PageHeader
-        eyebrow={<span className="row gap-3"><Status status={sitting.status} /> {circleTitle(circle, userId)}</span>}
+        eyebrow={<span className="row gap-3"><SittingBadge status={sitting.status} /> {circleTitle(circle, userId)}</span>}
         title={<time dateTime={sitting.scheduledAt}>{formatAppointment(sitting.scheduledAt)}</time>}
         lede={`${lede} ${scheduled ? capitalise(relativeDays(sitting.scheduledAt)) + "." : ""}`}
         actions={
@@ -61,7 +61,7 @@ export default async function SittingPage({ params }: { params: Promise<{ id: st
         ))}
       </div>
 
-      <Section title="Prepare" aside={<Caption>{weekLabel(currentWeek())}</Caption>}>
+      <Section title="Prepare" aside={<Caption>{weekLabel(currentWeekKey())}</Caption>}>
         <div className="card-grid">
           {prepFor.map((m) => (
             <PrepareCard key={m.userId} circle={circle} userId={m.userId} viewerId={userId} repo={repo} />
@@ -200,18 +200,11 @@ async function PrepareCard({ circle, userId, viewerId, repo }: { circle: CircleW
           <Caption>{you ? "You have not checked in yet." : "No check-in yet."}{you && <> <TextLink href="/check-in">Check in</TextLink></>}</Caption>
         )}
       </div>
-      {!snap.checkedInThisWeek && you && <H3 className="sr-only">Your check-in is waiting</H3>}
     </Card>
   );
 }
 
 /* ---------- Helpers ---------- */
-
-function currentWeek(): string {
-  // Week key for the caption; kept local so the page has one source for it.
-  const { currentWeekKey } = require("@/lib/weeks") as typeof import("@/lib/weeks");
-  return currentWeekKey();
-}
 
 function capitalise(s: string): string {
   return s.charAt(0).toUpperCase() + s.slice(1);
@@ -221,5 +214,3 @@ function excerpt(text: string, max: number): string {
   const t = text.trim();
   return t.length <= max ? t : `${t.slice(0, max - 1).trimEnd()}…`;
 }
-
-export type { Sitting };

@@ -4,7 +4,7 @@ import { useActionState, useEffect, useRef, type ReactNode } from "react";
 import { useFormStatus } from "react-dom";
 import { useRouter } from "next/navigation";
 import { Button, Notice, cn } from "@/components/ui";
-import { EMPTY_STATE, type ActionState } from "@/lib/actions/define";
+import { EMPTY_STATE, type ActionState } from "@/lib/actions/state";
 
 type ServerAction = (prev: ActionState, formData: FormData) => Promise<ActionState>;
 
@@ -20,7 +20,9 @@ export function Form({
   refreshOnSuccess = true,
   successNotice = true,
   inline,
+  id,
 }: {
+  id?: string;
   action: ServerAction;
   children: ReactNode | ((state: ActionState) => ReactNode);
   className?: string;
@@ -40,7 +42,7 @@ export function Form({
   }, [state, resetOnSuccess, refreshOnSuccess, router]);
 
   return (
-    <form ref={ref} action={formAction} className={cn(inline ? "form-inline" : "form", className)} title={inline && !state.ok && state.message ? state.message : undefined}>
+    <form id={id} ref={ref} action={formAction} className={cn(inline ? "form-inline" : "form", className)} title={inline && !state.ok && state.message ? state.message : undefined}>
       {!inline && state.message && (state.ok ? successNotice : true) && (
         <Notice tone={state.ok ? "ok" : "err"}>{state.message}</Notice>
       )}

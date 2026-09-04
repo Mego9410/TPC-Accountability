@@ -2,7 +2,7 @@
 
 import { startTransition, useActionState, useEffect } from "react";
 import { markThreadRead } from "@/lib/actions/messages";
-import type { ActionState } from "@/lib/actions/define";
+import type { ActionState } from "@/lib/actions/state";
 
 const INITIAL: ActionState = { ok: false, message: null, errors: {} };
 

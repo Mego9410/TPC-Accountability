@@ -83,9 +83,9 @@ export function PageHeader({
   );
 }
 
-export function Section({ title, aside, children, className }: { title?: ReactNode; aside?: ReactNode; children: ReactNode; className?: string }) {
+export function Section({ title, aside, children, className, id }: { title?: ReactNode; aside?: ReactNode; children: ReactNode; className?: string; id?: string }) {
   return (
-    <section className={cn("block", className)}>
+    <section id={id} className={cn("block", className)}>
       {(title || aside) && (
         <div className="block-head">
           {title && <Eyebrow>{title}</Eyebrow>}
@@ -240,10 +240,10 @@ export function ChoiceCards({
 /* =========================================================================
    Surfaces
    ------------------------------------------------------------------------- */
-export const Card = ({ children, emphasis, dark, pad, className, style, as: Tag = "div" }: {
-  children: ReactNode; emphasis?: boolean; dark?: boolean; pad?: "sm"; className?: string; style?: CSSProperties; as?: "div" | "article" | "section" | "li";
+export const Card = ({ children, emphasis, dark, pad, className, style, id, as: Tag = "div" }: {
+  children: ReactNode; emphasis?: boolean; dark?: boolean; pad?: "sm"; className?: string; style?: CSSProperties; id?: string; as?: "div" | "article" | "section" | "li";
 }) => (
-  <Tag className={cn("card", emphasis && "emphasis", dark && "dark", pad === "sm" && "pad-sm", className)} style={style}>{children}</Tag>
+  <Tag id={id} className={cn("card", emphasis && "emphasis", dark && "dark", pad === "sm" && "pad-sm", className)} style={style}>{children}</Tag>
 );
 
 export const Divider = ({ glyph = "❦", onDark, tight }: { glyph?: string; onDark?: boolean; tight?: boolean }) => (

@@ -1,0 +1,16 @@
+import { Suspense } from "react";
+import type { Metadata } from "next";
+import { AuthForm } from "@/components/auth-form";
+
+export const metadata: Metadata = {
+  title: "Sign in",
+  description: "Members and mentors of The Principals Club sign in here.",
+};
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="signin-scene" />}>
+      <AuthForm mode="signin" />
+    </Suspense>
+  );
+}

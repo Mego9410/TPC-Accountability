@@ -125,9 +125,9 @@ function MonthGrid({ shown, today, sittings, titleOf }: { shown: Date; today: Da
         <H2><time dateTime={format(shown, "yyyy-MM")}>{format(shown, "MMMM yyyy")}</time></H2>
         <TextLink href={`/calendar?month=${nextM}`}>{format(addMonths(shown, 1), "MMMM")} →</TextLink>
       </div>
-      <div className="cal static" role="grid" aria-label={format(shown, "MMMM yyyy")}>
+      <div className="cal static">
         {DOW.map((d) => (
-          <div key={d} className="head" role="columnheader">{d}</div>
+          <div key={d} className="head" aria-hidden="true">{d}</div>
         ))}
         {cells.map((d) => {
           const isToday = isSameDay(d, today);
@@ -135,11 +135,10 @@ function MonthGrid({ shown, today, sittings, titleOf }: { shown: Date; today: Da
           return (
             <div
               key={d.toISOString()}
-              role="gridcell"
               className={["day", !isSameMonth(d, shown) && "muted", isToday && "selected today"].filter(Boolean).join(" ")}
               aria-current={isToday ? "date" : undefined}
             >
-              <time className="n" dateTime={format(d, "yyyy-MM-dd")}>{format(d, "d")}</time>
+              <time className="n" dateTime={format(d, "yyyy-MM-dd")} aria-label={format(d, "EEEE d MMMM")}>{format(d, "d")}</time>
               {events.map((s) => (
                 <Link key={s.id} href={`/sittings/${s.id}`} className={`ev ${s.status === "completed" ? "held" : s.status}`} title={`${formatAppointment(s.scheduledAt)} · ${titleOf(s.circleId)}`}>
                   <span className="d" aria-hidden="true" />

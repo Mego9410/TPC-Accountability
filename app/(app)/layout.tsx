@@ -1,6 +1,7 @@
 import { requireViewer, canSeeSociety } from "@/lib/session";
 import { initials } from "@/lib/domain";
-import { TopNav, BottomNav, navFor } from "@/components/shell/nav";
+import { TopNav, BottomNav } from "@/components/shell/nav";
+import { navFor } from "@/components/shell/nav-items";
 import { Footer, TourBar } from "@/components/shell/chrome";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {

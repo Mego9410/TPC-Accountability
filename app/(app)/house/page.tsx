@@ -3,14 +3,9 @@ import { requireViewer } from "@/lib/session";
 import { currentWeekKey } from "@/lib/weeks";
 import { SubNav } from "@/components/shell/nav";
 import { Button, Caption, Card, Eyebrow, H3, PageHeader, Person, Stat, TextLink } from "@/components/ui";
+import { HOUSE_NAV } from "@/lib/house";
 
 export const metadata: Metadata = { title: "The House" };
-
-export const HOUSE_NAV = [
-  { href: "/house", label: "Overview" },
-  { href: "/house/members", label: "Members" },
-  { href: "/house/circles", label: "Circles" },
-];
 
 export default async function HousePage() {
   const { repo } = await requireViewer({ roles: ["staff"] });
