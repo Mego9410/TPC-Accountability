@@ -16,7 +16,6 @@ import type {
   Sitting,
   Visit,
   VisitNote,
-  VisitNoteKind,
   Template,
   Win,
 } from "@/lib/domain";

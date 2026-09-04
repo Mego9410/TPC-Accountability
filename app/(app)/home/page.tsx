@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { requireViewer, canSeeSociety } from "@/lib/session";
-import { address, firstName, menteesOf, mentorOf, othersIn, BLOCK_WEEKS, type CircleWithMembers, type Profile } from "@/lib/domain";
+import { address, firstName, menteesOf, mentorOf, othersIn, BLOCK_WEEKS, type CircleWithMembers, type Profile, type Visit } from "@/lib/domain";
 import { memberSnapshot, nextSitting, circleTitle, type MemberSnapshot } from "@/lib/queries";
 import { currentWeekKey, formatAppointment, relativeDays, weekLabel } from "@/lib/weeks";
 import { BENCHMARK_METRICS, formatMetric } from "@/lib/benchmarks";
@@ -26,10 +26,20 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
   if (profile.role === "staff") return <StaffHome />;
 
   const circles = await repo.listCirclesFor(userId);
-  const [snap, next] = await Promise.all([memberSnapshot(repo, profile), nextSitting(repo, circles)]);
-  const nextIsVisit = next?.sitting.kind === "visit";
+  const [snap, next, visits] = await Promise.all([
+    memberSnapshot(repo, profile),
+    nextSitting(repo, circles),
+    repo.listVisitsFor(userId),
+  ]);
   const mentor = mentorOf(circles, userId);
   const society = canSeeSociety(profile);
+
+  // The next thing in the diary is whichever comes first: a sitting, or a morning in a practice.
+  const nextVisit = visits
+    .filter((v) => v.status === "agreed" && new Date(v.scheduledAt).getTime() > Date.now() - 3_600_000)
+    .sort((a, b) => a.scheduledAt.localeCompare(b.scheduledAt))[0] ?? null;
+  const visitFirst = Boolean(nextVisit && (!next || nextVisit.scheduledAt < next.sitting.scheduledAt));
+  const nextAt = visitFirst ? nextVisit!.scheduledAt : next?.sitting.scheduledAt ?? null;
 
   return (
     <div className="section fade-enter">
@@ -39,7 +49,9 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
       <div>
         <Eyebrow>{today}</Eyebrow>
         <Display>{greeting()}, {firstName(profile)}.</Display>
-        <Body lg className="muted maxw-prose" style={{ marginTop: 12 }}>{headline(snap, next?.sitting.scheduledAt ?? null, mentor, nextIsVisit, next?.sitting.location ?? null)}</Body>
+        <Body lg className="muted maxw-prose" style={{ marginTop: 12 }}>
+          {headline(snap, nextAt, mentor, visitFirst ? nextVisit : null, userId)}
+        </Body>
       </div>
 
       <Divider />
@@ -63,14 +75,20 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
           </Card>
 
           <Card>
-            <Eyebrow>{next ? (next.sitting.kind === "visit" ? "Your next visit" : "Your next sitting") : "No sitting held"}</Eyebrow>
-            {next ? (
+            <Eyebrow>{visitFirst ? "Your next visit" : next ? "Your next sitting" : "Nothing in the diary"}</Eyebrow>
+            {visitFirst && nextVisit ? (
+              <>
+                <H3>{formatAppointment(nextVisit.scheduledAt)}</H3>
+                <Caption>{relativeDays(nextVisit.scheduledAt)} · {nextVisit.hostId === userId ? "The circle comes to you" : nextVisit.practiceName ?? "Their practice"}</Caption>
+                <div className="row gap-4 wrap" style={{ marginTop: 6 }}>
+                  <Button href={`/visits/${nextVisit.id}`} size="sm">Prepare</Button>
+                  <TextLink href="/visits">All visits</TextLink>
+                </div>
+              </>
+            ) : next ? (
               <>
                 <H3>{formatAppointment(next.sitting.scheduledAt)}</H3>
                 <Caption>{relativeDays(next.sitting.scheduledAt)} · {circleTitle(next.circle, userId)}</Caption>
-                {next.sitting.kind === "visit" && next.sitting.location && (
-                  <Caption>{next.sitting.hostId === userId ? "The circle comes to you" : next.sitting.location}</Caption>
-                )}
                 <div className="row gap-4 wrap" style={{ marginTop: 6 }}>
                   <Button href={`/sittings/${next.sitting.id}`} size="sm">Prepare</Button>
                   <TextLink href="/calendar">All sittings</TextLink>
@@ -80,8 +98,9 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
               <>
                 <H3>Arrange your next sitting.</H3>
                 <Caption>A standing time is the whole point.</Caption>
-                <div className="row" style={{ marginTop: 6 }}>
+                <div className="row gap-4 wrap" style={{ marginTop: 6 }}>
                   <Button href="/calendar" size="sm" variant="secondary">Arrange a sitting</Button>
+                  <TextLink href="/visits#propose">Propose a morning</TextLink>
                 </div>
               </>
             )}
@@ -96,12 +115,19 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
   );
 }
 
+/** "on Friday" when it is this week, "in 21 days" when it is further off. */
+function whenPhrase(iso: string, now = new Date()): string {
+  const days = Math.round((new Date(iso).getTime() - now.getTime()) / 86_400_000);
+  if (days > 1 && days <= 6) return `on ${new Date(iso).toLocaleDateString("en-GB", { weekday: "long" })}`;
+  return relativeDays(iso);
+}
+
 function headline(
   snap: MemberSnapshot,
   nextAt: string | null,
   mentor: Profile | null,
-  nextIsVisit = false,
-  nextLocation: string | null = null,
+  nextVisit: Visit | null = null,
+  userId = "",
 ): string {
   const parts: string[] = [];
   if (snap.block && snap.week) {
@@ -112,12 +138,14 @@ function headline(
     parts.push("No block is running. Twelve weeks starts with one outcome.");
   }
   if (!snap.checkedInThisWeek) parts.push("Your check-in is waiting.");
-  if (nextAt) {
+  if (nextVisit) {
     parts.push(
-      nextIsVisit
-        ? `You are ${nextLocation ? `at ${nextLocation}` : "inside another practice"} ${relativeDays(nextAt)}.`
-        : `You sit ${mentor ? `with ${address(mentor)} ` : ""}${relativeDays(nextAt)}.`,
+      nextVisit.hostId === userId
+        ? `The circle comes to you ${whenPhrase(nextVisit.scheduledAt)}.`
+        : `You are ${nextVisit.practiceName ? `at ${nextVisit.practiceName}` : "inside another practice"} ${whenPhrase(nextVisit.scheduledAt)}.`,
     );
+  } else if (nextAt) {
+    parts.push(`You sit ${mentor ? `with ${address(mentor)} ` : ""}${relativeDays(nextAt)}.`);
   }
   return parts.join(" ");
 }

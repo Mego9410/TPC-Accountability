@@ -80,6 +80,7 @@ const ICONS = {
   house: () => <Svg><path d="M3 10.5 12 3l9 7.5" /><path d="M5 9.5V21h14V9.5" /></Svg>,
   people: () => <Svg><circle cx="9" cy="8" r="3.5" /><path d="M2.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6" /><circle cx="17" cy="9" r="2.5" /><path d="M16 14.5c3 0 5.5 2 5.5 5.5" /></Svg>,
   circle: () => <Svg><circle cx="12" cy="12" r="8.5" /><circle cx="12" cy="8" r="2" /><circle cx="8" cy="15" r="2" /><circle cx="16" cy="15" r="2" /></Svg>,
+  door: () => <Svg><path d="M6 21V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v17" /><path d="M4 21h16" /><circle cx="14.5" cy="12.5" r="0.9" /></Svg>,
   target: () => <Svg><circle cx="12" cy="12" r="8" /><circle cx="12" cy="12" r="3.5" /></Svg>,
   check: () => <Svg><rect x="4" y="4" width="16" height="16" rx="1" /><path d="M8 12.5l3 3 5-6" /></Svg>,
   star: () => <Svg><path d="M12 3.5l2.6 5.6 6.1.7-4.5 4.2 1.2 6-5.4-3-5.4 3 1.2-6L3.3 9.8l6.1-.7z" /></Svg>,

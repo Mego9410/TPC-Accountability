@@ -1,6 +1,6 @@
 import { format } from "date-fns";
-import { VISIT_NOTE_HELP, VISIT_NOTE_LABEL, address, type Profile, type Visit, type VisitNoteKind } from "@/lib/domain";
-import { Body, Caption, Card, Eyebrow, H3 } from "@/components/ui";
+import { address, type Profile, type Visit } from "@/lib/domain";
+import { Caption, Card } from "@/components/ui";
 import { Form, QuickAction, SubmitButton, FieldError } from "@/components/ui/form";
 import { respondToVisit } from "@/lib/actions/visits";
 
@@ -93,25 +93,3 @@ export function RespondToVisit({ visitId, proposerName }: { visitId: string; pro
   );
 }
 
-/** One of the four parts of the record, with its notes and its own help. */
-export function RecordBlockHead({ kind }: { kind: VisitNoteKind }) {
-  return (
-    <div className="stack gap-2">
-      <Eyebrow>{VISIT_NOTE_LABEL[kind]}</Eyebrow>
-      <Caption>{VISIT_NOTE_HELP[kind]}</Caption>
-    </div>
-  );
-}
-
-/** The standing line about what a visit is, used where a page needs the sense of it. */
-export function VisitPreamble() {
-  return (
-    <Card>
-      <H3>A morning inside another principal&rsquo;s practice.</H3>
-      <Body className="muted">
-        Either of you may propose one. The other agrees or declines, and may decline without giving a reason. Both give the
-        undertaking before it is agreed: {UNDERTAKING.toLowerCase()}
-      </Body>
-    </Card>
-  );
-}
