@@ -1,8 +1,8 @@
 {
-  "name": "The Principals Club — Accountability",
+  "name": "The Principals Club",
   "short_name": "Principals Club",
-  "description": "A private accountability society for principal dentists.",
-  "start_url": "/dashboard",
+  "description": "An accountability society for principal dentists.",
+  "start_url": "/home",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait",

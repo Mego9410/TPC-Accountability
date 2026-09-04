@@ -1,11 +1,13 @@
 // =============================================================================
-// The Principals Club — weekly check-in nudge (master doc Step 2.7)
+// The Principals Club — weekly check-in nudge
 //
-// Emails each paid member who has NOT completed the current ISO week's check-in
-// and has not opted out. Degrades to a clearly-logged no-op when RESEND_API_KEY
-// is absent, mirroring the rest of the platform's stub-aware integrations.
+// Emails each Society member who has NOT completed the current ISO week's
+// check-in and has not opted out. Degrades to a clearly-logged no-op when
+// RESEND_API_KEY is absent, mirroring the rest of the platform's stub-aware
+// integrations.
 //
-// Invoke on a weekly schedule via pg_cron + pg_net (see ./schedule.sql).
+// Invoke on a weekly schedule via pg_cron + pg_net (see ./schedule.sql). The
+// caller must present the service-role key as a bearer token.
 // =============================================================================
 
 import { createClient } from "jsr:@supabase/supabase-js@2";
@@ -16,17 +18,32 @@ const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY") ?? "";
 const SITE_URL = Deno.env.get("SITE_URL") ?? "http://localhost:3000";
 const FROM_EMAIL = Deno.env.get("NUDGE_FROM_EMAIL") ?? "The Principals Club <no-reply@theprincipalsclub.co.uk>";
 
-/** Monday 00:00 UTC of the current ISO week. */
-function startOfIsoWeekUTC(now = new Date()): Date {
+/** The largest page we will read in one go; the Club is far smaller than this. */
+const MAX_ROWS = 4999;
+
+/** "2026-W36" for the ISO week containing `now` (UTC), matching lib/weeks.ts. */
+function isoWeekKey(now = new Date()): string {
   const d = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
-  const day = d.getUTCDay(); // 0 = Sun
-  const diff = (day === 0 ? -6 : 1) - day;
-  d.setUTCDate(d.getUTCDate() + diff);
-  return d;
+  const day = d.getUTCDay() || 7; // Monday = 1 … Sunday = 7
+  d.setUTCDate(d.getUTCDate() + 4 - day); // the Thursday decides the ISO year
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  const week = Math.ceil(((d.getTime() - yearStart.getTime()) / 86_400_000 + 1) / 7);
+  return `${d.getUTCFullYear()}-W${String(week).padStart(2, "0")}`;
+}
+
+/** Constant-time comparison so a wrong key does not leak by timing. */
+function timingSafeEqual(a: string, b: string): boolean {
+  const enc = new TextEncoder();
+  const x = enc.encode(a);
+  const y = enc.encode(b);
+  if (x.length !== y.length) return false;
+  let diff = 0;
+  for (let i = 0; i < x.length; i += 1) diff |= x[i] ^ y[i];
+  return diff === 0;
 }
 
 async function sendEmail(to: string, name: string): Promise<"sent" | "stubbed" | "failed"> {
-  const checkInUrl = `${SITE_URL}/accountability/check-in`;
+  const checkInUrl = `${SITE_URL}/check-in`;
   if (!RESEND_API_KEY) {
     console.log(`[checkin-nudge] STUB email → ${to} (no RESEND_API_KEY). Link: ${checkInUrl}`);
     return "stubbed";
@@ -57,16 +74,27 @@ async function sendEmail(to: string, name: string): Promise<"sent" | "stubbed" |
   return "sent";
 }
 
-Deno.serve(async () => {
-  const supabase = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
-  const weekStart = startOfIsoWeekUTC().toISOString();
+Deno.serve(async (req) => {
+  // Only the scheduler (or an operator with the service key) may run this.
+  const auth = req.headers.get("authorization") ?? "";
+  const token = auth.startsWith("Bearer ") ? auth.slice("Bearer ".length).trim() : "";
+  if (!SERVICE_ROLE_KEY || !token || !timingSafeEqual(token, SERVICE_ROLE_KEY)) {
+    return new Response(JSON.stringify({ error: "unauthorized" }), {
+      status: 401,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
 
-  // Paid members who have not opted out of the nudge.
+  const supabase = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
+  const weekKey = isoWeekKey();
+
+  // Society members who have not opted out of the nudge.
   const { data: members, error: membersErr } = await supabase
     .from("profiles")
-    .select("id, full_name")
-    .eq("is_paid_member", true)
-    .eq("checkin_nudge_opt_out", false);
+    .select("id, full_name, email")
+    .eq("tier", "society")
+    .eq("nudge_opt_out", false)
+    .range(0, MAX_ROWS);
   if (membersErr) {
     return new Response(JSON.stringify({ error: membersErr.message }), { status: 500 });
   }
@@ -75,7 +103,8 @@ Deno.serve(async () => {
   const { data: weekCheckIns, error: ciErr } = await supabase
     .from("check_ins")
     .select("user_id")
-    .gte("completed_at", weekStart);
+    .eq("week_key", weekKey)
+    .range(0, MAX_ROWS);
   if (ciErr) {
     return new Response(JSON.stringify({ error: ciErr.message }), { status: 500 });
   }
@@ -83,14 +112,18 @@ Deno.serve(async () => {
 
   const due = (members ?? []).filter((m) => !checkedIn.has(m.id));
 
-  // Resolve emails from auth.users via the admin API.
-  const { data: usersPage } = await supabase.auth.admin.listUsers({ page: 1, perPage: 1000 });
+  // Profiles carry the email from sign-up; fall back to auth.users for any
+  // that were created before that was recorded.
   const emailById = new Map<string, string>();
-  for (const u of usersPage?.users ?? []) {
-    if (u.email) emailById.set(u.id, u.email);
+  for (const m of due) if (m.email) emailById.set(m.id, m.email);
+  if (due.some((m) => !emailById.has(m.id))) {
+    const { data: usersPage } = await supabase.auth.admin.listUsers({ page: 1, perPage: 1000 });
+    for (const u of usersPage?.users ?? []) {
+      if (u.email && !emailById.has(u.id)) emailById.set(u.id, u.email);
+    }
   }
 
-  const summary = { due: due.length, sent: 0, stubbed: 0, failed: 0, skipped_no_email: 0 };
+  const summary = { week: weekKey, due: due.length, sent: 0, stubbed: 0, failed: 0, skipped_no_email: 0 };
   for (const m of due) {
     const email = emailById.get(m.id);
     if (!email) {
@@ -98,7 +131,7 @@ Deno.serve(async () => {
       continue;
     }
     const outcome = await sendEmail(email, (m.full_name ?? "").trim());
-    summary[outcome === "sent" ? "sent" : outcome === "stubbed" ? "stubbed" : "failed"] += 1;
+    summary[outcome] += 1;
   }
 
   console.log(`[checkin-nudge] ${JSON.stringify(summary)}`);
