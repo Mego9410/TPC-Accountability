@@ -3,10 +3,8 @@ import { redirect } from "next/navigation";
 import { canSeeSociety, requireViewer } from "@/lib/session";
 import type { Challenge, ChallengeParticipant, LeaderboardRow } from "@/lib/domain";
 import { formatLongDate } from "@/lib/weeks";
-import {
-  Badge, Body, Caption, Card, EmptyState, Eyebrow, Field, H3, PageHeader, Section, Stat, TextArea,
-} from "@/components/ui";
-import { Form, SubmitButton } from "@/components/ui/form";
+import { Badge, Body, Caption, Card, EmptyState, Eyebrow, H3, PageHeader, Section, Stat } from "@/components/ui";
+import { Form, SubmitButton, FField as Field, FTextArea as TextArea, FieldError } from "@/components/ui/form";
 import { createChallenge, joinChallenge, updateProgress } from "@/lib/actions/challenges";
 
 export const metadata: Metadata = { title: "Challenges" };
@@ -86,36 +84,32 @@ function ChallengeCard({ challenge, phase, mine, board, userId }: { challenge: C
               <Stat value={mine.progress} label={challenge.metricLabel} sub="your count so far" tone="gold" />
               {open && (
                 <Form action={updateProgress}>
-                  {(state) => (
-                    <>
-                      <input type="hidden" name="challenge_id" value={challenge.id} />
-                      <div className="form-row">
-                        <Field label={`Your ${challenge.metricLabel}`} name="progress" type="number" inputMode="numeric" min={0} step={1} defaultValue={mine.progress} required error={state.errors.progress} />
-                      </div>
-                      <div className="form-actions">
-                        <SubmitButton variant="secondary" size="sm">Update</SubmitButton>
-                      </div>
-                    </>
-                  )}
+                  <>
+                    <input type="hidden" name="challenge_id" value={challenge.id} />
+                    <div className="form-row">
+                      <Field label={`Your ${challenge.metricLabel}`} name="progress" type="number" inputMode="numeric" min={0} step={1} defaultValue={mine.progress} required />
+                    </div>
+                    <div className="form-actions">
+                      <SubmitButton variant="secondary" size="sm">Update</SubmitButton>
+                    </div>
+                  </>
                 </Form>
               )}
             </>
           )}
           {open ? (
             <Form action={joinChallenge}>
-              {(state) => (
-                <>
-                  <input type="hidden" name="challenge_id" value={challenge.id} />
-                  <label htmlFor={`lb-${challenge.id}`} className="check single">
-                    <input id={`lb-${challenge.id}`} type="checkbox" name="leaderboard" defaultChecked={mine?.leaderboardOptIn ?? true} />
-                    <span>Show my name on the leaderboard</span>
-                  </label>
-                  {state.errors.leaderboard && <Caption>{state.errors.leaderboard}</Caption>}
-                  <div className="form-actions">
-                    <SubmitButton variant={joined ? "quiet" : "primary"} size="sm">{joined ? "Save preference" : "Join"}</SubmitButton>
-                  </div>
-                </>
-              )}
+              <>
+                <input type="hidden" name="challenge_id" value={challenge.id} />
+                <label htmlFor={`lb-${challenge.id}`} className="check single">
+                  <input id={`lb-${challenge.id}`} type="checkbox" name="leaderboard" defaultChecked={mine?.leaderboardOptIn ?? true} />
+                  <span>Show my name on the leaderboard</span>
+                </label>
+                <FieldError name="leaderboard" />
+                <div className="form-actions">
+                  <SubmitButton variant={joined ? "quiet" : "primary"} size="sm">{joined ? "Save preference" : "Join"}</SubmitButton>
+                </div>
+              </>
             </Form>
           ) : (
             <Caption>{joined ? `You finished on ${mine.progress} ${challenge.metricLabel}.` : "This sprint has closed."}</Caption>
@@ -162,20 +156,18 @@ function OpenChallenge() {
     <Card>
       <Eyebrow>Open a challenge</Eyebrow>
       <Form action={createChallenge} resetOnSuccess>
-        {(state) => (
-          <>
-            <Field label="Title" name="title" required maxLength={100} placeholder="The ninety-day new-patient sprint" error={state.errors.title} />
-            <TextArea label="Description" name="description" rows={2} maxLength={400} placeholder="What is counted, and from when." error={state.errors.description} />
-            <div className="form-row">
-              <Field label="What is counted" name="metric_label" required maxLength={40} placeholder="new patients" help="A plural noun, in lower case." error={state.errors.metric_label} />
-              <Field label="Starts" name="start_date" type="date" required defaultValue={today} error={state.errors.start_date} />
-              <Field label="Ends" name="end_date" type="date" required error={state.errors.end_date} />
-            </div>
-            <div className="form-actions">
-              <SubmitButton>Open to the Club</SubmitButton>
-            </div>
-          </>
-        )}
+        <>
+          <Field label="Title" name="title" required maxLength={100} placeholder="The ninety-day new-patient sprint" />
+          <TextArea label="Description" name="description" rows={2} maxLength={400} placeholder="What is counted, and from when." />
+          <div className="form-row">
+            <Field label="What is counted" name="metric_label" required maxLength={40} placeholder="new patients" help="A plural noun, in lower case." />
+            <Field label="Starts" name="start_date" type="date" required defaultValue={today} />
+            <Field label="Ends" name="end_date" type="date" required />
+          </div>
+          <div className="form-actions">
+            <SubmitButton>Open to the Club</SubmitButton>
+          </div>
+        </>
       </Form>
     </Card>
   );

@@ -1,21 +1,22 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { env } from "@/lib/env";
-import { PREVIEW_COOKIE } from "@/lib/preview";
+import { clearDelta } from "@/lib/repo/demo/store";
 
-export async function POST(request: Request) {
+async function signOut(request: Request) {
   if (env.supabase.isConfigured) {
     const supabase = await createClient();
     await supabase.auth.signOut();
   }
-  const response = NextResponse.redirect(new URL("/login", request.url), { status: 303 });
-  response.cookies.delete(PREVIEW_COOKIE);
-  return response;
+  await clearDelta();
+  return NextResponse.redirect(new URL("/", request.url), { status: 303 });
 }
 
-// Allow exiting preview via a simple link as well.
+export async function POST(request: Request) {
+  return signOut(request);
+}
+
+/** A plain link works too: the footer and the tour bar use one. */
 export async function GET(request: Request) {
-  const response = NextResponse.redirect(new URL("/", request.url));
-  response.cookies.delete(PREVIEW_COOKIE);
-  return response;
+  return signOut(request);
 }

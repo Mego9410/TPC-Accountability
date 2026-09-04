@@ -12,10 +12,11 @@ export function TourBar({ persona }: { persona: PersonaKey }) {
   const others = (Object.keys(PERSONA_LABEL) as PersonaKey[]).filter((p) => p !== persona);
   return (
     <div className="tour-bar" role="status">
-      <span>You are touring a furnished example as {PERSONA_LABEL[persona]}. Your changes are kept in this browser only.</span>
+      <span className="long">You are touring a furnished example as {PERSONA_LABEL[persona]}. Your changes are kept in this browser only.</span>
+      <span className="short">Touring as {PERSONA_LABEL[persona]}.</span>
       <span className="sep" aria-hidden="true">·</span>
       <span>
-        See it as{" "}
+        <span className="long">See it as </span><span className="short">As </span>
         {others.map((p, i) => (
           <span key={p}>
             <a href={`/api/tour?as=${p}`}>{PERSONA_LABEL[p]}</a>

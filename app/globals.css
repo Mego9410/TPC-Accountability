@@ -950,3 +950,21 @@ a.person:hover .person-name { color: var(--tpc-gold-deep); }
   .seat-row { grid-template-columns: 1fr; }
   .seat-row .seat-actions { justify-content: flex-start; }
 }
+
+/* Onboarding */
+.onboarding { background: var(--bg-paper); min-height: 100dvh; }
+.onboarding-bar { display: flex; justify-content: center; padding: 28px 24px; border-bottom: 1px solid var(--rule-on-paper); }
+.onboarding-body { max-width: 680px; margin: 0 auto; padding: 56px 24px 120px; display: flex; flex-direction: column; gap: 16px; }
+.onboarding-body .form { gap: 40px; }
+.onboarding-body .form section { padding-top: 8px; }
+
+/* Tour bar and quick actions on small screens */
+.tour-bar .long { display: inline; }
+.tour-bar .short { display: none; }
+@media (max-width: 720px) {
+  .tour-bar { padding: 8px 14px; gap: 10px; letter-spacing: 0.12em; font-size: 9px; }
+  .tour-bar .long { display: none; }
+  .tour-bar .short { display: inline; }
+  .tour-bar .sep { display: none; }
+  .cm-actions .btn.quiet, .cm-actions .btn.secondary.sm { padding: 7px 10px; font-size: 9px; letter-spacing: 0.12em; }
+}

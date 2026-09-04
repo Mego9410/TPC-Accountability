@@ -11,7 +11,7 @@ const PERSONAS: PersonaKey[] = ["member", "mentor", "house"];
  */
 export async function GET(request: Request) {
   const url = new URL(request.url);
-  const origin = env.siteUrl.startsWith("http") && process.env.NODE_ENV === "production" ? env.siteUrl : url.origin;
+  const origin = url.origin;
   if (!env.previewEnabled) return NextResponse.redirect(`${origin}/login`);
 
   const as = url.searchParams.get("as") as PersonaKey | null;

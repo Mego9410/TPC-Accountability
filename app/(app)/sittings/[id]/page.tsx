@@ -5,10 +5,8 @@ import { CIRCLE_ROLE_LABEL, address, isMentorIn, type CircleWithMembers } from "
 import type { Repo } from "@/lib/repo/types";
 import { circleTitle, memberSnapshot } from "@/lib/queries";
 import { currentWeekKey, formatAppointment, formatShortDate, relativeDays, weekLabel } from "@/lib/weeks";
-import {
-  Body, Button, Caption, Card, CommitmentBadge, EmptyState, Eyebrow, Field, HairlineList, HairlineRow, PageHeader, Person, RoleBadge, Section, SittingBadge, TextArea, TextLink,
-} from "@/components/ui";
-import { Form, QuickAction, SubmitButton } from "@/components/ui/form";
+import { Body, Button, Caption, Card, CommitmentBadge, EmptyState, Eyebrow, HairlineList, HairlineRow, PageHeader, Person, RoleBadge, Section, SittingBadge, TextLink } from "@/components/ui";
+import { Form, QuickAction, SubmitButton, FField as Field, FTextArea as TextArea } from "@/components/ui/form";
 import { updateSitting } from "@/lib/actions/sittings";
 
 export const metadata: Metadata = { title: "Sitting" };
@@ -84,32 +82,28 @@ export default async function SittingPage({ params }: { params: Promise<{ id: st
         )}
         <Card>
           <Form action={updateSitting}>
-            {(state) => (
-              <>
-                <input type="hidden" name="sitting_id" value={sitting.id} />
-                <TextArea
-                  label="Notes"
-                  name="notes"
-                  rows={6}
-                  defaultValue={sitting.notes ?? ""}
-                  placeholder="What was agreed, what carries, what to bring next time."
-                  error={state.errors.notes}
-                />
-                <Field
-                  label="Meeting link"
-                  name="join_url"
-                  type="url"
-                  inputMode="url"
-                  defaultValue={sitting.joinUrl ?? ""}
-                  placeholder="https://"
-                  help="Google Meet, Teams or Zoom link. Optional."
-                  error={state.errors.join_url}
-                />
-                <div className="form-actions">
-                  <SubmitButton>Save notes</SubmitButton>
-                </div>
-              </>
-            )}
+            <>
+              <input type="hidden" name="sitting_id" value={sitting.id} />
+              <TextArea
+                label="Notes"
+                name="notes"
+                rows={6}
+                defaultValue={sitting.notes ?? ""}
+                placeholder="What was agreed, what carries, what to bring next time."
+              />
+              <Field
+                label="Meeting link"
+                name="join_url"
+                type="url"
+                inputMode="url"
+                defaultValue={sitting.joinUrl ?? ""}
+                placeholder="https://"
+                help="Google Meet, Teams or Zoom link. Optional."
+              />
+              <div className="form-actions">
+                <SubmitButton>Save notes</SubmitButton>
+              </div>
+            </>
           </Form>
           {scheduled && (
             <div className="row gap-3 wrap">
