@@ -5,14 +5,14 @@ import {
   BLOCK_WEEKS,
   CIRCLE_ROLE_LABEL,
   COMMITMENT_STATUS_LABEL,
-  SITTING_KIND_LABEL,
   SITTING_STATUS_LABEL,
+  VISIT_STATUS_LABEL,
   initials as toInitials,
   type BlockStatus,
   type CircleRole,
   type CommitmentStatus,
-  type SittingKind,
   type SittingStatus,
+  type VisitStatus,
 } from "@/lib/domain";
 
 export function cn(...parts: Array<string | false | null | undefined>) {
@@ -271,6 +271,7 @@ export const Badge = ({ children, tone = "", dot = true }: { children: ReactNode
 const COMMITMENT_TONE: Record<CommitmentStatus, string> = { open: "", done: "ok", partial: "warn", missed: "err", carried: "muted" };
 const BLOCK_TONE: Record<BlockStatus, string> = { active: "gold", completed: "ok", abandoned: "muted" };
 const SITTING_TONE: Record<SittingStatus, string> = { scheduled: "gold", completed: "ok", cancelled: "muted" };
+const VISIT_TONE: Record<VisitStatus, string> = { proposed: "warn", agreed: "gold", declined: "muted", held: "ok", cancelled: "muted" };
 
 export const CommitmentBadge = ({ status }: { status: CommitmentStatus }) => (
   <Badge tone={COMMITMENT_TONE[status]}>{COMMITMENT_STATUS_LABEL[status]}</Badge>
@@ -281,9 +282,13 @@ export const BlockBadge = ({ status }: { status: BlockStatus }) => (
 export const SittingBadge = ({ status }: { status: SittingStatus }) => (
   <Badge tone={SITTING_TONE[status]}>{SITTING_STATUS_LABEL[status]}</Badge>
 );
-/** Whether a sitting is held over video or inside somebody's practice. */
-export const SittingKindBadge = ({ kind }: { kind: SittingKind }) => (
-  <Badge tone={kind === "visit" ? "gold" : ""} dot={false}>{SITTING_KIND_LABEL[kind]}</Badge>
+/** Where a companion practice visit stands. */
+export const VisitBadge = ({ status }: { status: VisitStatus }) => (
+  <Badge tone={VISIT_TONE[status]}>{VISIT_STATUS_LABEL[status]}</Badge>
+);
+/** Marks a diary entry as a morning in a practice rather than a sitting over video. */
+export const PracticeVisitBadge = () => (
+  <Badge tone="gold" dot={false}>Practice visit</Badge>
 );
 export const RoleBadge = ({ role }: { role: CircleRole }) => (
   <Badge tone={role === "mentor" || role === "lead" ? "gold" : ""} dot={false}>{CIRCLE_ROLE_LABEL[role]}</Badge>

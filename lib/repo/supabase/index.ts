@@ -17,12 +17,14 @@ import type {
   Profile,
   Sitting,
   Template,
+  Visit,
+  VisitNote,
   Win,
 } from "@/lib/domain";
 import { blockEndDate } from "@/lib/weeks";
 import { createClient, type ServerClient } from "@/lib/supabase/server";
 import type { CreateSittingInput, Repo } from "../types";
-import type { CircleRow, CohortStatsRow } from "./database.types";
+import type { CircleRow, CohortStatsRow, VisitNoteUpdate, VisitUpdate } from "./database.types";
 import {
   blockCols,
   checkInCols,
@@ -44,7 +46,11 @@ import {
   toProfile,
   toSitting,
   toTemplate,
+  toVisit,
+  toVisitNote,
   toWin,
+  visitCols,
+  visitNoteCols,
   winCols,
 } from "./mappers";
 
@@ -226,9 +232,6 @@ export class SupabaseRepo implements Repo {
           scheduled_at: input.scheduledAt,
           created_by: input.createdBy,
           join_url: input.joinUrl ?? null,
-          kind: input.kind ?? "video",
-          host_id: input.hostId ?? null,
-          location: input.location ?? null,
         })
         .select()
         .single(),
@@ -242,6 +245,87 @@ export class SupabaseRepo implements Repo {
       "updateSitting",
     );
     return toSitting(row);
+  }
+
+  /* ---------- practice visits ---------- */
+  async listVisits(circleIds: string[]): Promise<Visit[]> {
+    if (circleIds.length === 0) return [];
+    return rows(
+      await this.db.from("visits").select().in("circle_id", circleIds).order("scheduled_at"),
+      "listVisits",
+    ).map(toVisit);
+  }
+  /** Every morning this principal is part of, whichever side of the door. */
+  async listVisitsFor(userId: string): Promise<Visit[]> {
+    return rows(
+      await this.db
+        .from("visits")
+        .select()
+        .or(`visitor_id.eq.${userId},host_id.eq.${userId}`)
+        .order("scheduled_at"),
+      "listVisitsFor",
+    ).map(toVisit);
+  }
+  async getVisit(id: string): Promise<Visit | null> {
+    const row = ok(await this.db.from("visits").select().eq("id", id).maybeSingle(), "getVisit");
+    return row ? toVisit(row) : null;
+  }
+  async createVisit(input: Parameters<Repo["createVisit"]>[0]): Promise<Visit> {
+    const row = must(
+      await this.db
+        .from("visits")
+        .insert({
+          circle_id: input.circleId,
+          visitor_id: input.visitorId,
+          host_id: input.hostId,
+          proposed_by_id: input.proposedById,
+          scheduled_at: input.scheduledAt,
+          practice_name: input.practiceName ?? null,
+          proposal_note: input.proposalNote ?? null,
+        })
+        .select()
+        .single(),
+      "createVisit",
+    );
+    return toVisit(row);
+  }
+  async updateVisit(id: string, patch: Partial<Visit>): Promise<Visit> {
+    const update: VisitUpdate = patchRow(patch, visitCols);
+    const row = must(
+      await this.db.from("visits").update(update).eq("id", id).select().single(),
+      "updateVisit",
+    );
+    return toVisit(row);
+  }
+  async listVisitNotes(visitIds: string[]): Promise<VisitNote[]> {
+    if (visitIds.length === 0) return [];
+    return rows(
+      await this.db.from("visit_notes").select().in("visit_id", visitIds).order("created_at"),
+      "listVisitNotes",
+    ).map(toVisitNote);
+  }
+  async createVisitNote(input: Pick<VisitNote, "visitId" | "authorId" | "kind" | "body">): Promise<VisitNote> {
+    const row = must(
+      await this.db
+        .from("visit_notes")
+        .insert({ visit_id: input.visitId, author_id: input.authorId, kind: input.kind, body: input.body })
+        .select()
+        .single(),
+      "createVisitNote",
+    );
+    return toVisitNote(row);
+  }
+  async updateVisitNote(id: string, patch: Partial<VisitNote>): Promise<VisitNote> {
+    const update: VisitNoteUpdate = patchRow(patch, visitNoteCols);
+    const row = must(
+      await this.db.from("visit_notes").update(update).eq("id", id).select().single(),
+      "updateVisitNote",
+    );
+    return toVisitNote(row);
+  }
+  /** Struck out for good; the demo adapter can only blank it, but here it goes. */
+  async deleteVisitNote(id: string): Promise<void> {
+    ok(await this.db.from("visit_notes").delete().eq("id", id), "deleteVisitNote");
   }
 
   /* ---------- blocks ---------- */

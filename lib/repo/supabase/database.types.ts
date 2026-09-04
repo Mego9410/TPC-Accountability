@@ -72,12 +72,38 @@ export type SittingRow = {
   circle_id: string;
   scheduled_at: string;
   status: "scheduled" | "completed" | "cancelled";
-  kind: "video" | "visit";
-  host_id: string | null;
-  location: string | null;
   join_url: string | null;
   notes: string | null;
   created_by: string;
+  created_at: string;
+  updated_at: string;
+};
+
+export type VisitRow = {
+  id: string;
+  circle_id: string;
+  visitor_id: string;
+  host_id: string;
+  proposed_by_id: string;
+  scheduled_at: string;
+  status: "proposed" | "agreed" | "declined" | "held" | "cancelled";
+  practice_name: string | null;
+  proposal_note: string | null;
+  arrival_note: string | null;
+  visitor_agreed_at: string | null;
+  host_agreed_at: string | null;
+  held_at: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type VisitNoteRow = {
+  id: string;
+  visit_id: string;
+  author_id: string;
+  kind: "observation" | "takeaway" | "for_host" | "host_note";
+  body: string;
+  commitment_id: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -212,10 +238,25 @@ export type CircleInsert = Partial<Pick<CircleRow, "id" | "cadence" | "cohort_la
   Pick<CircleRow, "kind" | "name">;
 export type CircleMemberInsert = Partial<Pick<CircleMemberRow, "role" | "joined_at" | "left_at">> &
   Pick<CircleMemberRow, "circle_id" | "user_id">;
-export type SittingInsert = Partial<
-  Pick<SittingRow, "id" | "status" | "kind" | "host_id" | "location" | "join_url" | "notes" | Defaulted>
-> &
+export type SittingInsert = Partial<Pick<SittingRow, "id" | "status" | "join_url" | "notes" | Defaulted>> &
   Pick<SittingRow, "circle_id" | "scheduled_at" | "created_by">;
+export type VisitInsert = Partial<
+  Pick<
+    VisitRow,
+    | "id"
+    | "status"
+    | "practice_name"
+    | "proposal_note"
+    | "arrival_note"
+    | "visitor_agreed_at"
+    | "host_agreed_at"
+    | "held_at"
+    | Defaulted
+  >
+> &
+  Pick<VisitRow, "circle_id" | "visitor_id" | "host_id" | "proposed_by_id" | "scheduled_at">;
+export type VisitNoteInsert = Partial<Pick<VisitNoteRow, "id" | "commitment_id" | Defaulted>> &
+  Pick<VisitNoteRow, "visit_id" | "author_id" | "kind" | "body">;
 export type GoalBlockInsert = Partial<Pick<GoalBlockRow, "id" | "description" | "status" | "template_id" | Defaulted>> &
   Pick<GoalBlockRow, "user_id" | "title" | "start_date" | "end_date">;
 export type CommitmentInsert = Partial<Pick<CommitmentRow, "id" | "status" | "carried_from" | "sitting_id" | Defaulted>> &
@@ -240,6 +281,11 @@ export type TemplateInsert = Partial<Pick<TemplateRow, "description" | "audience
   Pick<TemplateRow, "id" | "slug" | "title">;
 export type TemplateWeekInsert = Partial<Pick<TemplateWeekRow, "id" | "sort">> &
   Pick<TemplateWeekRow, "template_id" | "week" | "body">;
+
+/* ---------- updates (every column is optional; the row types drive them) ---------- */
+
+export type VisitUpdate = Partial<VisitRow>;
+export type VisitNoteUpdate = Partial<VisitNoteRow>;
 
 /* ---------- functions ---------- */
 
@@ -274,6 +320,8 @@ export type Database = {
       circles: Table<CircleRow, CircleInsert>;
       circle_members: Table<CircleMemberRow, CircleMemberInsert>;
       sittings: Table<SittingRow, SittingInsert>;
+      visits: Table<VisitRow, VisitInsert>;
+      visit_notes: Table<VisitNoteRow, VisitNoteInsert>;
       goal_blocks: Table<GoalBlockRow, GoalBlockInsert>;
       commitments: Table<CommitmentRow, CommitmentInsert>;
       check_ins: Table<CheckInRow, CheckInInsert>;
@@ -291,6 +339,7 @@ export type Database = {
       is_circle_member: { Args: { p_circle: string }; Returns: boolean };
       is_mentor_of: { Args: { p_target: string }; Returns: boolean };
       shares_circle_with: { Args: { p_target: string }; Returns: boolean };
+      is_visit_party: { Args: { p_visit: string }; Returns: boolean };
       is_staff: { Args: Record<PropertyKey, never>; Returns: boolean };
       benchmark_cohort_stats: {
         Args: { p_metric: string; p_period: string; p_region?: string | null; p_practice_type?: string | null };

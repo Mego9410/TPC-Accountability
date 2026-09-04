@@ -73,6 +73,24 @@ as $$
   );
 $$;
 
+-- Is the caller one of the two principals on this visit — the one going, or
+-- the one opening their practice? Asked by the visit_notes policies, which must
+-- reach into visits without the visits policies reaching back.
+create or replace function public.is_visit_party(p_visit uuid)
+returns boolean
+language sql
+security definer
+set search_path = public
+stable
+as $$
+  select exists (
+    select 1
+    from public.visits v
+    where v.id = p_visit
+      and auth.uid() in (v.visitor_id, v.host_id)
+  );
+$$;
+
 -- Is the caller a member of staff (the House)?
 create or replace function public.is_staff()
 returns boolean
@@ -91,10 +109,12 @@ $$;
 revoke execute on function public.is_circle_member(uuid)   from public, anon;
 revoke execute on function public.is_mentor_of(uuid)       from public, anon;
 revoke execute on function public.shares_circle_with(uuid) from public, anon;
+revoke execute on function public.is_visit_party(uuid)     from public, anon;
 revoke execute on function public.is_staff()               from public, anon;
 grant  execute on function public.is_circle_member(uuid)   to authenticated;
 grant  execute on function public.is_mentor_of(uuid)       to authenticated;
 grant  execute on function public.shares_circle_with(uuid) to authenticated;
+grant  execute on function public.is_visit_party(uuid)     to authenticated;
 grant  execute on function public.is_staff()               to authenticated;
 
 -- -----------------------------------------------------------------------------
@@ -105,6 +125,8 @@ alter table public.profiles               enable row level security;
 alter table public.circles                enable row level security;
 alter table public.circle_members         enable row level security;
 alter table public.sittings               enable row level security;
+alter table public.visits                 enable row level security;
+alter table public.visit_notes            enable row level security;
 alter table public.goal_blocks            enable row level security;
 alter table public.commitments            enable row level security;
 alter table public.check_ins              enable row level security;
@@ -185,6 +207,63 @@ create policy sittings_update on public.sittings
 drop policy if exists sittings_delete on public.sittings;
 create policy sittings_delete on public.sittings
   for delete to authenticated using (created_by = auth.uid() or public.is_staff());
+
+-- -----------------------------------------------------------------------------
+-- visits — a morning in somebody's practice is between the two principals. The
+-- pair see it, their mentor or pod lead sees it, and the House sees it; nobody
+-- else in the circle does. Either party may propose one, and either may change
+-- it afterwards: agreeing, declining, adding the arrival note, or marking it
+-- held. Neither can delete it, so a declined morning stays on the record.
+-- -----------------------------------------------------------------------------
+drop policy if exists visits_select on public.visits;
+create policy visits_select on public.visits
+  for select to authenticated
+  using (
+    auth.uid() in (visitor_id, host_id)
+    or public.is_mentor_of(visitor_id)
+    or public.is_mentor_of(host_id)
+    or public.is_staff()
+  );
+
+drop policy if exists visits_insert on public.visits;
+create policy visits_insert on public.visits
+  for insert to authenticated
+  with check (
+    proposed_by_id = auth.uid()
+    and auth.uid() in (visitor_id, host_id)
+    and public.is_circle_member(circle_id)
+  );
+
+drop policy if exists visits_update on public.visits;
+create policy visits_update on public.visits
+  for update to authenticated
+  using (auth.uid() in (visitor_id, host_id) or public.is_staff())
+  with check (auth.uid() in (visitor_id, host_id) or public.is_staff());
+
+-- -----------------------------------------------------------------------------
+-- visit_notes — what each side wrote down. Both parties read the whole record,
+-- including what the visitor wrote for the host; that candour is the point of
+-- the morning. Only the author may write, change or strike out their own note.
+-- -----------------------------------------------------------------------------
+drop policy if exists visit_notes_select on public.visit_notes;
+create policy visit_notes_select on public.visit_notes
+  for select to authenticated
+  using (public.is_visit_party(visit_id) or public.is_staff());
+
+drop policy if exists visit_notes_insert on public.visit_notes;
+create policy visit_notes_insert on public.visit_notes
+  for insert to authenticated
+  with check (author_id = auth.uid() and public.is_visit_party(visit_id));
+
+drop policy if exists visit_notes_update on public.visit_notes;
+create policy visit_notes_update on public.visit_notes
+  for update to authenticated
+  using (author_id = auth.uid())
+  with check (author_id = auth.uid());
+
+drop policy if exists visit_notes_delete on public.visit_notes;
+create policy visit_notes_delete on public.visit_notes
+  for delete to authenticated using (author_id = auth.uid());
 
 -- -----------------------------------------------------------------------------
 -- goal_blocks — yours to keep; your mentor may look.
