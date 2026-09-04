@@ -70,7 +70,7 @@ export default async function SittingPage({ params }: { params: Promise<{ id: st
       <PageHeader
         eyebrow={
           <span className="row gap-3">
-            {isVisit && <>{SITTING_KIND_LABEL.visit} ·</>}
+            {isVisit && <span>{SITTING_KIND_LABEL.visit}</span>}
             <SittingBadge status={sitting.status} /> {circleTitle(circle, userId)}
           </span>
         }

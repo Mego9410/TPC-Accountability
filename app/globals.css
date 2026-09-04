@@ -968,3 +968,15 @@ a.person:hover .person-name { color: var(--tpc-gold-deep); }
   .tour-bar .sep { display: none; }
   .cm-actions .btn.quiet, .cm-actions .btn.secondary.sm { padding: 7px 10px; font-size: 9px; letter-spacing: 0.12em; }
 }
+
+/* Practice visits — the kind badge beside the status, and the suggested
+   programme for a morning inside somebody else's practice. */
+.badge-row { display: inline-flex; flex-wrap: wrap; gap: 6px; align-items: center; justify-content: flex-end; }
+.programme { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; counter-reset: programme; }
+.programme li { display: grid; grid-template-columns: 52px minmax(0, 1fr); gap: 14px; align-items: baseline; }
+.programme .at { font: 500 12px/1.5 var(--font-sans); letter-spacing: 0.06em; color: var(--tpc-gold-deep); font-variant-numeric: tabular-nums; }
+.programme .what { font: 400 15px/1.5 var(--font-sans); color: var(--fg-on-paper); }
+@media (max-width: 420px) {
+  .programme li { grid-template-columns: 44px minmax(0, 1fr); gap: 10px; }
+  .programme .what { font-size: 14.5px; }
+}

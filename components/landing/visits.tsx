@@ -45,28 +45,33 @@ export function Programme() {
 export function ExclusionZone() {
   return (
     <figure className="lp-zone">
-      <svg viewBox="0 0 320 240" role="img" aria-labelledby="zone-title zone-desc">
+      <svg viewBox="0 0 330 212" role="img" aria-labelledby="zone-title zone-desc">
         <title id="zone-title">The exclusion zone, measured in drive time</title>
         <desc id="zone-desc">
-          Two practices with concentric rings between them marking twenty and thirty minutes of driving. A
-          match is only offered beyond the outer ring.
+          Concentric rings around your practice mark twenty and thirty minutes of driving. A match is only
+          ever offered beyond the outer ring.
         </desc>
-        <circle cx="112" cy="120" r="92" className="lp-zone-ring outer" />
-        <circle cx="112" cy="120" r="60" className="lp-zone-ring" />
-        <circle cx="112" cy="120" r="28" className="lp-zone-ring faint" />
-        <line x1="112" y1="120" x2="112" y2="28" className="lp-zone-tick" />
-        <line x1="112" y1="120" x2="172" y2="120" className="lp-zone-tick" />
-        <text x="118" y="66" className="lp-zone-label">30 min</text>
-        <text x="118" y="112" className="lp-zone-label">20 min</text>
+
+        {/* Rings. The core is left empty so the practice can be named inside it. */}
+        <circle cx="104" cy="102" r="84" className="lp-zone-ring outer" />
+        <circle cx="104" cy="102" r="52" className="lp-zone-ring" />
+
+        {/* Ring labels, set below each ring where nothing else runs. */}
+        <text x="104" y="168" className="lp-zone-label" textAnchor="middle">20 min</text>
+        <text x="104" y="200" className="lp-zone-label" textAnchor="middle">30 min</text>
+
+        {/* Your practice, named inside the empty core. */}
         <g className="lp-zone-pin">
-          <circle cx="112" cy="120" r="5" />
-          <text x="112" y="146" textAnchor="middle">Your practice</text>
+          <circle cx="104" cy="102" r="4.5" />
+          <text x="104" y="126" textAnchor="middle">Your practice</text>
         </g>
+
+        {/* The match, beyond the outer ring. */}
+        <path d="M190 78 C 220 68, 244 60, 262 56" className="lp-zone-arc" />
         <g className="lp-zone-pin match">
-          <circle cx="268" cy="86" r="5" />
-          <text x="268" y="112" textAnchor="middle">A match</text>
+          <text x="276" y="40" textAnchor="middle">A match</text>
+          <circle cx="276" cy="54" r="4.5" />
         </g>
-        <path d="M204 104 C 232 98, 248 94, 262 89" className="lp-zone-arc" />
       </svg>
       <figcaption>
         Journey time, not mileage. Twenty minutes in London is three miles; twenty minutes in Norfolk is
@@ -98,16 +103,17 @@ export function VisitsSection() {
         <Programme />
         <div className="lp-visit-aside">
           <ExclusionZone />
-          <ul className="lp-terms">
-            {TERMS.map((t) => (
-              <li key={t.term}>
-                <span className="lp-term-name">{t.term}</span>
-                <span className="lp-term-def">{t.def}</span>
-              </li>
-            ))}
-          </ul>
         </div>
       </div>
+
+      <ul className="lp-terms">
+        {TERMS.map((t) => (
+          <li key={t.term}>
+            <span className="lp-term-name">{t.term}</span>
+            <span className="lp-term-def">{t.def}</span>
+          </li>
+        ))}
+      </ul>
 
       <div className="lp-cta">
         <Button href="/visits" variant="secondary" onDark>How a visit works</Button>

@@ -214,20 +214,32 @@ function Visits({ sittings, circle, userId }: { sittings: Sitting[]; circle: Cir
 /** "You have visited two of the five. Three practices to go, and two principals still to see yours." */
 function visitSummary(ledger: ReturnType<typeof visitLedger>, total: number): string {
   const seen = ledger.visited.length;
-  const parts: string[] = [
+  const toVisit = ledger.toVisit.length;
+  const toHost = ledger.toHost.length;
+
+  // A pair reads as two people, not as an account of practices.
+  if (total === 1) {
+    if (seen === 1 && toHost === 0) return "You have been inside their practice, and they have been inside yours. The account is settled.";
+    if (seen === 1) return "You have been inside their practice. They have not yet been inside yours.";
+    if (toHost === 0) return "They have been inside your practice. You have not yet been inside theirs.";
+    return "Neither of you has yet spent a morning in the other's practice.";
+  }
+
+  const first =
     seen === 0
       ? `You have not yet been inside any of the ${count(total)}.`
       : seen === total
         ? `You have been inside all ${count(total)} practices.`
-        : `You have visited ${count(seen)} of the ${count(total)}.`,
-  ];
-  const toVisit = ledger.toVisit.length;
-  const toHost = ledger.toHost.length;
-  if (toVisit === 0 && toHost === 0) parts.push("The account is settled, both ways.");
-  else if (toVisit === 0) parts.push(`Every practice seen, and ${count(toHost)} ${toHost === 1 ? "principal" : "principals"} still to see yours.`);
-  else if (toHost === 0) parts.push(`${capitalise(count(toVisit))} ${toVisit === 1 ? "practice" : "practices"} to go, and everyone has seen yours.`);
-  else parts.push(`${capitalise(count(toVisit))} ${toVisit === 1 ? "practice" : "practices"} to go, and ${count(toHost)} ${toHost === 1 ? "principal" : "principals"} still to see yours.`);
-  return parts.join(" ");
+        : `You have visited ${count(seen)} of the ${count(total)}.`;
+  const second =
+    toVisit === 0 && toHost === 0
+      ? "The account is settled, both ways."
+      : toVisit === 0
+        ? `Every practice seen, and ${count(toHost)} ${toHost === 1 ? "principal" : "principals"} still to see yours.`
+        : toHost === 0
+          ? `${capitalise(count(toVisit))} ${toVisit === 1 ? "practice" : "practices"} to go, and everyone has seen yours.`
+          : `${capitalise(count(toVisit))} ${toVisit === 1 ? "practice" : "practices"} to go, and ${count(toHost)} ${toHost === 1 ? "principal" : "principals"} still to see yours.`;
+  return `${first} ${second}`;
 }
 
 const NUMBERS = ["none", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten"];
