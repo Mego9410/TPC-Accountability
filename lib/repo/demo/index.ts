@@ -26,6 +26,7 @@ import { world } from "./world";
 import { type DemoDelta, writeDelta } from "./store";
 
 type Row = { id: string };
+type MemberRow = Omit<CircleMember, "role"> & { id: string; role: CircleRole | null };
 type Collection = keyof typeof world;
 
 let seq = 0;
@@ -103,8 +104,7 @@ export class DemoRepo implements Repo {
   }
   private memberRows(): CircleMember[] {
     // circleMembers are keyed by circleId+userId; we model removals as role null patches.
-    const rows = (this.all as unknown as (c: Collection) => (CircleMember & { id: string; role: CircleRole | null })[])
-      .call(this, "circleMembers");
+    const rows = this.all<MemberRow>("circleMembers");
     return rows.filter((m) => m.role !== null) as CircleMember[];
   }
   async listCirclesFor(userId: string) {
@@ -125,10 +125,10 @@ export class DemoRepo implements Repo {
   }
   async setCircleMember(circleId: string, userId: string, role: CircleRole | null) {
     const id = `${circleId}:${userId}`;
-    const rows = (this.all as unknown as (c: Collection) => (CircleMember & { id: string })[]).call(this, "circleMembers");
+    const rows = this.all<MemberRow>("circleMembers");
     const existing = rows.find((m) => m.id === id);
     if (existing) {
-      this.patch("circleMembers", id, { role });
+      this.patch<MemberRow>("circleMembers", id, { role });
     } else if (role) {
       this.add("circleMembers", { id, circleId, userId, role, joinedAt: now() });
     }
@@ -321,16 +321,20 @@ export class DemoRepo implements Repo {
     return this.add<Challenge>("challenges", { id: newId("ch"), createdAt: now(), ...input });
   }
   private participantRows() {
-    return (this.all as unknown as (c: Collection) => (ChallengeParticipant & { id: string })[]).call(this, "participants");
+    return this.all<ChallengeParticipant & { id: string }>("participants");
   }
   async listParticipation(userId: string) {
     return this.participantRows().filter((p) => p.userId === userId);
   }
-  async setParticipation(input: ChallengeParticipant) {
+  async setParticipation(input: ChallengeParticipant): Promise<ChallengeParticipant> {
     const id = `${input.challengeId}:${input.userId}`;
     const existing = this.participantRows().find((p) => p.id === id);
-    if (existing) return this.patch("participants", id, input);
-    return this.add("participants", { id, ...input });
+    const row = existing
+      ? this.patch<ChallengeParticipant & { id: string }>("participants", id, input)
+      : this.add<ChallengeParticipant & { id: string }>("participants", { id, ...input });
+    const { id: _omit, ...participant } = row;
+    void _omit;
+    return participant;
   }
   async leaderboard(challengeId: string): Promise<LeaderboardRow[]> {
     const profiles = this.all<Profile>("profiles");

@@ -59,6 +59,7 @@ export default async function BlockPage({ params }: { params: Promise<{ id: stri
     notesByCommitment.set(n.commitmentId, list);
   }
   const sidebarNotes = notes.filter((n) => (n.commitmentId ? commitmentIds.has(n.commitmentId) : !n.checkInId));
+  const weekOf = new Map(commitments.map((c) => [c.id, c.week]));
 
   const counted = commitments.filter((c) => c.status !== "carried");
   const kept = counted.filter((c) => c.status === "done").length;
@@ -121,6 +122,7 @@ export default async function BlockPage({ params }: { params: Promise<{ id: stri
               commitments={commitments.filter((c) => c.week === w)}
               notes={notesByCommitment}
               authors={authorById}
+              weekOf={weekOf}
             />
           ))}
 
@@ -169,7 +171,7 @@ export default async function BlockPage({ params }: { params: Promise<{ id: stri
                 <Caption>{isOwner ? "When something goes right, write it down. On the hard weeks, read it back." : "Nothing on the record for this block."}</Caption>
               </>
             ) : (
-              <div className="quiet-list-wrap">
+              <div className="stack gap-3">
                 {blockWins.map((w) => <WinLine key={w.id} win={w} />)}
               </div>
             )}
@@ -216,7 +218,7 @@ export default async function BlockPage({ params }: { params: Promise<{ id: stri
 
 function WinLine({ win }: { win: Win }) {
   return (
-    <div className="stack" style={{ marginTop: 4 }}>
+    <div className="stack">
       <span className="feed-who">{win.title}</span>
       <Caption><time dateTime={win.createdAt}>{formatDayMonth(win.createdAt)}</time>{win.detail ? ` · ${win.detail}` : ""}</Caption>
     </div>
@@ -224,7 +226,7 @@ function WinLine({ win }: { win: Win }) {
 }
 
 function WeekGroup({
-  week, current, block, owner, isOwner, canNote, commitments, notes, authors,
+  week, current, block, owner, isOwner, canNote, commitments, notes, authors, weekOf,
 }: {
   week: number;
   current: number;
@@ -235,6 +237,7 @@ function WeekGroup({
   commitments: Commitment[];
   notes: Map<string, Note[]>;
   authors: Map<string, Profile>;
+  weekOf: Map<string, number>;
 }) {
   const now = week === current;
   if (!now && commitments.length === 0 && week > current) return null;
@@ -260,7 +263,7 @@ function WeekGroup({
               canNote={canNote}
               notes={notes.get(c.id) ?? []}
               authors={authors}
-              carriedFromWeek={c.carriedFrom ? findWeek(c.carriedFrom, commitments) : null}
+              carriedFromWeek={c.carriedFrom ? weekOf.get(c.carriedFrom) ?? null : null}
             />
           ))}
         </div>
@@ -268,12 +271,6 @@ function WeekGroup({
     </section>
   );
 }
-
-function findWeek(id: string, _cs: Commitment[]): number | null {
-  // Carried commitments live in a different week; the caller passes the block's full list via closure below.
-  return CARRIED_WEEKS.get(id) ?? null;
-}
-const CARRIED_WEEKS = new Map<string, number>();
 
 function CommitmentRow({
   c, owner, isOwner, canNote, notes, authors, carriedFromWeek,

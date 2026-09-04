@@ -32,7 +32,7 @@ export const seatMember = defineAction({
       await ctx.repo.setCircleMember(circle.id, input.user_id, null);
       return { message: "Seat vacated." };
     }
-    if (circle.kind === "pair" && input.role !== "remove") {
+    if (circle.kind === "pair") {
       const others = circle.members.filter((m) => m.userId !== input.user_id);
       if (others.length >= 2) throw new Error("A pair has two seats.");
     }
