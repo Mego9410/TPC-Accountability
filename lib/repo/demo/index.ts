@@ -16,6 +16,8 @@ import type {
   Note,
   Profile,
   Sitting,
+  Visit,
+  VisitNote,
   Win,
 } from "@/lib/domain";
 import { blockEndDate } from "@/lib/weeks";
@@ -143,6 +145,56 @@ export class DemoRepo implements Repo {
   async getSitting(id: string) {
     return this.all<Sitting>("sittings").find((s) => s.id === id) ?? null;
   }
+  /* ---------- practice visits ---------- */
+  async listVisits(circleIds: string[]) {
+    const set = new Set(circleIds);
+    return this.all<Visit>("visits")
+      .filter((v) => set.has(v.circleId))
+      .sort((a, b) => a.scheduledAt.localeCompare(b.scheduledAt));
+  }
+  async listVisitsFor(userId: string) {
+    return this.all<Visit>("visits")
+      .filter((v) => v.visitorId === userId || v.hostId === userId)
+      .sort((a, b) => a.scheduledAt.localeCompare(b.scheduledAt));
+  }
+  async getVisit(id: string) {
+    return this.all<Visit>("visits").find((v) => v.id === id) ?? null;
+  }
+  async createVisit(input: Parameters<Repo["createVisit"]>[0]) {
+    return this.add<Visit>("visits", {
+      id: newId("v"),
+      status: "proposed",
+      practiceName: input.practiceName ?? null,
+      proposalNote: input.proposalNote ?? null,
+      arrivalNote: null,
+      visitorAgreedAt: null,
+      hostAgreedAt: null,
+      heldAt: null,
+      createdAt: now(),
+      ...input,
+    });
+  }
+  async updateVisit(id: string, patch: Partial<Visit>) {
+    return this.patch<Visit>("visits", id, patch);
+  }
+  async listVisitNotes(visitIds: string[]) {
+    const set = new Set(visitIds);
+    return this.all<VisitNote>("visitNotes")
+      .filter((n) => set.has(n.visitId))
+      .sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+  }
+  async createVisitNote(input: Pick<VisitNote, "visitId" | "authorId" | "kind" | "body">) {
+    return this.add<VisitNote>("visitNotes", { id: newId("vn"), commitmentId: null, createdAt: now(), ...input });
+  }
+  async updateVisitNote(id: string, patch: Partial<VisitNote>) {
+    return this.patch<VisitNote>("visitNotes", id, patch);
+  }
+  async deleteVisitNote(id: string) {
+    // The delta cannot remove a base row, so a deleted note is blanked and
+    // filtered out by the pages that read it.
+    this.patch<VisitNote>("visitNotes", id, { body: "" });
+  }
+
   async createSitting(input: CreateSittingInput) {
     return this.add<Sitting>("sittings", {
       id: newId("s"),
@@ -152,9 +204,6 @@ export class DemoRepo implements Repo {
       status: "scheduled",
       notes: null,
       joinUrl: input.joinUrl ?? null,
-      kind: input.kind ?? "video",
-      hostId: input.hostId ?? null,
-      location: input.location ?? null,
       createdAt: now(),
     });
   }

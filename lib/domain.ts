@@ -23,7 +23,6 @@ export type SittingStatus = "scheduled" | "completed" | "cancelled";
  * Every principal visits every other principal in their circle, and in turn
  * has each of them inside their own practice for a morning.
  */
-export type SittingKind = "video" | "visit";
 export type PracticeType = "NHS" | "Private" | "Mixed";
 export type CircleStatus = "active" | "archived";
 
@@ -84,11 +83,56 @@ export interface Sitting {
   notes: string | null;
   createdBy: string;
   createdAt: string;
-  kind: SittingKind;
-  /** For a visit: whose practice is being visited. */
-  hostId: string | null;
-  /** For a visit: the practice and town, denormalised for display. */
-  location: string | null;
+}
+
+/* ---------- Companion practice visits ----------
+   A morning inside another principal's practice, and in turn one inside
+   yours. Either party may propose; the other agrees or declines, and may
+   decline for any reason without giving one. Both give the confidentiality
+   undertaking before it is agreed. What is learned is written down after. */
+
+export type VisitStatus = "proposed" | "agreed" | "declined" | "held" | "cancelled";
+
+export interface Visit {
+  id: string;
+  circleId: string;
+  /** The principal going. */
+  visitorId: string;
+  /** The principal opening their practice. */
+  hostId: string;
+  proposedById: string;
+  /** The morning itself. */
+  scheduledAt: string;
+  status: VisitStatus;
+  /** The host's practice, denormalised for display. */
+  practiceName: string | null;
+  /** A word with the proposal: what the visitor hopes to see. */
+  proposalNote: string | null;
+  /** The host's practicalities: where to park, who to ask for, when to arrive. */
+  arrivalNote: string | null;
+  /** The confidentiality undertaking, given by each party before it is agreed. */
+  visitorAgreedAt: string | null;
+  hostAgreedAt: string | null;
+  heldAt: string | null;
+  createdAt: string;
+}
+
+/**
+ * The record of a visit, kept in four parts so that it is useful afterwards
+ * rather than a single box of prose. Three belong to the visitor and one to
+ * the host, because both sides learn something.
+ */
+export type VisitNoteKind = "observation" | "takeaway" | "for_host" | "host_note";
+
+export interface VisitNote {
+  id: string;
+  visitId: string;
+  authorId: string;
+  kind: VisitNoteKind;
+  body: string;
+  /** Set when a takeaway has been set down as a commitment in a block. */
+  commitmentId: string | null;
+  createdAt: string;
 }
 
 export interface GoalBlock {
@@ -239,11 +283,6 @@ export const SITTING_STATUS_LABEL: Record<SittingStatus, string> = {
   cancelled: "Cancelled",
 };
 
-export const SITTING_KIND_LABEL: Record<SittingKind, string> = {
-  video: "Sitting",
-  visit: "Practice visit",
-};
-
 export const CIRCLE_ROLE_LABEL: Record<CircleRole, string> = {
   peer: "Partner",
   mentee: "Mentee",
@@ -276,46 +315,84 @@ export function othersIn(circle: CircleWithMembers, userId: string) {
   return circle.members.filter((m) => m.userId !== userId);
 }
 
+export const VISIT_STATUS_LABEL: Record<VisitStatus, string> = {
+  proposed: "Proposed",
+  agreed: "Agreed",
+  declined: "Declined",
+  held: "Held",
+  cancelled: "Cancelled",
+};
+
+export const VISIT_NOTE_LABEL: Record<VisitNoteKind, string> = {
+  observation: "What I saw",
+  takeaway: "What I am taking back",
+  for_host: "What struck me, for the host",
+  host_note: "What I took from being asked",
+};
+
+export const VISIT_NOTE_HELP: Record<VisitNoteKind, string> = {
+  observation: "The systems, the diary, the team. Written while it is fresh.",
+  takeaway: "The thing you will actually do at home. Each one can be set down as a commitment.",
+  for_host: "What a stranger noticed in a morning. Say it plainly; it is the reason they opened the door.",
+  host_note: "You learn as much showing someone your practice as you do walking round theirs.",
+};
+
+/** Which note kinds a given principal may add to a visit. */
+export function noteKindsFor(visit: Visit, userId: string): VisitNoteKind[] {
+  if (userId === visit.visitorId) return ["observation", "takeaway", "for_host"];
+  if (userId === visit.hostId) return ["host_note"];
+  return [];
+}
+
+/** A visit is settled once both parties have given the undertaking. */
+export function undertakingGiven(visit: Visit): boolean {
+  return Boolean(visit.visitorAgreedAt && visit.hostAgreedAt);
+}
+
+/** The counterparty: whoever is not the viewer. */
+export function otherPartyId(visit: Visit, userId: string): string {
+  return userId === visit.visitorId ? visit.hostId : visit.visitorId;
+}
+
+/** Whether this principal still owes a response to a proposal. */
+export function awaitingResponseFrom(visit: Visit, userId: string): boolean {
+  return visit.status === "proposed" && visit.proposedById !== userId
+    && (userId === visit.visitorId || userId === visit.hostId);
+}
+
 export interface VisitLedger {
   /** Members whose practice the viewer has not yet been inside. */
   toVisit: Profile[];
   /** Members who have not yet been inside the viewer's practice. */
   toHost: Profile[];
-  visited: Array<{ profile: Profile; at: string }>;
-  hosted: Array<{ profile: Profile; at: string }>;
+  visited: Array<{ profile: Profile; at: string; visitId: string }>;
+  hosted: Array<{ profile: Profile; at: string; visitId: string }>;
 }
 
 /**
- * Who in this circle the viewer has yet to visit, and who has yet to visit
- * them. A completed visit hosted by X means everyone else in the circle has
- * been inside X's practice: a visit is the circle's morning, not a private
- * appointment. Where a practice has been visited more than once, the most
- * recent morning is the one on the ledger.
+ * Who in this circle the viewer has yet to be inside, and who has yet to be
+ * inside theirs. Only held visits count, and where a practice has been seen
+ * more than once the most recent morning is the one on the ledger.
  */
 export function visitLedger(
   circle: CircleWithMembers,
-  sittings: Sitting[],
+  visits: Visit[],
   userId: string,
 ): VisitLedger {
-  const held = sittings.filter(
-    (s) => s.circleId === circle.id && s.kind === "visit" && s.status === "completed" && s.hostId !== null,
-  );
-  /** The most recent completed visit to this principal's practice. */
-  const lastVisitTo = (hostId: string): string | null =>
+  const held = visits.filter((v) => v.circleId === circle.id && v.status === "held");
+  const latest = (visitorId: string, hostId: string) =>
     held
-      .filter((s) => s.hostId === hostId)
-      .map((s) => s.scheduledAt)
-      .sort((a, b) => b.localeCompare(a))[0] ?? null;
-
-  const others = othersIn(circle, userId).map((m) => m.profile);
-  const mine = lastVisitTo(userId);
+      .filter((v) => v.visitorId === visitorId && v.hostId === hostId)
+      .sort((a, b) => b.scheduledAt.localeCompare(a.scheduledAt))[0] ?? null;
 
   const ledger: VisitLedger = { toVisit: [], toHost: [], visited: [], hosted: [] };
-  for (const profile of others) {
-    const at = lastVisitTo(profile.id);
-    if (at) ledger.visited.push({ profile, at });
+  for (const profile of othersIn(circle, userId).map((m) => m.profile)) {
+    const iWent = latest(userId, profile.id);
+    if (iWent) ledger.visited.push({ profile, at: iWent.scheduledAt, visitId: iWent.id });
     else ledger.toVisit.push(profile);
-    if (mine) ledger.hosted.push({ profile, at: mine });
+
+    const theyCame = latest(profile.id, userId);
+    if (theyCame) ledger.hosted.push({ profile, at: theyCame.scheduledAt, visitId: theyCame.id });
     else ledger.toHost.push(profile);
   }
   return ledger;

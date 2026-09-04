@@ -99,20 +99,14 @@ create table if not exists public.circle_members (
 create index if not exists circle_members_user_idx on public.circle_members (user_id) where left_at is null;
 
 -- -----------------------------------------------------------------------------
--- sittings — a circle's scheduled conversations, held over video or inside a
--- member's practice. Every principal visits every other principal in their
--- circle, and has each of them inside their own practice in turn; those
--- mornings are recorded here as kind 'visit', with the host and the place.
+-- sittings — a circle's scheduled conversations, held over video. A morning
+-- inside somebody's practice is not a sitting; it is a visit (below).
 -- -----------------------------------------------------------------------------
 create table if not exists public.sittings (
   id           uuid primary key default gen_random_uuid(),
   circle_id    uuid not null references public.circles (id) on delete cascade,
   scheduled_at timestamptz not null,
   status       text not null default 'scheduled' check (status in ('scheduled', 'completed', 'cancelled')),
-  kind         text not null default 'video' check (kind in ('video', 'visit')),
-  -- For a visit: whose practice is opened, and the practice and town for display.
-  host_id      uuid references public.profiles (id) on delete set null,
-  location     text,
   join_url     text,
   notes        text,
   created_by   uuid not null references public.profiles (id) on delete cascade,
@@ -120,7 +114,13 @@ create table if not exists public.sittings (
   updated_at   timestamptz not null default now()
 );
 create index if not exists sittings_circle_idx on public.sittings (circle_id, scheduled_at);
-create index if not exists sittings_circle_kind_idx on public.sittings (circle_id, kind, scheduled_at);
+
+-- A sitting was briefly made to carry practice visits too. It is a video
+-- sitting again; visits have their own table.
+drop index if exists public.sittings_circle_kind_idx;
+alter table public.sittings drop column if exists kind;
+alter table public.sittings drop column if exists host_id;
+alter table public.sittings drop column if exists location;
 
 -- -----------------------------------------------------------------------------
 -- goal_blocks — twelve-week blocks; commitments hang off them by week.
@@ -154,6 +154,60 @@ create table if not exists public.commitments (
 );
 create index if not exists commitments_block_week_idx on public.commitments (block_id, week);
 create index if not exists commitments_user_idx on public.commitments (user_id);
+
+-- -----------------------------------------------------------------------------
+-- visits — a morning inside another principal's practice, and in turn one
+-- inside yours. Either party may propose; the other agrees or declines, and may
+-- decline for any reason without giving one. Both give the confidentiality
+-- undertaking (visitor_agreed_at, host_agreed_at) before it is agreed.
+-- visit_notes reference commitments, so both tables come after them.
+-- -----------------------------------------------------------------------------
+create table if not exists public.visits (
+  id                uuid primary key default gen_random_uuid(),
+  circle_id         uuid not null references public.circles (id) on delete cascade,
+  -- The principal going, and the principal opening their practice.
+  visitor_id        uuid not null references public.profiles (id) on delete cascade,
+  host_id           uuid not null references public.profiles (id) on delete cascade,
+  proposed_by_id    uuid not null references public.profiles (id) on delete cascade,
+  scheduled_at      timestamptz not null,
+  status            text not null default 'proposed'
+                      check (status in ('proposed', 'agreed', 'declined', 'held', 'cancelled')),
+  practice_name     text,                              -- the host's practice, for display
+  proposal_note     text,                              -- what the visitor hopes to see
+  arrival_note      text,                              -- where to park, who to ask for
+  visitor_agreed_at timestamptz,
+  host_agreed_at    timestamptz,
+  held_at           timestamptz,
+  created_at        timestamptz not null default now(),
+  updated_at        timestamptz not null default now(),
+  check (visitor_id <> host_id)
+);
+create index if not exists visits_circle_idx on public.visits (circle_id, scheduled_at);
+create index if not exists visits_visitor_idx on public.visits (visitor_id, status);
+create index if not exists visits_host_idx on public.visits (host_id, status);
+-- One live morning at a time for a pair in a given direction; a practice may be
+-- visited again once the last one is held, declined or cancelled.
+create unique index if not exists visits_live_pair_idx
+  on public.visits (circle_id, visitor_id, host_id)
+  where status in ('proposed', 'agreed');
+
+-- -----------------------------------------------------------------------------
+-- visit_notes — the record of a visit, kept in four parts rather than one box
+-- of prose. Three belong to the visitor (observation, takeaway, for_host) and
+-- one to the host (host_note), because both sides learn something. A takeaway
+-- that has been set down as a commitment carries its id.
+-- -----------------------------------------------------------------------------
+create table if not exists public.visit_notes (
+  id            uuid primary key default gen_random_uuid(),
+  visit_id      uuid not null references public.visits (id) on delete cascade,
+  author_id     uuid not null references public.profiles (id) on delete cascade,
+  kind          text not null check (kind in ('observation', 'takeaway', 'for_host', 'host_note')),
+  body          text not null,
+  commitment_id uuid references public.commitments (id) on delete set null,
+  created_at    timestamptz not null default now(),
+  updated_at    timestamptz not null default now()
+);
+create index if not exists visit_notes_visit_idx on public.visit_notes (visit_id, created_at);
 
 -- -----------------------------------------------------------------------------
 -- check_ins — one per member per ISO week ("2026-W36").
@@ -304,9 +358,9 @@ do $$
 declare t text;
 begin
   foreach t in array array[
-    'profiles', 'circles', 'sittings', 'goal_blocks', 'commitments', 'check_ins',
-    'wins', 'messages', 'notes', 'benchmark_entries', 'challenges',
-    'challenge_participants', 'templates'
+    'profiles', 'circles', 'sittings', 'visits', 'visit_notes', 'goal_blocks',
+    'commitments', 'check_ins', 'wins', 'messages', 'notes', 'benchmark_entries',
+    'challenges', 'challenge_participants', 'templates'
   ] loop
     execute format('drop trigger if exists %I on public.%I', t || '_set_updated_at', t);
     execute format(
@@ -343,13 +397,15 @@ create trigger on_auth_user_created after insert on auth.users
   for each row execute function public.handle_new_user();
 
 -- =============================================================================
--- Realtime — the circle thread, check-ins and commitments update live.
+-- Realtime — the circle thread, check-ins and commitments update live, and so
+-- do visits and their notes: a proposal answered in one practice should appear
+-- in the other without a reload.
 -- Realtime still honours RLS, so members only ever see their own circles.
 -- =============================================================================
 do $$
 declare t text;
 begin
-  foreach t in array array['messages', 'check_ins', 'commitments'] loop
+  foreach t in array array['messages', 'check_ins', 'commitments', 'visits', 'visit_notes'] loop
     begin
       execute format('alter publication supabase_realtime add table public.%I', t);
     exception when duplicate_object then null;
