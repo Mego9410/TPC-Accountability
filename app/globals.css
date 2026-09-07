@@ -1038,3 +1038,9 @@ a.person:hover .person-name { color: var(--tpc-gold-deep); }
   .goal-head { gap: 8px; }
   .filter-bar { gap: 6px 14px; }
 }
+
+/* The correspondence sidebar must stack on a narrow screen; the reversed
+   variant is more specific than the shared rule above, so it is repeated. */
+@media (max-width: 880px) {
+  .grid-sidebar.reverse { grid-template-columns: 1fr; gap: 28px; }
+}

@@ -90,12 +90,20 @@ export const answerVisit = defineAction({
   },
 });
 
+/**
+ * A patch, not a whole record: a field absent from the form is left alone.
+ * `zOptText` turns an absent field into `null`, which would make every one of
+ * these branches fire on every submission, so the patch fields stay plain
+ * optional strings and are narrowed to null only when they are actually sent.
+ */
+const zPatchText = (max: number) => z.string().trim().max(max, "Too long.").optional();
+
 export const updateVisitDetails = defineAction({
   schema: z.object({
     visit_id: z.string(),
     scheduled_at: z.string().optional(),
-    arrival_note: zOptText(800),
-    notes: zOptText(4000),
+    arrival_note: zPatchText(800),
+    notes: zPatchText(4000),
   }),
   run: async (ctx, input) => {
     const visit = await ownVisit(ctx, input.visit_id);
@@ -109,11 +117,11 @@ export const updateVisitDetails = defineAction({
     }
     if (input.arrival_note !== undefined) {
       if (visit.hostId !== ctx.userId) throw new Error("Only the host sets the practicalities.");
-      patch.arrivalNote = input.arrival_note;
+      patch.arrivalNote = input.arrival_note || null;
     }
     if (input.notes !== undefined) {
       if (visit.status !== "held") throw new Error("The notes open once the morning is held.");
-      patch.notes = input.notes;
+      patch.notes = input.notes || null;
     }
     if (Object.keys(patch).length === 0) return { message: "Nothing to save." };
     await ctx.repo.updateVisit(visit.id, patch);
