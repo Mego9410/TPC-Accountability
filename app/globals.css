@@ -995,3 +995,52 @@ a.person:hover .person-name { color: var(--tpc-gold-deep); }
 @media (max-width: 720px) {
   .visit-note-actions { justify-content: flex-start; }
 }
+
+/* =========================================================================
+   ADDITIONS — the partner, the goals, the members directory
+   ------------------------------------------------------------------------- */
+/* Badges that read left to right under a name rather than trailing a row. */
+.badge-row.start { justify-content: flex-start; }
+
+/* A single checkbox on its own, outside a group. */
+.checkbox-row { display: flex; flex-direction: column; gap: 4px; }
+.checkbox-row .check.single { padding: 2px 0; }
+
+/* The members directory: cards of equal height, actions pinned to the foot. */
+.member-card { display: flex; flex-direction: column; gap: 12px; }
+.member-card .grow { flex: 1; }
+.member-card .card-actions { display: flex; flex-direction: column; gap: 10px; align-items: flex-start; }
+.member-card .card-actions .disclosure { width: 100%; }
+
+/* Plain-link filters above a list. */
+.filter-bar { display: flex; flex-wrap: wrap; gap: 8px 18px; align-items: baseline; padding-bottom: 14px; border-bottom: 1px solid var(--rule-on-paper); }
+.filter-bar .lbl { font: 500 10px/1.8 var(--font-sans); letter-spacing: 0.18em; text-transform: uppercase; color: var(--tpc-gold-deep); }
+.filter-bar a { font: 500 11px/1.6 var(--font-sans); letter-spacing: 0.12em; text-transform: uppercase; color: var(--fg-on-paper-muted); text-decoration: none; border-bottom: 1px solid transparent; }
+.filter-bar a:hover { color: var(--tpc-midnight); }
+.filter-bar a[aria-current="page"] { color: var(--tpc-midnight); border-bottom-color: var(--tpc-midnight); }
+
+/* A goal, and the words written against it. */
+.goal-card { display: flex; flex-direction: column; gap: 14px; }
+.goal-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; }
+.goal-head .goal-title { font: 500 21px/1.3 var(--font-serif); color: var(--fg-on-paper); margin: 0; }
+.goal-card.done .goal-title { color: var(--fg-on-paper-muted); }
+.goal-actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.updates { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 14px; }
+.updates li { display: flex; flex-direction: column; gap: 3px; padding-left: 14px; border-left: 2px solid var(--accent); }
+.updates .who { font: 500 10px/1.6 var(--font-sans); letter-spacing: 0.14em; text-transform: uppercase; color: var(--tpc-gold-deep); }
+.updates .what { font: 400 15.5px/1.55 var(--font-serif); color: var(--fg-on-paper); white-space: pre-wrap; }
+
+/* The programme for a morning, and the notes written afterwards. */
+.prose-note { font: 400 16px/1.6 var(--font-serif); color: var(--fg-on-paper); white-space: pre-wrap; margin: 0; }
+
+@media (max-width: 480px) {
+  .page-head-actions { width: 100%; }
+  .goal-head { gap: 8px; }
+  .filter-bar { gap: 6px 14px; }
+}
+
+/* The correspondence sidebar must stack on a narrow screen; the reversed
+   variant is more specific than the shared rule above, so it is repeated. */
+@media (max-width: 880px) {
+  .grid-sidebar.reverse { grid-template-columns: 1fr; gap: 28px; }
+}

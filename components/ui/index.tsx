@@ -1,17 +1,12 @@
 import Link from "next/link";
 import { useId, type CSSProperties, type InputHTMLAttributes, type ReactNode, type SelectHTMLAttributes, type TextareaHTMLAttributes, type ButtonHTMLAttributes } from "react";
 import {
-  BLOCK_STATUS_LABEL,
-  BLOCK_WEEKS,
-  CIRCLE_ROLE_LABEL,
-  COMMITMENT_STATUS_LABEL,
-  SITTING_STATUS_LABEL,
+  GOAL_STATUS_LABEL,
+  PARTNERSHIP_STATUS_LABEL,
   VISIT_STATUS_LABEL,
   initials as toInitials,
-  type BlockStatus,
-  type CircleRole,
-  type CommitmentStatus,
-  type SittingStatus,
+  type GoalStatus,
+  type PartnershipStatus,
   type VisitStatus,
 } from "@/lib/domain";
 
@@ -213,29 +208,19 @@ export function CheckboxGroup({
   );
 }
 
-/** Large radio choices, e.g. "I want a mentor / I want to mentor". */
-export function ChoiceCards({
-  name, options, defaultValue, legend, error,
-}: { name: string; legend: string; defaultValue?: string; error?: string; options: Array<{ value: string; title: string; detail: string }> }) {
+/** One labelled checkbox on its own, e.g. "Open to a partner". */
+export function Checkbox({
+  label, name, defaultChecked, help,
+}: { label: string; name: string; defaultChecked?: boolean; help?: string }) {
+  const cid = `c${useId()}${name}`;
   return (
-    <fieldset className={cn("field choicecards", error && "has-error")}>
-      <legend>{legend}</legend>
-      <div className="choicegrid">
-        {options.map((o) => {
-          const oid = `${name}-${o.value}`;
-          return (
-            <label key={o.value} htmlFor={oid} className="choice">
-              <input id={oid} type="radio" name={name} value={o.value} defaultChecked={defaultValue === o.value} />
-              <span className="choice-body">
-                <span className="choice-title">{o.title}</span>
-                <span className="choice-detail">{o.detail}</span>
-              </span>
-            </label>
-          );
-        })}
-      </div>
-      {error && <div className="help err" role="alert">{error}</div>}
-    </fieldset>
+    <div className="checkbox-row">
+      <label htmlFor={cid} className="check single">
+        <input id={cid} type="checkbox" name={name} defaultChecked={defaultChecked} aria-describedby={help ? `${cid}-help` : undefined} />
+        <span>{label}</span>
+      </label>
+      {help && <p id={`${cid}-help`} className="caption">{help}</p>}
+    </div>
   );
 }
 
@@ -268,31 +253,30 @@ export const Badge = ({ children, tone = "", dot = true }: { children: ReactNode
   </span>
 );
 
-const COMMITMENT_TONE: Record<CommitmentStatus, string> = { open: "", done: "ok", partial: "warn", missed: "err", carried: "muted" };
-const BLOCK_TONE: Record<BlockStatus, string> = { active: "gold", completed: "ok", abandoned: "muted" };
-const SITTING_TONE: Record<SittingStatus, string> = { scheduled: "gold", completed: "ok", cancelled: "muted" };
 const VISIT_TONE: Record<VisitStatus, string> = { proposed: "warn", agreed: "gold", declined: "muted", held: "ok", cancelled: "muted" };
+const GOAL_TONE: Record<GoalStatus, string> = { open: "gold", done: "ok" };
+const PARTNERSHIP_TONE: Record<PartnershipStatus, string> = { proposed: "warn", active: "gold", declined: "muted", ended: "muted" };
 
-export const CommitmentBadge = ({ status }: { status: CommitmentStatus }) => (
-  <Badge tone={COMMITMENT_TONE[status]}>{COMMITMENT_STATUS_LABEL[status]}</Badge>
-);
-export const BlockBadge = ({ status }: { status: BlockStatus }) => (
-  <Badge tone={BLOCK_TONE[status]}>{BLOCK_STATUS_LABEL[status]}</Badge>
-);
-export const SittingBadge = ({ status }: { status: SittingStatus }) => (
-  <Badge tone={SITTING_TONE[status]}>{SITTING_STATUS_LABEL[status]}</Badge>
-);
-/** Where a companion practice visit stands. */
+/** Where a companion visit stands. */
 export const VisitBadge = ({ status }: { status: VisitStatus }) => (
   <Badge tone={VISIT_TONE[status]}>{VISIT_STATUS_LABEL[status]}</Badge>
 );
-/** Marks a diary entry as a morning in a practice rather than a sitting over video. */
-export const PracticeVisitBadge = () => (
-  <Badge tone="gold" dot={false}>Practice visit</Badge>
+export const GoalBadge = ({ status }: { status: GoalStatus }) => (
+  <Badge tone={GOAL_TONE[status]}>{GOAL_STATUS_LABEL[status]}</Badge>
 );
-export const RoleBadge = ({ role }: { role: CircleRole }) => (
-  <Badge tone={role === "mentor" || role === "lead" ? "gold" : ""} dot={false}>{CIRCLE_ROLE_LABEL[role]}</Badge>
+export const PartnershipBadge = ({ status }: { status: PartnershipStatus }) => (
+  <Badge tone={PARTNERSHIP_TONE[status]}>{PARTNERSHIP_STATUS_LABEL[status]}</Badge>
 );
+
+/** What a principal is working on, as quiet badges. */
+export const FocusBadges = ({ areas, label = "Working on" }: { areas: string[]; label?: string }) =>
+  areas.length === 0 ? null : (
+    <div className="badge-row start" aria-label={label}>
+      {areas.map((a) => (
+        <Badge key={a} dot={false}>{a}</Badge>
+      ))}
+    </div>
+  );
 
 /* =========================================================================
    People
@@ -324,71 +308,6 @@ export function Stat({ value, label, sub, tone }: { value: ReactNode; label: Rea
       <span className="stat-value">{value}</span>
       <span className="stat-label">{label}</span>
       {sub && <span className="stat-sub">{sub}</span>}
-    </div>
-  );
-}
-
-/** Twelve cells, one per block week, coloured by the commitments in them. */
-export function WeekStrip({ current, weekStatus, compact }: { current: number; weekStatus: Partial<Record<number, "kept" | "mixed" | "missed" | "open" | "none">>; compact?: boolean }) {
-  return (
-    <ol className={cn("weekstrip", compact && "compact")} aria-label={`Week ${current} of ${BLOCK_WEEKS}`}>
-      {Array.from({ length: BLOCK_WEEKS }, (_, i) => i + 1).map((w) => (
-        <li key={w} className={cn("wk", weekStatus[w] ?? "none", w === current && "now", w > current && "future")} title={`Week ${w}`}>
-          <span>{w}</span>
-        </li>
-      ))}
-    </ol>
-  );
-}
-
-/** A cohort band (p25–p75) with the median and the member's own marker. */
-export function RangeBar({ min, max, p25, p75, median, value, format }: { min: number; max: number; p25: number; p75: number; median: number; value: number; format: (n: number) => string }) {
-  const span = Math.max(1e-9, max - min);
-  const pct = (n: number) => `${Math.min(100, Math.max(0, ((n - min) / span) * 100))}%`;
-  return (
-    <div className="rangebar" role="img" aria-label={`You ${format(value)}; cohort median ${format(median)}; middle half ${format(p25)} to ${format(p75)}`}>
-      <div className="rb-track">
-        <div className="rb-band" style={{ left: pct(p25), width: `calc(${pct(p75)} - ${pct(p25)})` }} />
-        <div className="rb-median" style={{ left: pct(median) }} />
-        <div className="rb-you" style={{ left: pct(value) }} />
-      </div>
-      <div className="rb-labels">
-        <span>{format(min)}</span>
-        <span className="rb-med">median {format(median)}</span>
-        <span>{format(max)}</span>
-      </div>
-    </div>
-  );
-}
-
-/** Small inline series; last point emphasised. */
-export function Sparkline({ values, width = 160, height = 40 }: { values: number[]; width?: number; height?: number }) {
-  if (values.length < 2) return null;
-  const min = Math.min(...values);
-  const max = Math.max(...values);
-  const span = max - min || 1;
-  const pad = 4;
-  const pts = values.map((v, i) => {
-    const x = pad + (i / (values.length - 1)) * (width - pad * 2);
-    const y = height - pad - ((v - min) / span) * (height - pad * 2);
-    return [x, y] as const;
-  });
-  const d = pts.map(([x, y], i) => `${i === 0 ? "M" : "L"}${x.toFixed(1)} ${y.toFixed(1)}`).join(" ");
-  const area = `${d} L${pts[pts.length - 1][0].toFixed(1)} ${height - pad} L${pts[0][0].toFixed(1)} ${height - pad} Z`;
-  const [lx, ly] = pts[pts.length - 1];
-  return (
-    <svg className="spark" viewBox={`0 0 ${width} ${height}`} width={width} height={height} aria-hidden="true">
-      <path d={area} className="spark-area" />
-      <path d={d} className="spark-line" />
-      <circle cx={lx} cy={ly} r={3} className="spark-end" />
-    </svg>
-  );
-}
-
-export function ProgressBar({ pct, label }: { pct: number; label?: string }) {
-  return (
-    <div className="progress" role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100} aria-label={label}>
-      <div className="progress-fill" style={{ width: `${Math.min(100, Math.max(0, pct))}%` }} />
     </div>
   );
 }

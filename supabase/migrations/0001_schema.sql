@@ -1,15 +1,21 @@
 -- =============================================================================
 -- The Principals Club — schema
 --
--- One model for the whole product (see lib/domain.ts). A member belongs to one
--- or more *circles* (a pair or a pod). Inside a circle they are a peer, a
--- mentee, a mentor, or the lead. Every member runs twelve-week *goal blocks* of
--- weekly *commitments*, checks in once a week, logs *wins*, and reports figures
--- to the *benchmark*. Mentors see their mentees' progress and leave *notes*.
+-- Two things, and nothing else (see lib/domain.ts).
+--
+--   1. A **partner**. One principal asks another; if they agree, the two of
+--      them share what they are working on and each keeps an eye on whether
+--      the other is getting on with it. One ongoing relationship, held in
+--      `partnerships`, with the work itself in `goals` and `goal_updates`.
+--
+--   2. A **companion visit**. A morning inside another principal's practice,
+--      and in turn a morning inside yours. Held in `visits`.
+--
+-- `messages` carries the correspondence between any two members; `profiles` is
+-- the directory every member may read.
 --
 -- Column names are snake_case; the app maps them to camelCase at the door
--- (lib/repo/supabase/mappers.ts). Policies live in 0002, functions in 0003,
--- the template catalogue in 0004.
+-- (lib/repo/supabase/mappers.ts). Row level security lives in 0002.
 -- =============================================================================
 
 create extension if not exists "pgcrypto";
@@ -19,8 +25,8 @@ create extension if not exists "pgcrypto";
 create sequence if not exists public.membership_seq start with 149;
 
 -- -----------------------------------------------------------------------------
--- regions — the twelve UK regions used for benchmark cohorting.
--- Mirrors REGIONS in lib/benchmarks.ts; keep the two lists in step.
+-- regions — the twelve UK regions. Mirrors REGIONS in lib/regions.ts; keep the
+-- two lists in step.
 -- -----------------------------------------------------------------------------
 create table if not exists public.regions (
   name text primary key
@@ -42,7 +48,9 @@ insert into public.regions (name) values
 on conflict (name) do nothing;
 
 -- -----------------------------------------------------------------------------
--- profiles — one row per auth user, created by trigger on sign-up.
+-- profiles — one row per auth user, created by trigger on sign-up. This is the
+-- directory: every signed-in member may read every row (0002), because finding
+-- a partner or a practice worth a morning is the whole point.
 -- -----------------------------------------------------------------------------
 create table if not exists public.profiles (
   id                 uuid primary key references auth.users (id) on delete cascade,
@@ -55,291 +63,157 @@ create table if not exists public.profiles (
   chair_count        int check (chair_count is null or chair_count >= 0),
   years_as_principal int check (years_as_principal is null or years_as_principal >= 0),
   timezone           text not null default 'Europe/London',
+  -- A short note on the practice, read by anyone deciding whether to ask you.
   bio                text,
-  membership_no      text not null unique default lpad(nextval('public.membership_seq')::text, 4, '0'),
-  role               text not null default 'member' check (role in ('member', 'mentor', 'staff')),
-  tier               text not null default 'member' check (tier in ('member', 'society')),
-  onboarded          boolean not null default false,
+  -- What you are working on. Shown when someone is looking for a partner.
   focus_areas        text[] not null default '{}',
-  cadence            text not null default 'weekly' check (cadence in ('weekly', 'fortnightly', 'monthly')),
-  preferred_times    text[] not null default '{}',
-  -- Mentors only: how many mentees they will take, and the note shown to them.
-  mentor_capacity    int check (mentor_capacity is null or mentor_capacity >= 0),
-  mentor_note        text,
-  consistency_score  numeric not null default 0,
+  -- Willing to receive a visitor, and looking for a partner, at present.
+  open_to_visits     boolean not null default true,
+  open_to_partner    boolean not null default false,
+  membership_no      text not null unique default lpad(nextval('public.membership_seq')::text, 4, '0'),
+  role               text not null default 'member' check (role in ('member', 'staff')),
+  onboarded          boolean not null default false,
+  -- The monthly note asking how the goals are getting on.
   nudge_opt_out      boolean not null default false,
   created_at         timestamptz not null default now(),
   updated_at         timestamptz not null default now()
 );
-create index if not exists profiles_role_idx on public.profiles (role);
+
+-- The directory listing: everyone but the House, in name order.
+create index if not exists profiles_role_name_idx on public.profiles (role, full_name);
+-- Narrowing the directory by where and what kind of practice.
 create index if not exists profiles_region_type_idx on public.profiles (region, practice_type);
+-- The two "who is available" filters.
+create index if not exists profiles_open_to_partner_idx on public.profiles (open_to_partner) where open_to_partner;
+create index if not exists profiles_open_to_visits_idx on public.profiles (open_to_visits) where open_to_visits;
 
 -- -----------------------------------------------------------------------------
--- circles — a pair (mentor + mentee, or two peers) or a pod (4–6 members).
+-- partnerships — one ongoing relationship between two principals. Order carries
+-- no meaning: a_id and b_id are simply the two of them. Either may propose; the
+-- other agrees ('active') or declines ('declined'), and either may end it.
 -- -----------------------------------------------------------------------------
-create table if not exists public.circles (
-  id           uuid primary key default gen_random_uuid(),
-  kind         text not null check (kind in ('pair', 'pod')),
-  name         text not null,
-  cadence      text not null default 'weekly' check (cadence in ('weekly', 'fortnightly', 'monthly')),
-  cohort_label text,                                   -- e.g. '2026 Q3'
-  status       text not null default 'active' check (status in ('active', 'archived')),
-  created_at   timestamptz not null default now(),
-  updated_at   timestamptz not null default now()
+create table if not exists public.partnerships (
+  id             uuid primary key default gen_random_uuid(),
+  a_id           uuid not null references public.profiles (id) on delete cascade,
+  b_id           uuid not null references public.profiles (id) on delete cascade,
+  proposed_by_id uuid not null references public.profiles (id) on delete cascade,
+  status         text not null default 'proposed'
+                   check (status in ('proposed', 'active', 'declined', 'ended')),
+  -- A word with the request: why you asked.
+  message        text,
+  started_at     timestamptz,
+  ended_at       timestamptz,
+  created_at     timestamptz not null default now(),
+  updated_at     timestamptz not null default now(),
+  check (a_id <> b_id)
 );
 
-create table if not exists public.circle_members (
-  circle_id uuid not null references public.circles (id) on delete cascade,
-  user_id   uuid not null references public.profiles (id) on delete cascade,
-  role      text not null default 'peer' check (role in ('peer', 'mentee', 'mentor', 'lead')),
-  joined_at timestamptz not null default now(),
-  left_at   timestamptz,                               -- null while a current member
-  primary key (circle_id, user_id)
-);
-create index if not exists circle_members_user_idx on public.circle_members (user_id) where left_at is null;
+create index if not exists partnerships_a_idx on public.partnerships (a_id, created_at desc);
+create index if not exists partnerships_b_idx on public.partnerships (b_id, created_at desc);
+-- The question is_partner_of() asks, and the one the partner page asks.
+create index if not exists partnerships_active_idx on public.partnerships (status) where status = 'active';
+
+-- Two principals cannot have two live rows between them, whichever way round
+-- they were entered. A declined or ended relationship leaves the pair free to
+-- ask again.
+create unique index if not exists partnerships_live_pair_idx
+  on public.partnerships (least(a_id, b_id), greatest(a_id, b_id))
+  where status in ('proposed', 'active');
 
 -- -----------------------------------------------------------------------------
--- sittings — a circle's scheduled conversations, held over video. A morning
--- inside somebody's practice is not a sitting; it is a visit (below).
+-- goals — what a principal is working on. No blocks, no weeks: a goal is open
+-- until it is done. A goal without a target date is still a goal.
 -- -----------------------------------------------------------------------------
-create table if not exists public.sittings (
-  id           uuid primary key default gen_random_uuid(),
-  circle_id    uuid not null references public.circles (id) on delete cascade,
-  scheduled_at timestamptz not null,
-  status       text not null default 'scheduled' check (status in ('scheduled', 'completed', 'cancelled')),
-  join_url     text,
-  notes        text,
-  created_by   uuid not null references public.profiles (id) on delete cascade,
-  created_at   timestamptz not null default now(),
-  updated_at   timestamptz not null default now()
-);
-create index if not exists sittings_circle_idx on public.sittings (circle_id, scheduled_at);
-
--- A sitting was briefly made to carry practice visits too. It is a video
--- sitting again; visits have their own table.
-drop index if exists public.sittings_circle_kind_idx;
-alter table public.sittings drop column if exists kind;
-alter table public.sittings drop column if exists host_id;
-alter table public.sittings drop column if exists location;
-
--- -----------------------------------------------------------------------------
--- goal_blocks — twelve-week blocks; commitments hang off them by week.
--- -----------------------------------------------------------------------------
-create table if not exists public.goal_blocks (
+create table if not exists public.goals (
   id          uuid primary key default gen_random_uuid(),
   user_id     uuid not null references public.profiles (id) on delete cascade,
   title       text not null,
-  description text,
-  start_date  date not null,
-  end_date    date not null,
-  status      text not null default 'active' check (status in ('active', 'completed', 'abandoned')),
-  template_id text,                                    -- the catalogue entry it began from, if any
+  detail      text,
+  target_date date,
+  status      text not null default 'open' check (status in ('open', 'done')),
+  done_at     timestamptz,
   created_at  timestamptz not null default now(),
-  updated_at  timestamptz not null default now(),
-  check (end_date > start_date)
+  updated_at  timestamptz not null default now()
 );
-create index if not exists goal_blocks_user_idx on public.goal_blocks (user_id, status, start_date desc);
 
-create table if not exists public.commitments (
-  id           uuid primary key default gen_random_uuid(),
-  block_id     uuid not null references public.goal_blocks (id) on delete cascade,
-  user_id      uuid not null references public.profiles (id) on delete cascade,
-  week         int not null check (week between 1 and 12),
-  body         text not null,                          -- Commitment.text in the app
-  status       text not null default 'open' check (status in ('open', 'done', 'partial', 'missed', 'carried')),
-  carried_from uuid references public.commitments (id) on delete set null,
-  sitting_id   uuid references public.sittings (id) on delete set null,
-  created_at   timestamptz not null default now(),
-  updated_at   timestamptz not null default now()
-);
-create index if not exists commitments_block_week_idx on public.commitments (block_id, week);
-create index if not exists commitments_user_idx on public.commitments (user_id);
+-- listGoals(): open first, then by target date with the undated last.
+create index if not exists goals_user_idx
+  on public.goals (user_id, status desc, target_date asc nulls last);
+-- The monthly note asks who has an open goal.
+create index if not exists goals_open_idx on public.goals (user_id) where status = 'open';
 
 -- -----------------------------------------------------------------------------
--- visits — a morning inside another principal's practice, and in turn one
--- inside yours. Either party may propose; the other agrees or declines, and may
--- decline for any reason without giving one. Both give the confidentiality
--- undertaking (visitor_agreed_at, host_agreed_at) before it is agreed.
--- visit_notes reference commitments, so both tables come after them.
+-- goal_updates — a line written against a goal: your own progress, or a word
+-- from your partner. The monthly note asks for one of these.
+-- -----------------------------------------------------------------------------
+create table if not exists public.goal_updates (
+  id         uuid primary key default gen_random_uuid(),
+  goal_id    uuid not null references public.goals (id) on delete cascade,
+  author_id  uuid not null references public.profiles (id) on delete cascade,
+  body       text not null,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists goal_updates_goal_idx on public.goal_updates (goal_id, created_at);
+create index if not exists goal_updates_author_idx on public.goal_updates (author_id, created_at desc);
+
+-- -----------------------------------------------------------------------------
+-- visits — a morning inside another principal's practice. Either party may
+-- propose; the other agrees or declines, and may decline for any reason without
+-- giving one. Nobody may delete one, so a declined morning stays on the record.
+-- A visit is between any two members: it does not need a partnership.
 -- -----------------------------------------------------------------------------
 create table if not exists public.visits (
-  id                uuid primary key default gen_random_uuid(),
-  circle_id         uuid not null references public.circles (id) on delete cascade,
+  id             uuid primary key default gen_random_uuid(),
   -- The principal going, and the principal opening their practice.
-  visitor_id        uuid not null references public.profiles (id) on delete cascade,
-  host_id           uuid not null references public.profiles (id) on delete cascade,
-  proposed_by_id    uuid not null references public.profiles (id) on delete cascade,
-  scheduled_at      timestamptz not null,
-  status            text not null default 'proposed'
-                      check (status in ('proposed', 'agreed', 'declined', 'held', 'cancelled')),
-  practice_name     text,                              -- the host's practice, for display
-  proposal_note     text,                              -- what the visitor hopes to see
-  arrival_note      text,                              -- where to park, who to ask for
-  visitor_agreed_at timestamptz,
-  host_agreed_at    timestamptz,
-  held_at           timestamptz,
-  created_at        timestamptz not null default now(),
-  updated_at        timestamptz not null default now(),
+  visitor_id     uuid not null references public.profiles (id) on delete cascade,
+  host_id        uuid not null references public.profiles (id) on delete cascade,
+  proposed_by_id uuid not null references public.profiles (id) on delete cascade,
+  scheduled_at   timestamptz not null,
+  status         text not null default 'proposed'
+                   check (status in ('proposed', 'agreed', 'declined', 'held', 'cancelled')),
+  -- The host's practice, denormalised for display.
+  practice_name  text,
+  -- A word with the request: what you hope to see.
+  proposal_note  text,
+  -- The host's practicalities: where to park, who to ask for, when to arrive.
+  arrival_note   text,
+  -- Written afterwards by either of them, and seen by both.
+  notes          text,
+  created_at     timestamptz not null default now(),
+  updated_at     timestamptz not null default now(),
   check (visitor_id <> host_id)
 );
-create index if not exists visits_circle_idx on public.visits (circle_id, scheduled_at);
-create index if not exists visits_visitor_idx on public.visits (visitor_id, status);
-create index if not exists visits_host_idx on public.visits (host_id, status);
--- One live morning at a time for a pair in a given direction; a practice may be
--- visited again once the last one is held, declined or cancelled.
+
+create index if not exists visits_visitor_idx on public.visits (visitor_id, scheduled_at);
+create index if not exists visits_host_idx on public.visits (host_id, scheduled_at);
+create index if not exists visits_held_idx on public.visits (status, scheduled_at desc) where status = 'held';
+
+-- One live morning at a time between any two principals, whichever of them is
+-- the visitor. Once it is held, declined or cancelled they may arrange another.
 create unique index if not exists visits_live_pair_idx
-  on public.visits (circle_id, visitor_id, host_id)
+  on public.visits (least(visitor_id, host_id), greatest(visitor_id, host_id))
   where status in ('proposed', 'agreed');
 
 -- -----------------------------------------------------------------------------
--- visit_notes — the record of a visit, kept in four parts rather than one box
--- of prose. Three belong to the visitor (observation, takeaway, for_host) and
--- one to the host (host_note), because both sides learn something. A takeaway
--- that has been set down as a commitment carries its id.
--- -----------------------------------------------------------------------------
-create table if not exists public.visit_notes (
-  id            uuid primary key default gen_random_uuid(),
-  visit_id      uuid not null references public.visits (id) on delete cascade,
-  author_id     uuid not null references public.profiles (id) on delete cascade,
-  kind          text not null check (kind in ('observation', 'takeaway', 'for_host', 'host_note')),
-  body          text not null,
-  commitment_id uuid references public.commitments (id) on delete set null,
-  created_at    timestamptz not null default now(),
-  updated_at    timestamptz not null default now()
-);
-create index if not exists visit_notes_visit_idx on public.visit_notes (visit_id, created_at);
-
--- -----------------------------------------------------------------------------
--- check_ins — one per member per ISO week ("2026-W36").
--- -----------------------------------------------------------------------------
-create table if not exists public.check_ins (
-  id             uuid primary key default gen_random_uuid(),
-  user_id        uuid not null references public.profiles (id) on delete cascade,
-  circle_id      uuid references public.circles (id) on delete set null,
-  week_key       text not null check (week_key ~ '^\d{4}-W\d{2}$'),
-  block_week     int check (block_week is null or block_week between 1 and 12),
-  did_well       text,
-  struggled_with text,
-  next_focus     text,
-  energy         int check (energy is null or energy between 1 and 10),
-  completed_at   timestamptz not null default now(),
-  updated_at     timestamptz not null default now(),
-  unique (user_id, week_key)
-);
-create index if not exists check_ins_user_idx on public.check_ins (user_id, completed_at desc);
-create index if not exists check_ins_circle_idx on public.check_ins (circle_id, completed_at desc);
-
--- -----------------------------------------------------------------------------
--- wins — the permanent win log. Archived rather than deleted.
--- -----------------------------------------------------------------------------
-create table if not exists public.wins (
-  id          uuid primary key default gen_random_uuid(),
-  user_id     uuid not null references public.profiles (id) on delete cascade,
-  block_id    uuid references public.goal_blocks (id) on delete set null,
-  title       text not null,
-  detail      text,
-  archived_at timestamptz,
-  created_at  timestamptz not null default now(),
-  updated_at  timestamptz not null default now()
-);
-create index if not exists wins_user_idx on public.wins (user_id, created_at desc) where archived_at is null;
-
--- -----------------------------------------------------------------------------
--- messages — a circle's thread. read_at is set by the reader, not the sender.
+-- messages — correspondence between two members. read_at is set by the
+-- recipient, never by the sender (0002 narrows UPDATE to that one column).
 -- -----------------------------------------------------------------------------
 create table if not exists public.messages (
   id         uuid primary key default gen_random_uuid(),
-  circle_id  uuid not null references public.circles (id) on delete cascade,
-  sender_id  uuid not null references public.profiles (id) on delete cascade,
+  from_id    uuid not null references public.profiles (id) on delete cascade,
+  to_id      uuid not null references public.profiles (id) on delete cascade,
   body       text not null,
   read_at    timestamptz,
-  created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now()
-);
-create index if not exists messages_circle_idx on public.messages (circle_id, created_at);
-
--- -----------------------------------------------------------------------------
--- notes — a mentor's note about a mentee: on a commitment, a check-in, or general.
--- -----------------------------------------------------------------------------
-create table if not exists public.notes (
-  id            uuid primary key default gen_random_uuid(),
-  author_id     uuid not null references public.profiles (id) on delete cascade,
-  about_user_id uuid not null references public.profiles (id) on delete cascade,
-  commitment_id uuid references public.commitments (id) on delete set null,
-  check_in_id   uuid references public.check_ins (id) on delete set null,
-  body          text not null,
-  created_at    timestamptz not null default now(),
-  updated_at    timestamptz not null default now()
-);
-create index if not exists notes_about_idx on public.notes (about_user_id, created_at desc);
-create index if not exists notes_author_idx on public.notes (author_id, created_at desc);
-
--- -----------------------------------------------------------------------------
--- benchmark_entries — monthly practice figures. Raw rows are own-only; the
--- cohort aggregates are exposed only through benchmark_cohort_stats() (0003).
--- -----------------------------------------------------------------------------
-create table if not exists public.benchmark_entries (
-  id         uuid primary key default gen_random_uuid(),
-  user_id    uuid not null references public.profiles (id) on delete cascade,
-  period     date not null,                            -- first of the month
-  metric_key text not null,                            -- see lib/benchmarks.ts
-  value      numeric not null,
-  created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now(),
-  unique (user_id, period, metric_key)
-);
-create index if not exists benchmark_entries_metric_period_idx on public.benchmark_entries (metric_key, period);
-
--- -----------------------------------------------------------------------------
--- challenges — club-wide sprints with an opt-in leaderboard.
--- -----------------------------------------------------------------------------
-create table if not exists public.challenges (
-  id           uuid primary key default gen_random_uuid(),
-  title        text not null,
-  description  text,
-  metric_label text not null,                          -- e.g. 'new patients'
-  start_date   date not null,
-  end_date     date not null,
-  created_at   timestamptz not null default now(),
-  updated_at   timestamptz not null default now(),
-  check (end_date >= start_date)
-);
-create index if not exists challenges_start_idx on public.challenges (start_date desc);
-
-create table if not exists public.challenge_participants (
-  challenge_id       uuid not null references public.challenges (id) on delete cascade,
-  user_id            uuid not null references public.profiles (id) on delete cascade,
-  progress           numeric not null default 0 check (progress >= 0),
-  leaderboard_opt_in boolean not null default false,
-  created_at         timestamptz not null default now(),
-  updated_at         timestamptz not null default now(),
-  primary key (challenge_id, user_id)
-);
-create index if not exists challenge_participants_user_idx on public.challenge_participants (user_id);
-
--- -----------------------------------------------------------------------------
--- templates — the goal-block catalogue. Ids are stable text keys so the demo
--- world and the real records agree ("t-turnover"). Seeded in 0004.
--- -----------------------------------------------------------------------------
-create table if not exists public.templates (
-  id          text primary key,
-  slug        text not null unique,
-  title       text not null,
-  description text,
-  audience    text not null default 'any' check (audience in ('mentee', 'any')),
-  sort        int not null default 0,
-  created_at  timestamptz not null default now(),
-  updated_at  timestamptz not null default now()
+  created_at timestamptz not null default now()
 );
 
-create table if not exists public.template_weeks (
-  id          uuid primary key default gen_random_uuid(),
-  template_id text not null references public.templates (id) on delete cascade,
-  week        int not null check (week between 1 and 12),
-  body        text not null,                           -- weeks[].text in the app
-  sort        int not null default 0
-);
-create index if not exists template_weeks_template_idx on public.template_weeks (template_id, week, sort);
+-- listCorrespondents() and listMessagesWith() read from both sides.
+create index if not exists messages_to_idx on public.messages (to_id, created_at);
+create index if not exists messages_from_idx on public.messages (from_id, created_at);
+create index if not exists messages_pair_idx on public.messages (from_id, to_id, created_at);
+-- countUnread().
+create index if not exists messages_unread_idx on public.messages (to_id) where read_at is null;
 
 -- =============================================================================
 -- Triggers: updated_at, new-user provisioning
@@ -354,14 +228,12 @@ begin
 end;
 $$;
 
+-- goal_updates and messages are written once and never edited (bar read_at, set
+-- by column-level grant), so they carry no updated_at and no trigger.
 do $$
 declare t text;
 begin
-  foreach t in array array[
-    'profiles', 'circles', 'sittings', 'visits', 'visit_notes', 'goal_blocks',
-    'commitments', 'check_ins', 'wins', 'messages', 'notes', 'benchmark_entries',
-    'challenges', 'challenge_participants', 'templates'
-  ] loop
+  foreach t in array array['profiles', 'partnerships', 'goals', 'visits'] loop
     execute format('drop trigger if exists %I on public.%I', t || '_set_updated_at', t);
     execute format(
       'create trigger %I before update on public.%I for each row execute function public.set_updated_at()',
@@ -370,8 +242,8 @@ begin
   end loop;
 end$$;
 
--- A profile for every new auth user. Name and email come from sign-up metadata;
--- everything else is filled in during onboarding.
+-- A profile for every new auth user. Name, honorific and email come from
+-- sign-up metadata; everything else is filled in during onboarding.
 create or replace function public.handle_new_user()
 returns trigger
 language plpgsql
@@ -379,9 +251,10 @@ security definer
 set search_path = public
 as $$
 begin
-  insert into public.profiles (id, full_name, email)
+  insert into public.profiles (id, honorific, full_name, email)
   values (
     new.id,
+    coalesce(nullif(new.raw_user_meta_data ->> 'honorific', ''), 'Dr'),
     coalesce(new.raw_user_meta_data ->> 'full_name', new.raw_user_meta_data ->> 'name', ''),
     new.email
   )
@@ -397,15 +270,14 @@ create trigger on_auth_user_created after insert on auth.users
   for each row execute function public.handle_new_user();
 
 -- =============================================================================
--- Realtime — the circle thread, check-ins and commitments update live, and so
--- do visits and their notes: a proposal answered in one practice should appear
--- in the other without a reload.
--- Realtime still honours RLS, so members only ever see their own circles.
+-- Realtime — a message, a word against a goal, or an answer to a visit proposal
+-- should appear in the other practice without a reload. Realtime still honours
+-- RLS, so a member only ever sees rows the policies in 0002 allow them.
 -- =============================================================================
 do $$
 declare t text;
 begin
-  foreach t in array array['messages', 'check_ins', 'commitments', 'visits', 'visit_notes'] loop
+  foreach t in array array['messages', 'goal_updates', 'visits'] loop
     begin
       execute format('alter publication supabase_realtime add table public.%I', t);
     exception when duplicate_object then null;

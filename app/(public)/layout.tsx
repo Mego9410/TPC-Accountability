@@ -6,9 +6,9 @@ import { getViewer } from "@/lib/session";
 import "./public.css";
 
 /**
- * The public side of the Club: landing, the two audiences, membership, the
- * documents, the tour, and the door itself. No sign-in is required; a signed-in
- * principal is offered the way back in.
+ * The public side of the Club: the landing page, companion practice visits,
+ * membership, the documents, the tour, and the door itself. No sign-in is
+ * required; a signed-in principal is offered the way back in.
  */
 export default async function PublicLayout({ children }: { children: React.ReactNode }) {
   const viewer = await getViewer();

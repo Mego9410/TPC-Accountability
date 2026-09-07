@@ -3,11 +3,11 @@ import { env } from "@/lib/env";
 import { emptyDelta, readDelta, writeDelta } from "@/lib/repo/demo/store";
 import type { PersonaKey } from "@/lib/repo/demo/world";
 
-const PERSONAS: PersonaKey[] = ["member", "mentor", "house"];
+const PERSONAS: PersonaKey[] = ["member", "partner", "house"];
 
 /**
  * Enter the furnished example in a chosen seat. Keeps the visitor's existing
- * changes when they switch seats, so the mentor can see what the member did.
+ * changes when they switch seats, so a partner can see what the member did.
  */
 export async function GET(request: Request) {
   const url = new URL(request.url);

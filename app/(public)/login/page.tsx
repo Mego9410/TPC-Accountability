@@ -4,7 +4,7 @@ import { AuthForm } from "@/components/auth-form";
 
 export const metadata: Metadata = {
   title: "Sign in",
-  description: "Members and mentors of The Principals Club sign in here.",
+  description: "Members of The Principals Club sign in here.",
 };
 
 export default function LoginPage() {

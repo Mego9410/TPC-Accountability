@@ -1,69 +1,80 @@
 import type { Metadata } from "next";
 import { requireViewer } from "@/lib/session";
-import { currentWeekKey } from "@/lib/weeks";
-import { SubNav } from "@/components/shell/nav";
-import { Button, Caption, Card, Eyebrow, H3, PageHeader, Person, Stat, TextLink } from "@/components/ui";
-import { HOUSE_NAV } from "@/lib/house";
+import { partnerIdOf, practiceLine, type Profile } from "@/lib/domain";
+import { Badge, Caption, EmptyState, PageHeader, Section } from "@/components/ui";
 
 export const metadata: Metadata = { title: "The House" };
 
 export default async function HousePage() {
   const { repo } = await requireViewer({ roles: ["staff"] });
-  const [members, circles] = await Promise.all([repo.listAllProfiles(), repo.listAllCircles()]);
-  const active = circles.filter((c) => c.status === "active");
-  const seated = new Set(active.flatMap((c) => c.members.map((m) => m.userId)));
-  const unseated = members.filter((m) => !seated.has(m.id));
-  const mentors = members.filter((m) => m.role === "mentor");
-  const society = members.filter((m) => m.tier === "society");
-  const checkIns = await repo.listCheckInsFor(society.map((m) => m.id), 500);
-  const thisWeek = new Set(checkIns.filter((c) => c.weekKey === currentWeekKey()).map((c) => c.userId));
-  const quiet = society.filter((m) => !thisWeek.has(m.id));
+  const members = await repo.listMembers();
+  const byId = new Map<string, Profile>(members.map((m) => [m.id, m]));
+
+  const partnerOf = new Map<string, Profile>();
+  await Promise.all(
+    members.map(async (m) => {
+      const active = (await repo.listPartnerships(m.id)).find((p) => p.status === "active");
+      if (!active) return;
+      const other = byId.get(partnerIdOf(active, m.id));
+      if (other) partnerOf.set(m.id, other);
+    }),
+  );
+
+  const partnered = members.filter((m) => partnerOf.has(m.id)).length;
 
   return (
     <div className="section fade-enter">
-      <SubNav items={HOUSE_NAV} />
-      <PageHeader eyebrow="The House" title="The Club at a glance." lede="Who is in, who is seated, and who has gone quiet. The week's picture is on the home page." />
+      <PageHeader
+        eyebrow="The House"
+        title="Who is here, and who is with whom."
+        lede="One page. The House keeps the register and nothing else."
+      />
 
-      <div className="stat-row">
-        <Stat value={members.length} label="Principals" sub="on the books" />
-        <Stat value={mentors.length} label="Mentors" sub={`${mentors.reduce((n, m) => n + (m.mentorCapacity ?? 0), 0)} seats offered`} />
-        <Stat value={society.length} label="In the Society" sub={`${members.length - society.length} members`} tone="gold" />
-        <Stat value={active.length} label="Circles" sub={`${active.filter((c) => c.kind === "pair").length} pairs · ${active.filter((c) => c.kind === "pod").length} pods`} />
-      </div>
-
-      <div className="grid-even">
-        <Card emphasis={unseated.length > 0}>
-          <Eyebrow>Waiting for a seat</Eyebrow>
-          {unseated.length === 0 ? (
-            <>
-              <H3>Everyone is seated.</H3>
-              <Caption>New principals appear here the moment they finish their introduction.</Caption>
-            </>
-          ) : (
-            unseated.map((m) => <Person key={m.id} name={m.fullName} meta={m.practiceName ?? "Principal"} href="/house/members" size="sm" />)
-          )}
-          <div className="row gap-4 wrap" style={{ marginTop: 6 }}>
-            <Button href="/house/circles" size="sm" variant="secondary">Form a circle</Button>
-            <TextLink href="/house/members">All members</TextLink>
+      <Section
+        title={`${members.length} ${members.length === 1 ? "member" : "members"}`}
+        aside={<Caption>{partnered} of them are partnered.</Caption>}
+      >
+        {members.length === 0 ? (
+          <EmptyState title="No members yet.">The register is empty.</EmptyState>
+        ) : (
+          <div className="tablewrap">
+            <table className="table">
+              <caption className="sr-only">Members of the Club and their partners</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Member</th>
+                  <th scope="col">Practice</th>
+                  <th scope="col">Partner</th>
+                  <th scope="col">Open to</th>
+                </tr>
+              </thead>
+              <tbody>
+                {members.map((m) => {
+                  const partner = partnerOf.get(m.id);
+                  return (
+                    <tr key={m.id}>
+                      <td className="wrapcell">
+                        {m.fullName}
+                        <br />
+                        <span className="mono-sm">No. {m.membershipNo}</span>
+                      </td>
+                      <td className="wrapcell">{practiceLine(m) || "Not given"}</td>
+                      <td className="wrapcell">{partner ? partner.fullName : "None"}</td>
+                      <td className="wrapcell">
+                        <span className="badge-row start">
+                          {m.openToPartner && <Badge tone="ok">A partner</Badge>}
+                          {m.openToVisits && <Badge tone="gold">Visits</Badge>}
+                          {!m.openToPartner && !m.openToVisits && <Badge tone="muted">Nothing at present</Badge>}
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
-        </Card>
-
-        <Card>
-          <Eyebrow>Gone quiet this week</Eyebrow>
-          {quiet.length === 0 ? (
-            <>
-              <H3>Everyone in the Society has checked in.</H3>
-              <Caption>A rare and fine thing.</Caption>
-            </>
-          ) : (
-            quiet.slice(0, 6).map((m) => <Person key={m.id} name={m.fullName} meta={m.practiceName ?? "Principal"} href="/house/members" size="sm" />)
-          )}
-          {quiet.length > 6 && <Caption>And {quiet.length - 6} more.</Caption>}
-          <div className="row" style={{ marginTop: 6 }}>
-            <TextLink href="/home">This week&rsquo;s picture</TextLink>
-          </div>
-        </Card>
-      </div>
+        )}
+      </Section>
     </div>
   );
 }

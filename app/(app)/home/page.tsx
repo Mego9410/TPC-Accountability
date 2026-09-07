@@ -1,354 +1,228 @@
 import type { Metadata } from "next";
-import Link from "next/link";
-import { requireViewer, canSeeSociety } from "@/lib/session";
-import { address, firstName, menteesOf, mentorOf, othersIn, BLOCK_WEEKS, type CircleWithMembers, type Profile, type Visit } from "@/lib/domain";
-import { memberSnapshot, nextSitting, circleTitle, type MemberSnapshot } from "@/lib/queries";
-import { currentWeekKey, formatAppointment, relativeDays, weekLabel } from "@/lib/weeks";
-import { BENCHMARK_METRICS, formatMetric } from "@/lib/benchmarks";
+import { requireViewer } from "@/lib/session";
 import {
-  Body, Button, Caption, Card, CommitmentBadge, Display, Divider, EmptyState, Eyebrow, H3, Notice, Person, Section, Stat, TextLink, WeekStrip,
+  address,
+  awaitingAnswerFrom,
+  firstName,
+  otherPartyOfVisit,
+  partnerIdOf,
+  practiceLine,
+  type Profile,
+  type Visit,
+} from "@/lib/domain";
+import { answerPartnerRequest } from "@/lib/actions/partners";
+import { answerVisit } from "@/lib/actions/visits";
+import { formatAppointment, relativeDays } from "@/lib/weeks";
+import {
+  Body, Button, Caption, Card, Divider, EmptyState, GoalBadge, H3, PageHeader, Person, Section, TextLink, VisitBadge,
 } from "@/components/ui";
-import { CommitmentQuickActions } from "@/components/commitments";
+import { QuickAction } from "@/components/ui/form";
+import { LatestUpdate, loadGoals, loadPartnerships, namer } from "../parts";
 
 export const metadata: Metadata = { title: "Home" };
 
-function greeting(): string {
-  const h = new Date().getHours();
-  return h < 12 ? "Good morning" : h < 18 ? "Good afternoon" : "Good evening";
+function greeting(now: Date): string {
+  const h = now.getHours();
+  if (h < 12) return "Good morning";
+  if (h < 18) return "Good afternoon";
+  return "Good evening";
 }
 
-export default async function HomePage({ searchParams }: { searchParams: Promise<{ welcome?: string }> }) {
-  const viewer = await requireViewer();
-  const { profile, repo, userId } = viewer;
-  const { welcome } = await searchParams;
-  const today = new Date().toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" });
+export default async function HomePage() {
+  const { repo, userId, profile } = await requireViewer();
 
-  if (profile.role === "staff") return <StaffHome />;
-
-  const circles = await repo.listCirclesFor(userId);
-  const [snap, next, visits] = await Promise.all([
-    memberSnapshot(repo, profile),
-    nextSitting(repo, circles),
+  const [{ active, incoming, people }, visits] = await Promise.all([
+    loadPartnerships(repo, userId),
     repo.listVisitsFor(userId),
   ]);
-  const mentor = mentorOf(circles, userId);
-  const society = canSeeSociety(profile);
+  const partner = active ? people.get(partnerIdOf(active, userId)) ?? null : null;
 
-  // The next thing in the diary is whichever comes first: a sitting, or a morning in a practice.
-  const nextVisit = visits
-    .filter((v) => v.status === "agreed" && new Date(v.scheduledAt).getTime() > Date.now() - 3_600_000)
-    .sort((a, b) => a.scheduledAt.localeCompare(b.scheduledAt))[0] ?? null;
-  const visitFirst = Boolean(nextVisit && (!next || nextVisit.scheduledAt < next.sitting.scheduledAt));
-  const nextAt = visitFirst ? nextVisit!.scheduledAt : next?.sitting.scheduledAt ?? null;
+  const visitsWaiting = visits.filter((v) => awaitingAnswerFrom(v, userId));
+  const others = [...new Set(visitsWaiting.map((v) => otherPartyOfVisit(v, userId)))];
+  const visitPeople = new Map<string, Profile>((await repo.listProfiles(others)).map((p) => [p.id, p]));
+
+  const { goals, updatesFor } = await loadGoals(repo, partner ? [userId, partner.id] : [userId]);
+  const myOpen = goals.filter((g) => g.userId === userId && g.status === "open");
+  const theirOpen = partner ? goals.filter((g) => g.userId === partner.id && g.status === "open") : [];
+
+  const now = Date.now();
+  const agreed = visits.filter((v) => v.status === "agreed").sort((a, b) => a.scheduledAt.localeCompare(b.scheduledAt));
+  const nextVisit = agreed.find((v) => new Date(v.scheduledAt).getTime() >= now) ?? agreed[0] ?? null;
+  const nextVisitOther = nextVisit
+    ? (await repo.listProfiles([otherPartyOfVisit(nextVisit, userId)]))[0] ?? null
+    : null;
+
+  const nameOf = namer(new Map([...people, ...visitPeople]), userId);
+  const waiting = incoming.length + visitsWaiting.length;
 
   return (
     <div className="section fade-enter">
-      {welcome === "society" && (
-        <Notice tone="ok">Welcome to the Society. Your first block and this week&rsquo;s check-in are below.</Notice>
+      <PageHeader
+        eyebrow="The Principals Club"
+        title={`${greeting(new Date())}, ${firstName(profile)}.`}
+        lede={
+          waiting > 0
+            ? `${waiting === 1 ? "One thing is" : `${waiting} things are`} waiting on you.`
+            : "Nothing is waiting on you. Here is where everything stands."
+        }
+      />
+
+      {waiting > 0 && (
+        <Section title="Waiting on you">
+          <div className="stack gap-5">
+            {incoming.map((p) => {
+              const them = people.get(partnerIdOf(p, userId));
+              return (
+                <Card key={p.id} emphasis>
+                  <Person
+                    name={them?.fullName ?? "A principal"}
+                    size="lg"
+                    meta={them ? practiceLine(them) : "A member of the Club"}
+                  />
+                  <H3>Asks to be your partner.</H3>
+                  {p.message && <blockquote className="quote">{p.message}</blockquote>}
+                  <div className="row wrap gap-3">
+                    <QuickAction action={answerPartnerRequest} fields={{ partnership_id: p.id, answer: "accept" }} variant="primary">
+                      Accept
+                    </QuickAction>
+                    <QuickAction
+                      action={answerPartnerRequest}
+                      fields={{ partnership_id: p.id, answer: "decline" }}
+                      confirm="Decline this request? No reason is owed, and none is recorded."
+                    >
+                      Decline
+                    </QuickAction>
+                    <TextLink href="/partner">The particulars</TextLink>
+                  </div>
+                </Card>
+              );
+            })}
+
+            {visitsWaiting.map((v) => {
+              const them = visitPeople.get(otherPartyOfVisit(v, userId));
+              const theyHost = v.hostId !== userId;
+              return (
+                <Card key={v.id} emphasis>
+                  <div className="row between wrap gap-4">
+                    <Person
+                      name={them?.fullName ?? "A principal"}
+                      size="lg"
+                      meta={theyHost ? v.practiceName ?? "Their practice" : "Would come to your practice"}
+                      href={`/visits/${v.id}`}
+                    />
+                    <VisitBadge status={v.status} />
+                  </div>
+                  <H3>
+                    <time dateTime={v.scheduledAt}>{formatAppointment(v.scheduledAt)}</time>
+                  </H3>
+                  <Caption>{relativeDays(v.scheduledAt)}</Caption>
+                  {v.proposalNote && <blockquote className="quote">{v.proposalNote}</blockquote>}
+                  <div className="row wrap gap-3">
+                    <QuickAction action={answerVisit} fields={{ visit_id: v.id, answer: "agree" }} variant="primary">
+                      Agree to the morning
+                    </QuickAction>
+                    <QuickAction
+                      action={answerVisit}
+                      fields={{ visit_id: v.id, answer: "decline" }}
+                      confirm="Decline this morning? No reason is owed, and none is recorded."
+                    >
+                      Decline
+                    </QuickAction>
+                  </div>
+                </Card>
+              );
+            })}
+          </div>
+        </Section>
       )}
-      <div>
-        <Eyebrow>{today}</Eyebrow>
-        <Display>{greeting()}, {firstName(profile)}.</Display>
-        <Body lg className="muted maxw-prose" style={{ marginTop: 12 }}>
-          {headline(snap, nextAt, mentor, visitFirst ? nextVisit : null, userId)}
-        </Body>
-      </div>
 
       <Divider />
 
-      <div className="grid-sidebar">
-        <div className="stack gap-8">
-          {society ? <ThisWeek snap={snap} /> : <SocietyInvite />}
-
-          {profile.role === "mentor" && <MenteesStrip circles={circles} mentorId={userId} repo={repo} />}
-
-          {society && <BlockCard snap={snap} />}
-        </div>
-
-        <div className="stack gap-6">
-          <Card emphasis>
-            <Eyebrow>Your standing</Eyebrow>
-            <div className="stat-row">
-              <Stat value={snap.score} label="Consistency" sub="of 100" tone="gold" />
-              <Stat value={snap.streak} label={snap.streak === 1 ? "week streak" : "week streak"} sub={snap.checkedInThisWeek ? "this week counted" : "check in to extend"} />
-            </div>
-          </Card>
-
+      <Section title="Your partner" aside={partner && <TextLink href="/partner">Their page</TextLink>}>
+        {partner ? (
           <Card>
-            <Eyebrow>{visitFirst ? "Your next visit" : next ? "Your next sitting" : "Nothing in the diary"}</Eyebrow>
-            {visitFirst && nextVisit ? (
-              <>
-                <H3>{formatAppointment(nextVisit.scheduledAt)}</H3>
-                <Caption>{relativeDays(nextVisit.scheduledAt)} · {nextVisit.hostId === userId ? "The circle comes to you" : nextVisit.practiceName ?? "Their practice"}</Caption>
-                <div className="row gap-4 wrap" style={{ marginTop: 6 }}>
-                  <Button href={`/visits/${nextVisit.id}`} size="sm">Prepare</Button>
-                  <TextLink href="/visits">All visits</TextLink>
-                </div>
-              </>
-            ) : next ? (
-              <>
-                <H3>{formatAppointment(next.sitting.scheduledAt)}</H3>
-                <Caption>{relativeDays(next.sitting.scheduledAt)} · {circleTitle(next.circle, userId)}</Caption>
-                <div className="row gap-4 wrap" style={{ marginTop: 6 }}>
-                  <Button href={`/sittings/${next.sitting.id}`} size="sm">Prepare</Button>
-                  <TextLink href="/calendar">All sittings</TextLink>
-                </div>
-              </>
+            <Person name={partner.fullName} size="lg" meta={practiceLine(partner)} href="/partner" />
+            <Divider tight />
+            {theirOpen.length === 0 ? (
+              <Caption>{address(partner)} has nothing open at the moment.</Caption>
             ) : (
-              <>
-                <H3>Arrange your next sitting.</H3>
-                <Caption>A standing time is the whole point.</Caption>
-                <div className="row gap-4 wrap" style={{ marginTop: 6 }}>
-                  <Button href="/calendar" size="sm" variant="secondary">Arrange a sitting</Button>
-                  <TextLink href="/visits#propose">Propose a morning</TextLink>
-                </div>
-              </>
+              <div className="stack gap-4">
+                <Caption>What {address(partner)} is working on</Caption>
+                {theirOpen.map((g) => (
+                  <div key={g.id} className="row between wrap gap-3">
+                    <span className="person-name">{g.title}</span>
+                    <GoalBadge status={g.status} />
+                  </div>
+                ))}
+              </div>
             )}
           </Card>
+        ) : (
+          <EmptyState
+            title="You have no partner yet."
+            action={<Button href="/members">Look through the members</Button>}
+          >
+            You find one yourself. Read the directory, pick someone whose practice interests you, and ask.
+          </EmptyState>
+        )}
+      </Section>
 
-          <CircleCard circles={circles} viewerId={userId} mentor={mentor} />
-
-          {society && <BenchmarkGlance userId={userId} repo={repo} />}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/** "on Friday" when it is this week, "in 21 days" when it is further off. */
-function whenPhrase(iso: string, now = new Date()): string {
-  const days = Math.round((new Date(iso).getTime() - now.getTime()) / 86_400_000);
-  if (days > 1 && days <= 6) return `on ${new Date(iso).toLocaleDateString("en-GB", { weekday: "long" })}`;
-  return relativeDays(iso);
-}
-
-function headline(
-  snap: MemberSnapshot,
-  nextAt: string | null,
-  mentor: Profile | null,
-  nextVisit: Visit | null = null,
-  userId = "",
-): string {
-  const parts: string[] = [];
-  if (snap.block && snap.week) {
-    parts.push(`Week ${snap.week} of ${BLOCK_WEEKS} on “${snap.block.title}”.`);
-    if (snap.openThisWeek > 0) parts.push(`${snap.openThisWeek} ${snap.openThisWeek === 1 ? "commitment" : "commitments"} still open this week.`);
-    else if (snap.thisWeek.length > 0) parts.push("Everything set down for this week is kept.");
-  } else {
-    parts.push("No block is running. Twelve weeks starts with one outcome.");
-  }
-  if (!snap.checkedInThisWeek) parts.push("Your check-in is waiting.");
-  if (nextVisit) {
-    parts.push(
-      nextVisit.hostId === userId
-        ? `The circle comes to you ${whenPhrase(nextVisit.scheduledAt)}.`
-        : `You are ${nextVisit.practiceName ? `at ${nextVisit.practiceName}` : "inside another practice"} ${whenPhrase(nextVisit.scheduledAt)}.`,
-    );
-  } else if (nextAt) {
-    parts.push(`You sit ${mentor ? `with ${address(mentor)} ` : ""}${relativeDays(nextAt)}.`);
-  }
-  return parts.join(" ");
-}
-
-function ThisWeek({ snap }: { snap: MemberSnapshot }) {
-  return (
-    <Section title="This week" aside={snap.block && <TextLink href={`/blocks/${snap.block.id}`}>The whole block</TextLink>}>
-      <Card emphasis={!snap.checkedInThisWeek}>
-        <div className="row between wrap">
-          <div>
-            <H3>{snap.checkedInThisWeek ? "Checked in." : "Your check-in is waiting."}</H3>
-            <Caption>
-              {snap.checkedInThisWeek
-                ? `Logged for ${weekLabel(snap.latestCheckIn!.weekKey)}. Energy ${snap.latestCheckIn!.energy ?? "—"} of 10.`
-                : "Four short questions. You never face a blank page."}
-            </Caption>
-          </div>
-          <Button href="/check-in" size="sm" variant={snap.checkedInThisWeek ? "secondary" : "primary"}>
-            {snap.checkedInThisWeek ? "Revise" : "Check in"}
-          </Button>
-        </div>
-      </Card>
-
-      {snap.block ? (
-        snap.thisWeek.length > 0 ? (
-          <div>
-            {snap.thisWeek.map((c) => (
-              <div key={c.id} className={`commitment ${c.status}`}>
-                <div className="cm-week">Wk {c.week}</div>
-                <div>
-                  <div className="cm-text">{c.text}</div>
-                  {c.carriedFrom && <div className="cm-meta">Carried from an earlier week.</div>}
+      <Section title="Your goals" aside={<TextLink href="/goals">All of them</TextLink>}>
+        {myOpen.length === 0 ? (
+          <EmptyState title="Nothing set down yet." action={<Button href="/goals">Set one down</Button>}>
+            Write down what you are working on this year. Your partner can see it and write against it.
+          </EmptyState>
+        ) : (
+          <div className="stack gap-5">
+            {myOpen.map((g) => (
+              <Card key={g.id} className="goal-card">
+                <div className="goal-head">
+                  <h3 className="goal-title">{g.title}</h3>
+                  <GoalBadge status={g.status} />
                 </div>
-                <div className="cm-actions">
-                  {c.status === "open" ? <CommitmentQuickActions id={c.id} canCarry={c.week < BLOCK_WEEKS} /> : <CommitmentBadge status={c.status} />}
-                </div>
-              </div>
+                <LatestUpdate updates={updatesFor(g.id)} nameOf={nameOf} />
+              </Card>
             ))}
           </div>
+        )}
+      </Section>
+
+      <Section title="Your next visit" aside={<TextLink href="/visits">All the mornings</TextLink>}>
+        {nextVisit ? (
+          <NextVisit visit={nextVisit} other={nextVisitOther} userId={userId} />
         ) : (
-          <EmptyState title={`Nothing set down for week ${snap.week}.`} action={<Button href={`/blocks/${snap.block.id}#add`} size="sm" variant="secondary">Set a commitment</Button>}>
-            One or two things you will actually do this week.
+          <EmptyState title="No visit arranged." action={<Button href="/visits/new">Propose a morning</Button>}>
+            A morning inside another practice, and in turn one inside yours. Twice a year at most.
           </EmptyState>
-        )
-      ) : null}
-    </Section>
-  );
-}
-
-function BlockCard({ snap }: { snap: MemberSnapshot }) {
-  if (!snap.block) {
-    return (
-      <Card>
-        <Eyebrow>No active block</Eyebrow>
-        <H3>Begin a twelve-week block.</H3>
-        <Caption>One outcome, weekly commitments beneath it, and a record of what was kept.</Caption>
-        <div className="row" style={{ marginTop: 6 }}>
-          <Button href="/blocks/new" size="sm">Start a block</Button>
-        </div>
-      </Card>
-    );
-  }
-  return (
-    <Section title={`Your block · week ${snap.week} of ${BLOCK_WEEKS}`}>
-      <Card>
-        <Link href={`/blocks/${snap.block.id}`} style={{ textDecoration: "none", color: "inherit" }}>
-          <H3>{snap.block.title}</H3>
-        </Link>
-        {snap.block.description && <Caption>{snap.block.description}</Caption>}
-        <WeekStrip current={snap.week!} weekStatus={snap.weekStatus} />
-        <Caption>
-          {snap.commitments.filter((c) => c.status === "done").length} kept · {snap.commitments.filter((c) => c.status === "missed").length} missed · {snap.commitments.filter((c) => c.status === "carried").length} carried
-        </Caption>
-      </Card>
-    </Section>
-  );
-}
-
-function SocietyInvite() {
-  return (
-    <Card emphasis>
-      <Eyebrow>The Society</Eyebrow>
-      <H3>Twelve-week blocks, a weekly check-in, and the benchmark.</H3>
-      <Caption>Members keep their circle and their correspondence. The Society adds the record of what was kept.</Caption>
-      <div className="row" style={{ marginTop: 6 }}>
-        <Button href="/upgrade" size="sm">Join the Society</Button>
-      </div>
-    </Card>
-  );
-}
-
-function CircleCard({ circles, viewerId, mentor }: { circles: CircleWithMembers[]; viewerId: string; mentor: Profile | null }) {
-  if (circles.length === 0) {
-    return (
-      <Card>
-        <Eyebrow>Your circle</Eyebrow>
-        <H3>You are in the queue.</H3>
-        <Caption>The House is finding you a principal of fitting ambition and hour. You will be told the moment a seat is found.</Caption>
-      </Card>
-    );
-  }
-  const pair = circles.find((c) => c.kind === "pair");
-  const pod = circles.find((c) => c.kind === "pod");
-  return (
-    <Card>
-      <Eyebrow>Your circle</Eyebrow>
-      {mentor && <Person name={mentor.fullName} meta={`Your mentor · ${mentor.practiceName ?? "Principal"}`} href="/circle" />}
-      {!mentor && pair && othersIn(pair, viewerId).map((m) => (
-        <Person key={m.userId} name={m.profile.fullName} meta={`${m.role === "mentee" ? "Your mentee" : "Your partner"} · ${m.profile.practiceName ?? "Principal"}`} href="/circle" />
-      ))}
-      {pod && <Caption>{pod.name} · {pod.members.length} principals · {pod.cohortLabel}</Caption>}
-      <div className="row gap-4" style={{ marginTop: 4 }}>
-        <Button href="/circle" size="sm" variant="secondary">Open your circle</Button>
-        <TextLink href="/messages">Write a note</TextLink>
-      </div>
-    </Card>
-  );
-}
-
-async function BenchmarkGlance({ userId, repo }: { userId: string; repo: import("@/lib/repo/types").Repo }) {
-  const entries = await repo.listBenchmarkEntries(userId);
-  const latest = BENCHMARK_METRICS.map((m) => ({ m, e: entries.filter((x) => x.metricKey === m.key).at(-1) })).filter((x) => x.e);
-  return (
-    <Card>
-      <Eyebrow>The benchmark</Eyebrow>
-      {latest.length === 0 ? (
-        <>
-          <H3>No figures yet.</H3>
-          <Caption>One number unlocks your cohort comparison.</Caption>
-        </>
-      ) : (
-        <dl className="kv-list">
-          {latest.slice(0, 3).map(({ m, e }) => (
-            <div key={m.key} className="kv-row">
-              <dt>{m.short}</dt>
-              <dd>{formatMetric(m.kind, e!.value)}</dd>
-            </div>
-          ))}
-        </dl>
-      )}
-      <TextLink href="/benchmark">Where you stand</TextLink>
-    </Card>
-  );
-}
-
-async function MenteesStrip({ circles, mentorId, repo }: { circles: CircleWithMembers[]; mentorId: string; repo: import("@/lib/repo/types").Repo }) {
-  const mentees = menteesOf(circles, mentorId).filter((p) => circles.some((c) => c.kind === "pair" && c.members.some((m) => m.userId === p.id)));
-  if (mentees.length === 0) return null;
-  const snaps = await Promise.all(mentees.map((p) => memberSnapshot(repo, p)));
-  return (
-    <Section title="Your mentees" aside={<TextLink href="/mentor">All mentees</TextLink>}>
-      <div className="card-grid">
-        {snaps.map((s) => (
-          <Card key={s.profile.id} pad="sm">
-            <Person name={s.profile.fullName} meta={s.block ? `Week ${s.week} · ${s.block.title}` : "No block running"} href={`/mentor/${s.profile.id}`} size="sm" />
-            {s.block && <WeekStrip current={s.week!} weekStatus={s.weekStatus} compact />}
-            <Caption>
-              {s.checkedInThisWeek ? "Checked in this week" : "Not yet checked in"} · {s.openThisWeek} open · streak {s.streak}
-            </Caption>
-          </Card>
-        ))}
-      </div>
-    </Section>
-  );
-}
-
-async function StaffHome() {
-  const { repo } = await requireViewer();
-  const [members, circles] = await Promise.all([repo.listAllProfiles(), repo.listAllCircles()]);
-  const seated = new Set(circles.flatMap((c) => c.members.map((m) => m.userId)));
-  const unseated = members.filter((m) => !seated.has(m.id));
-  const checkIns = await repo.listCheckInsFor(members.map((m) => m.id), 500);
-  const thisWeek = new Set(checkIns.filter((c) => c.weekKey === currentWeekKey()).map((c) => c.userId));
-  const society = members.filter((m) => m.tier === "society");
-  return (
-    <div className="section fade-enter">
-      <div>
-        <Eyebrow>The House</Eyebrow>
-        <Display>The Club this week.</Display>
-      </div>
-      <Divider />
-      <div className="stat-row">
-        <Stat value={members.length} label="Principals" sub={`${members.filter((m) => m.role === "mentor").length} mentors`} />
-        <Stat value={society.length} label="In the Society" sub={`${members.length - society.length} members`} />
-        <Stat value={circles.filter((c) => c.status === "active").length} label="Circles" sub={`${circles.filter((c) => c.kind === "pod").length} pods`} />
-        <Stat value={`${Math.round((thisWeek.size / Math.max(1, society.length)) * 100)}%`} label="Checked in" sub="of the Society, this week" tone={thisWeek.size / Math.max(1, society.length) > 0.6 ? "ok" : "warn"} />
-      </div>
-      <div className="grid-even">
-        <Card emphasis={unseated.length > 0}>
-          <Eyebrow>Waiting for a seat</Eyebrow>
-          {unseated.length === 0 ? <H3>Everyone is seated.</H3> : unseated.map((m) => <Person key={m.id} name={m.fullName} meta={m.practiceName ?? "Principal"} href={`/house/members`} size="sm" />)}
-          <div className="row" style={{ marginTop: 6 }}>
-            <Button href="/house/circles" size="sm" variant="secondary">Form a circle</Button>
-          </div>
-        </Card>
-        <Card>
-          <Eyebrow>Not yet checked in</Eyebrow>
-          {society.filter((m) => !thisWeek.has(m.id)).slice(0, 6).map((m) => (
-            <Person key={m.id} name={m.fullName} meta={m.practiceName ?? "Principal"} size="sm" href="/house/members" />
-          ))}
-          {society.every((m) => thisWeek.has(m.id)) && <H3>Everyone has checked in.</H3>}
-        </Card>
-      </div>
+        )}
+      </Section>
     </div>
+  );
+}
+
+function NextVisit({ visit, other, userId }: { visit: Visit; other: Profile | null; userId: string }) {
+  const youHost = visit.hostId === userId;
+  return (
+    <Card>
+      <div className="row between wrap gap-4">
+        <Person
+          name={other?.fullName ?? "A principal"}
+          size="lg"
+          meta={youHost ? "Coming to your practice" : visit.practiceName ?? "Their practice"}
+          href={`/visits/${visit.id}`}
+        />
+        <VisitBadge status={visit.status} />
+      </div>
+      <H3>
+        <time dateTime={visit.scheduledAt}>{formatAppointment(visit.scheduledAt)}</time>
+      </H3>
+      <Caption>
+        {relativeDays(visit.scheduledAt)} · {youHost ? "You are the host" : "You are the visitor"}
+      </Caption>
+      {visit.arrivalNote && <Body className="muted">{visit.arrivalNote}</Body>}
+      <div className="row wrap gap-3">
+        <Button href={`/visits/${visit.id}`} variant="secondary" size="sm">The morning</Button>
+      </div>
+    </Card>
   );
 }

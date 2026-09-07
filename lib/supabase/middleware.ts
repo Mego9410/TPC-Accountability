@@ -13,10 +13,8 @@ const TOUR_COOKIE = "tpc_tour";
 /** Routes reachable without an authenticated session. */
 const PUBLIC_PATHS = [
   "/",
-  "/for-mentors",
-  "/for-mentees",
-  "/membership",
   "/practice-visits",
+  "/membership",
   "/house-rules",
   "/privacy",
   "/tour",
@@ -27,21 +25,26 @@ const PUBLIC_PATHS = [
   "/api/auth",
 ];
 
-/** Old addresses that still turn up in bookmarks and emails. */
+/**
+ * Old addresses that still turn up in bookmarks and emails. The product used to
+ * model circles, pods, twelve-week blocks, check-ins, wins, the benchmark and
+ * challenges; all of that is gone, so each of those addresses now lands on the
+ * nearest thing that still exists: the partner, the goals, or the visits.
+ */
 const LEGACY_REDIRECTS: Record<string, string> = {
   "/dashboard": "/home",
-  "/goals": "/blocks",
+  "/circle": "/partner",
+  "/blocks": "/goals",
+  "/check-in": "/goals",
+  "/wins": "/goals",
+  "/benchmark": "/home",
+  "/challenges": "/home",
+  "/review": "/home",
+  "/calendar": "/visits",
+  "/sittings": "/visits",
+  "/mentor": "/partner",
+  "/upgrade": "/membership",
   "/accountability": "/home",
-  "/accountability/blocks": "/blocks",
-  "/accountability/check-in": "/check-in",
-  "/accountability/pod": "/circle",
-  "/accountability/wins": "/wins",
-  "/accountability/review": "/review",
-  "/accountability/benchmark": "/benchmark",
-  "/accountability/challenges": "/challenges",
-  "/accountability/templates": "/blocks/new",
-  "/accountability/profile": "/settings",
-  "/accountability/admin/pods": "/house",
 };
 
 function isPublic(pathname: string): boolean {
@@ -51,7 +54,7 @@ function isPublic(pathname: string): boolean {
 function legacyTarget(pathname: string): string | null {
   const exact = LEGACY_REDIRECTS[pathname];
   if (exact) return exact;
-  if (pathname.startsWith("/accountability/blocks/")) return `/blocks${pathname.slice("/accountability/blocks".length)}`;
+  // Everything that hung off /accountability went with it.
   if (pathname.startsWith("/accountability/")) return "/home";
   return null;
 }

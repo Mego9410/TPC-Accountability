@@ -6,23 +6,23 @@ import { ExclusionZone, Programme, Returns } from "@/components/landing/visits";
 export const metadata: Metadata = {
   title: "Companion practice visits",
   description:
-    "A morning inside another principal's practice, and in turn a morning inside yours. Every principal in a circle visits every other. No consultant, no conference, and nothing to buy at the end of the afternoon.",
+    "A morning inside another member's practice, and in turn a morning inside yours. Any member, by mutual agreement, twice a year at most. No consultant, no conference, and nothing to buy at the end of the afternoon.",
 };
 
 const RULES = [
-  { no: "I", rule: "Nobody hosts a competitor", why: "The exclusion zone is twenty to thirty minutes' drive time. Journey time, not a fixed radius, so it works in London and in Norfolk alike." },
+  { no: "I", rule: "Nobody hosts a competitor", why: "At least twenty to thirty minutes' drive apart. Journey time, not a fixed radius, so it works in London and in Norfolk alike, and it is on the two of you to hold to it." },
   { no: "II", rule: "Any request may be declined", why: "For any reason, at any time, without explanation. A difficult week is reason enough. Declining is part of the scheme, not a departure from it." },
-  { no: "III", rule: "Two visits a year", why: "A ceiling rather than an ambition. It keeps the thing occasional, and keeps hosting from becoming an intrusion on a working business." },
+  { no: "III", rule: "Two visits a year", why: "A ceiling rather than an ambition, with any member and by mutual agreement. It keeps the thing occasional, and keeps hosting from becoming an intrusion on a working business." },
   { no: "IV", rule: "Confidentiality is mutual", why: "Both principals agree the same undertaking before a visit is arranged. What is seen in the building stays in the building." },
   { no: "V", rule: "No patient contact", why: "You are there to see how a practice is run, not its clinical work, unless your host offers otherwise and the consents are in place." },
   { no: "VI", rule: "The visitor sets the agenda", why: "Within whatever the host is willing to show. Nobody arrives with a scorecard, and nobody is being assessed." },
 ];
 
 const FAQS = [
-  { q: "Who arranges it?", a: "You do, between you. The Club seats you in a circle and the visits follow from that; the date is settled in your correspondence, like any sitting. It appears in your calendar with the practice and the morning on it." },
+  { q: "Who arranges it?", a: "You do, between you. You ask any member, or any member asks you, and the date is settled in your correspondence. Nothing is arranged over your head and nobody is paired off by the House." },
   { q: "What does it cost?", a: "Nothing beyond your membership. There is no fee to host and no fee to visit, and nobody is selling anything at four o'clock." },
-  { q: "Do I have to open my practice?", a: "Yes, in turn. There are no hosts and no visitors here, only principals taking it in turns. The half usually left unsaid is the better half: opening your practice is not a favour done for the profession." },
-  { q: "What if my circle is local to me?", a: "It will not be. The House seats circles across the exclusion zone precisely so that a visit is possible. Nobody is ever seated with a practice inside their own catchment." },
+  { q: "Do I have to open my practice?", a: "In turn, yes. There are no hosts and no visitors here, only principals taking it in turns; you are both. The half usually left unsaid is the better half: opening your practice is not a favour done for the profession, and being asked why you do it like that is worth the morning on its own." },
+  { q: "What if the only members near me are local?", a: "Then you look further out. A visit is only ever arranged with a practice at least twenty to thirty minutes' drive away, and the directory covers the whole country, so distance is rarely the obstacle a day out of the diary is." },
   { q: "What if the week is impossible?", a: "Decline it. A visit can be moved or refused without explanation, and doing so is not held against you or recorded anywhere." },
   { q: "How long does it take?", a: "A morning is usual. Some principals stay for lunch and the afternoon; some days run to the surgeries and no further. The programme is indicative, not a timetable you are held to." },
 ];
@@ -37,12 +37,14 @@ export default function VisitsPage() {
             A morning inside someone else&rsquo;s practice. And, in turn, a morning inside yours.
           </h1>
           <Body lg style={{ color: "var(--fg-muted)" }}>
-            One principal, one practice, one honest look around: the systems, the diary, the team, the
-            decisions. No consultant. No conference. Nothing to buy at the end of the afternoon.
+            With any member, by mutual agreement, twice a year at most. One principal, one practice, one
+            honest look around: the workflow, the systems, the processes, and the feel of how someone else
+            has built their culture. No consultant. No conference. Nothing to buy at the end of the
+            afternoon.
           </Body>
         </div>
         <div className="lp-cta">
-          <Button href="/signup?as=mentee">Request an introduction</Button>
+          <Button href="/signup">Request an introduction</Button>
           <TextLink href="/tour" className="on-dark">Tour the House</TextLink>
         </div>
       </LandingSection>
@@ -101,8 +103,8 @@ export default function VisitsPage() {
           </li>
           <li className="lp-step">
             <span className="lp-step-no" aria-hidden="true">IV</span>
-            <H3>Both of you write it up</H3>
-            <Body>The visitor records what they saw, what they are taking back, and what struck them that the host may not see. The host records what they took from being asked. A takeaway can be set down as a commitment in your own block, which is where a visit stops being a nice morning and starts being work.</Body>
+            <H3>You both write down anything worth remembering</H3>
+            <Body>A note against the visit, seen by the two of you and nobody else. Whatever struck the visitor, and whatever the host took from being asked why they do it like that. There is no form and no scoring; a line each is plenty, and an empty note is nobody&rsquo;s business but yours.</Body>
           </li>
         </ol>
       </LandingSection>
@@ -128,7 +130,7 @@ export default function VisitsPage() {
           ))}
         </ul>
         <div className="lp-cta">
-          <TextLink href="/house-rules">All eight house rules</TextLink>
+          <TextLink href="/house-rules">All seven house rules</TextLink>
         </div>
       </LandingSection>
 
@@ -139,7 +141,7 @@ export default function VisitsPage() {
         </div>
         <div className="lp-cta">
           <Caption>Visits are part of membership, not an extra.</Caption>
-          <TextLink href="/membership">What membership costs</TextLink>
+          <TextLink href="/membership">What membership includes</TextLink>
         </div>
       </LandingSection>
 
@@ -155,7 +157,7 @@ export default function VisitsPage() {
           </div>
           <div>
             <H3>No visit without your word</H3>
-            <Body>Nothing is arranged over your head. Every visit is agreed between the two principals, and either may decline.</Body>
+            <Body>Nothing is arranged over your head. Every visit is agreed between the two principals themselves, and either may decline without a reason.</Body>
           </div>
         </div>
       </LandingSection>

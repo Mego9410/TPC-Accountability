@@ -29,10 +29,10 @@ export function SectionHead({ eyebrow, title, lede, onDark }: { eyebrow: ReactNo
 
 /* ---------- The one real sequence ---------- */
 const STEPS = [
-  { no: "I", title: "You are put forward", text: "Request an introduction. The House reads it, asks you a question or two, and writes back within the week." },
-  { no: "II", title: "You are seated", text: "The House seats you with a mentor whose history fits your focus, and in a pod of principals at your stage." },
-  { no: "III", title: "You sit", text: "A standing hour every fortnight, over video. You set the block and this fortnight's commitments out loud." },
-  { no: "IV", title: "You are held to it", text: "At the next sitting you say what was kept and what was not. It is written down. Then you set the next fortnight." },
+  { no: "I", title: "You join", text: "Request an introduction. The House reads it, asks you a question or two, and writes back within the week." },
+  { no: "II", title: "You find a partner", text: "Read the members directory, choose a principal whose year looks something like yours, and ask them. They accept, or they decline without a reason." },
+  { no: "III", title: "You share what you are working on", text: "The few things you are actually trying to do this year. Your partner can see them and write a word against them, and you against theirs." },
+  { no: "IV", title: "You visit each other", text: "A morning inside their practice, and in turn a morning inside yours. Any member, by mutual agreement, twice a year at most." },
 ];
 
 export function Steps() {
@@ -67,29 +67,30 @@ export function Faq({ items }: { items: Array<{ q: string; a: string }> }) {
 export function MembershipStrip() {
   return (
     <LandingSection id="membership" tone="parchment">
-      <SectionHead eyebrow="Membership" title="Two ways to belong." lede="Every principal is a Member first. The Society is the record on top." />
-      <div className="lp-tiers">
-        <Card as="article" className="lp-tier">
-          <Eyebrow>Member</Eyebrow>
-          <div className="lp-price">By introduction</div>
+      <SectionHead
+        eyebrow="Membership"
+        title="One kind of member, admitted by introduction."
+        lede="There are no tiers and nobody is ranked above anybody. Every member has the same two things."
+      />
+      <div className="lp-pair">
+        <Card as="article">
+          <Eyebrow>What it includes</Eyebrow>
           <ul>
-            <li>A circle: your mentor, or your pod of six</li>
-            <li>Sittings, held in the Club over video</li>
-            <li>Correspondence with your circle between sittings</li>
+            <li>A partner, when you find one and they agree</li>
+            <li>Two companion practice visits a year, with any member</li>
+            <li>The members directory, so you can see who to ask</li>
+            <li>Correspondence with your partner and with the House</li>
           </ul>
-          <Caption>Admission is by introduction and there is no monthly charge. The House reads every request.</Caption>
         </Card>
-        <Card as="article" className="lp-tier" emphasis>
-          <Eyebrow>Society</Eyebrow>
-          <div className="lp-price">£95<small>a month</small></div>
+        <Card as="article" emphasis>
+          <Eyebrow>What it asks</Eyebrow>
           <ul>
-            <li>Everything a Member has</li>
-            <li>Twelve-week blocks, from a template or a blank page</li>
-            <li>The weekly check-in, read by your mentor</li>
-            <li>The win log and the benchmark</li>
-            <li>Club challenges, with a leaderboard you may opt out of</li>
+            <li>Turn up, and answer the monthly note</li>
+            <li>Be honest about what has not moved</li>
+            <li>Host when you are asked, or decline freely</li>
+            <li>Keep what you see in someone else&rsquo;s building inside it</li>
           </ul>
-          <Caption>Mentors are in the Society without charge, for as long as they mentor.</Caption>
+          <Caption>Terms and pricing are being settled with the founding members, and are not yet stated.</Caption>
         </Card>
       </div>
       <div className="lp-cta">
@@ -101,15 +102,15 @@ export function MembershipStrip() {
 
 /* ---------- House rules excerpt ---------- */
 const THREE_RULES = [
-  { rule: "What is said in a sitting stays in it.", why: "A mentor's notes are seen by the mentee they are about, and nobody else." },
-  { rule: "A missed commitment is recorded, not judged.", why: "The record is there so you can see the pattern, not so anyone can hold it against you." },
-  { rule: "Numbers are shared anonymously or not at all.", why: "The benchmark shows medians across cohorts of five or more. Nobody sees your figures." },
+  { rule: "A partner is there to ask, not to judge.", why: "A question does more than an answer and lasts longer. Nothing you share is scored, ranked or held against you." },
+  { rule: "Any request may be declined, without a reason.", why: "A partnership, a visit, a date: all of them may be refused. Declining is part of the scheme, not a departure from it." },
+  { rule: "What is seen in the building stays in it.", why: "Both principals give the same undertaking before a visit is arranged, and it does not lapse afterwards." },
 ];
 
 export function RulesExcerpt() {
   return (
     <LandingSection tone="paper">
-      <SectionHead eyebrow="House rules" title="Three of the eight." />
+      <SectionHead eyebrow="House rules" title="Three of the seven." />
       <div className="lp-three">
         {THREE_RULES.map((r) => (
           <div key={r.rule}>
@@ -119,7 +120,7 @@ export function RulesExcerpt() {
         ))}
       </div>
       <div className="lp-cta">
-        <TextLink href="/house-rules">All eight rules</TextLink>
+        <TextLink href="/house-rules">All seven rules</TextLink>
       </div>
     </LandingSection>
   );
@@ -133,8 +134,8 @@ export function Closing({ eyebrow = "The Principals Club" }: { eyebrow?: string 
         <Eyebrow onDark>{eyebrow}</Eyebrow>
         <H2>The work is yours. The keeping of it, we share.</H2>
         <div className="lp-cta">
-          <Button href="/signup?as=mentee">Request an introduction</Button>
-          <Button href="/signup?as=mentor" variant="secondary" onDark>Offer to mentor</Button>
+          <Button href="/signup">Request an introduction</Button>
+          <Button href="/tour" variant="secondary" onDark>Tour the House</Button>
         </div>
       </div>
     </LandingSection>

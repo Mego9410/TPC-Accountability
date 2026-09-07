@@ -1,50 +1,39 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { canSeeSociety, requireViewer } from "@/lib/session";
+import { requireViewer } from "@/lib/session";
 import { navFor } from "@/components/shell/nav-items";
 import { HairlineList, PageHeader } from "@/components/ui";
 
 export const metadata: Metadata = { title: "More" };
 
 const GROUP: Record<string, string> = {
-  "/blocks": "Society",
-  "/check-in": "Society",
-  "/wins": "Society",
-  "/benchmark": "Society",
-  "/review": "Society",
-  "/challenges": "Society",
+  "/home": "The Club",
+  "/partner": "The Club",
+  "/goals": "The Club",
+  "/visits": "The Club",
+  "/members": "The Club",
+  "/messages": "The Club",
   "/house": "The House",
   "/settings": "Account",
 };
 
 const DESCRIPTION: Record<string, string> = {
-  "/home": "Your week at a glance.",
-  "/mentor": "The principals you mentor, and how their weeks are going.",
-  "/circle": "Your pair and your pod: who is in them, and what they have been up to.",
-  "/visits": "Mornings inside other principals' practices, and the record of each one.",
-  "/blocks": "Twelve-week blocks and the commitments beneath them.",
-  "/check-in": "Four short questions, once a week.",
-  "/wins": "The ledger of what went right.",
-  "/benchmark": "Your figures against practices like yours.",
-  "/messages": "Notes between sittings, seen only by your circle.",
-  "/calendar": "Every sitting in the diary, and the place to hold the next one.",
-  "/house": "Members, circles and the running of the Club.",
-  "/review": "A printed record of a block: what was kept and what was not.",
-  "/challenges": "Short, optional sprints across the Club.",
-  "/settings": "Your particulars, your practice and how you are addressed.",
+  "/home": "Everything, on one screen.",
+  "/partner": "The principal who keeps an eye on whether you are getting on with it.",
+  "/goals": "What you are working on, and what has been written against it.",
+  "/visits": "Mornings inside other practices, and mornings inside yours.",
+  "/members": "Every principal in the Club. This is where a partner is found.",
+  "/messages": "Notes between two members, and nobody else.",
+  "/house": "The register: who is here, and who is with whom.",
+  "/settings": "Your particulars, and what you are open to.",
 };
 
 export default async function MorePage() {
   const { profile } = await requireViewer();
-  const society = canSeeSociety(profile);
-  const primary = navFor(profile.role, society).map((i) => ({ href: i.href, label: i.label }));
-  const extras: Array<{ href: string; label: string }> = [];
-  if (society) {
-    if (!primary.some((i) => i.href === "/wins")) extras.push({ href: "/wins", label: "Wins" });
-    extras.push({ href: "/review", label: "Review" }, { href: "/challenges", label: "Challenges" });
-  }
-  extras.push({ href: "/settings", label: "Settings" });
-  const items = [...primary, ...extras];
+  const items = [
+    ...navFor(profile.role).map((i) => ({ href: i.href, label: i.label })),
+    { href: "/settings", label: "Your particulars" },
+  ];
 
   return (
     <div className="section fade-enter">
@@ -52,7 +41,7 @@ export default async function MorePage() {
       <HairlineList>
         {items.map((i) => (
           <Link key={i.href} href={i.href} className="row">
-            <div className="date">{GROUP[i.href] ?? "Club"}</div>
+            <div className="date">{GROUP[i.href] ?? "The Club"}</div>
             <div>
               <div className="title">{i.label}</div>
               <div className="meta">{DESCRIPTION[i.href] ?? ""}</div>

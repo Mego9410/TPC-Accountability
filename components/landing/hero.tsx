@@ -17,7 +17,7 @@ export function Hero() {
       <div className="lp-hero-frame" aria-hidden="true" />
 
       <div className="lp-hero-inner">
-        <Eyebrow onDark>An accountability society for principal dentists</Eyebrow>
+        <Eyebrow onDark>An accountability club for principal dentists</Eyebrow>
 
         <h1 className="lp-kept">
           <span>Kept.</span>
@@ -27,23 +27,25 @@ export function Hero() {
           A goal said aloud to someone who will ask about it is a goal more often kept.
         </p>
         <p className="lp-thesis-2">
-          A mentor, a pod of six, twelve weeks at a time — and a morning inside each other&rsquo;s practices.
+          One partner, chosen and asked by you — and a morning inside each other&rsquo;s practices, twice a year at most.
         </p>
 
         <div className="lp-doors">
-          <a href="#mentees" className="lp-door">
-            <Eyebrow onDark>For mentees</Eyebrow>
-            <span className="lp-door-title">I run a practice and want this year to go differently.</span>
+          <a href="#partner" className="lp-door">
+            <Eyebrow onDark>The partner</Eyebrow>
+            <span className="lp-door-title">Someone who asks how it is going.</span>
             <span className="lp-door-detail">
-              A mentor who has done it, a pod of six at your stage, and a record of what you kept.
+              Another principal you find yourself and ask. You share what you are working on, they share
+              theirs, and once a month the Club asks you both how the other is getting on.
             </span>
             <span className="lp-door-go">Read on</span>
           </a>
-          <a href="#mentors" className="lp-door">
-            <Eyebrow onDark>For mentors</Eyebrow>
-            <span className="lp-door-title">I have done it and want to give a year back.</span>
+          <a href="#visits" className="lp-door">
+            <Eyebrow onDark>The visit</Eyebrow>
+            <span className="lp-door-title">A morning inside another practice.</span>
             <span className="lp-door-detail">
-              An hour a fortnight with one or two principals, a pod to lead, and a circle of your own.
+              The workflow, the systems, the feel of how someone else has built their culture — and, in
+              turn, a morning inside yours.
             </span>
             <span className="lp-door-go">Read on</span>
           </a>

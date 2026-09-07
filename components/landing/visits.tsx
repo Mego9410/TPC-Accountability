@@ -2,10 +2,11 @@ import { Body, Button, Caption, Eyebrow, H3, TextLink } from "@/components/ui";
 import { LandingSection, SectionHead } from "./furniture";
 
 /* =========================================================================
-   Companion practice visits. Every principal spends a morning inside another
-   principal's practice, and in turn opens their own. The scheme is abstract
-   until somebody shows you the day, so the day is the hero: the programme,
-   hour by hour, and the one rule that decides whether an owner reads on.
+   Companion practice visits. A morning inside another member's practice, and
+   in turn a morning inside yours: any member, by mutual agreement, twice a
+   year at most. The scheme is abstract until somebody shows you the day, so
+   the day is the hero: the programme, hour by hour, and the one rule that
+   decides whether an owner reads on.
    ------------------------------------------------------------------------- */
 
 const PROGRAMME = [
@@ -48,8 +49,8 @@ export function ExclusionZone() {
       <svg viewBox="0 0 330 212" role="img" aria-labelledby="zone-title zone-desc">
         <title id="zone-title">The exclusion zone, measured in drive time</title>
         <desc id="zone-desc">
-          Concentric rings around your practice mark twenty and thirty minutes of driving. A match is only
-          ever offered beyond the outer ring.
+          Concentric rings around your practice mark twenty and thirty minutes of driving. A visit is only
+          ever arranged with a practice beyond the outer ring.
         </desc>
 
         {/* Rings. The core is left empty so the practice can be named inside it. */}
@@ -69,22 +70,22 @@ export function ExclusionZone() {
         {/* The match, beyond the outer ring. */}
         <path d="M190 78 C 220 68, 244 60, 262 56" className="lp-zone-arc" />
         <g className="lp-zone-pin match">
-          <text x="276" y="40" textAnchor="middle">A match</text>
+          <text x="276" y="40" textAnchor="middle">A member</text>
           <circle cx="276" cy="54" r="4.5" />
         </g>
       </svg>
       <figcaption>
         Journey time, not mileage. Twenty minutes in London is three miles; twenty minutes in Norfolk is
-        twenty. Nobody is ever offered a practice inside their own catchment.
+        twenty. Nobody visits, or hosts, a practice inside their own catchment.
       </figcaption>
     </figure>
   );
 }
 
 const TERMS = [
-  { term: "Nobody hosts a competitor", def: "Twenty to thirty minutes' drive time, at least. Journey time, not a radius." },
+  { term: "Nobody hosts a competitor", def: "At least twenty to thirty minutes' drive apart. Journey time, not a radius, and it is on the two of you to hold to it." },
   { term: "Any request may be declined", def: "For any reason, at any time, without explanation. A difficult week is reason enough." },
-  { term: "Two visits a year", def: "A ceiling rather than an ambition. It keeps hosting from becoming an intrusion on a working business." },
+  { term: "Two visits a year", def: "A ceiling rather than an ambition, with any member and by mutual agreement. It keeps hosting from becoming an intrusion on a working business." },
   { term: "No patient contact", def: "You are there to see how a practice is run, not its clinical work." },
 ];
 
@@ -96,7 +97,7 @@ export function VisitsSection() {
         onDark
         eyebrow="Companion practice visits"
         title="A morning inside someone else's practice. And, in turn, a morning inside yours."
-        lede="Every principal in a circle visits every other. One principal, one practice, one honest look around: the systems, the diary, the team, the decisions. No consultant, and nothing to buy at the end of the afternoon."
+        lede="With any member, by mutual agreement, twice a year at most. One principal, one practice, one honest look around: the workflow, the systems, the processes, and the feel of how someone else has built their culture. No consultant, and nothing to buy at the end of the afternoon."
       />
 
       <div className="lp-visit-grid">
@@ -169,8 +170,8 @@ export function Returns() {
 export function VisitsCta() {
   return (
     <div className="lp-cta">
-      <Button href="/signup?as=mentee">Request an introduction</Button>
-      <TextLink href="/membership">What membership costs</TextLink>
+      <Button href="/signup">Request an introduction</Button>
+      <TextLink href="/membership">What membership includes</TextLink>
     </div>
   );
 }

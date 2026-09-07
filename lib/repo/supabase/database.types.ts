@@ -1,8 +1,12 @@
 /**
  * The shape of the Postgres schema in supabase/migrations, written by hand so
  * the client is typed end to end. Keep it in step with 0001_schema.sql and
- * 0003_functions.sql; the mappers in ./mappers.ts are the only place these
+ * 0002_policies.sql; the mappers in ./mappers.ts are the only place these
  * snake_case rows meet the camelCase domain.
+ *
+ * Every row is a `type` alias, never an `interface`: supabase-js resolves the
+ * schema through a mapped conditional type, and an interface (having no index
+ * signature) fails to satisfy it, collapsing every query result to `never`.
  */
 
 type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
@@ -33,55 +37,52 @@ export type ProfileRow = {
   years_as_principal: number | null;
   timezone: string;
   bio: string | null;
-  membership_no: string;
-  role: "member" | "mentor" | "staff";
-  tier: "member" | "society";
-  onboarded: boolean;
   focus_areas: string[];
-  cadence: "weekly" | "fortnightly" | "monthly";
-  preferred_times: string[];
-  mentor_capacity: number | null;
-  mentor_note: string | null;
-  consistency_score: number;
+  open_to_visits: boolean;
+  open_to_partner: boolean;
+  membership_no: string;
+  role: "member" | "staff";
+  onboarded: boolean;
   nudge_opt_out: boolean;
   created_at: string;
   updated_at: string;
 };
 
-export type CircleRow = {
+export type PartnershipRow = {
   id: string;
-  kind: "pair" | "pod";
-  name: string;
-  cadence: "weekly" | "fortnightly" | "monthly";
-  cohort_label: string | null;
-  status: "active" | "archived";
+  a_id: string;
+  b_id: string;
+  proposed_by_id: string;
+  status: "proposed" | "active" | "declined" | "ended";
+  message: string | null;
+  started_at: string | null;
+  ended_at: string | null;
   created_at: string;
   updated_at: string;
 };
 
-export type CircleMemberRow = {
-  circle_id: string;
+export type GoalRow = {
+  id: string;
   user_id: string;
-  role: "peer" | "mentee" | "mentor" | "lead";
-  joined_at: string;
-  left_at: string | null;
-};
-
-export type SittingRow = {
-  id: string;
-  circle_id: string;
-  scheduled_at: string;
-  status: "scheduled" | "completed" | "cancelled";
-  join_url: string | null;
-  notes: string | null;
-  created_by: string;
+  title: string;
+  detail: string | null;
+  target_date: string | null;
+  status: "open" | "done";
+  done_at: string | null;
   created_at: string;
   updated_at: string;
+};
+
+export type GoalUpdateRow = {
+  id: string;
+  goal_id: string;
+  author_id: string;
+  body: string;
+  created_at: string;
 };
 
 export type VisitRow = {
   id: string;
-  circle_id: string;
   visitor_id: string;
   host_id: string;
   proposed_by_id: string;
@@ -90,218 +91,57 @@ export type VisitRow = {
   practice_name: string | null;
   proposal_note: string | null;
   arrival_note: string | null;
-  visitor_agreed_at: string | null;
-  host_agreed_at: string | null;
-  held_at: string | null;
-  created_at: string;
-  updated_at: string;
-};
-
-export type VisitNoteRow = {
-  id: string;
-  visit_id: string;
-  author_id: string;
-  kind: "observation" | "takeaway" | "for_host" | "host_note";
-  body: string;
-  commitment_id: string | null;
-  created_at: string;
-  updated_at: string;
-};
-
-export type GoalBlockRow = {
-  id: string;
-  user_id: string;
-  title: string;
-  description: string | null;
-  start_date: string;
-  end_date: string;
-  status: "active" | "completed" | "abandoned";
-  template_id: string | null;
-  created_at: string;
-  updated_at: string;
-};
-
-export type CommitmentRow = {
-  id: string;
-  block_id: string;
-  user_id: string;
-  week: number;
-  body: string;
-  status: "open" | "done" | "partial" | "missed" | "carried";
-  carried_from: string | null;
-  sitting_id: string | null;
-  created_at: string;
-  updated_at: string;
-};
-
-export type CheckInRow = {
-  id: string;
-  user_id: string;
-  circle_id: string | null;
-  week_key: string;
-  block_week: number | null;
-  did_well: string | null;
-  struggled_with: string | null;
-  next_focus: string | null;
-  energy: number | null;
-  completed_at: string;
-  updated_at: string;
-};
-
-export type WinRow = {
-  id: string;
-  user_id: string;
-  block_id: string | null;
-  title: string;
-  detail: string | null;
-  archived_at: string | null;
+  notes: string | null;
   created_at: string;
   updated_at: string;
 };
 
 export type MessageRow = {
   id: string;
-  circle_id: string;
-  sender_id: string;
+  from_id: string;
+  to_id: string;
   body: string;
   read_at: string | null;
   created_at: string;
-  updated_at: string;
-};
-
-export type NoteRow = {
-  id: string;
-  author_id: string;
-  about_user_id: string;
-  commitment_id: string | null;
-  check_in_id: string | null;
-  body: string;
-  created_at: string;
-  updated_at: string;
-};
-
-export type BenchmarkEntryRow = {
-  id: string;
-  user_id: string;
-  period: string;
-  metric_key: string;
-  value: number;
-  created_at: string;
-  updated_at: string;
-};
-
-export type ChallengeRow = {
-  id: string;
-  title: string;
-  description: string | null;
-  metric_label: string;
-  start_date: string;
-  end_date: string;
-  created_at: string;
-  updated_at: string;
-};
-
-export type ChallengeParticipantRow = {
-  challenge_id: string;
-  user_id: string;
-  progress: number;
-  leaderboard_opt_in: boolean;
-  created_at: string;
-  updated_at: string;
-};
-
-export type TemplateRow = {
-  id: string;
-  slug: string;
-  title: string;
-  description: string | null;
-  audience: "mentee" | "any";
-  sort: number;
-  created_at: string;
-  updated_at: string;
-};
-
-export type TemplateWeekRow = {
-  id: string;
-  template_id: string;
-  week: number;
-  body: string;
-  sort: number;
 };
 
 /* ---------- inserts (columns with defaults are optional) ---------- */
 
 type Defaulted = "created_at" | "updated_at";
 
+/** The row is made by the sign-up trigger, so every column but the id is optional. */
 export type ProfileInsert = Partial<ProfileRow> & Pick<ProfileRow, "id">;
-export type CircleInsert = Partial<Pick<CircleRow, "id" | "cadence" | "cohort_label" | "status" | Defaulted>> &
-  Pick<CircleRow, "kind" | "name">;
-export type CircleMemberInsert = Partial<Pick<CircleMemberRow, "role" | "joined_at" | "left_at">> &
-  Pick<CircleMemberRow, "circle_id" | "user_id">;
-export type SittingInsert = Partial<Pick<SittingRow, "id" | "status" | "join_url" | "notes" | Defaulted>> &
-  Pick<SittingRow, "circle_id" | "scheduled_at" | "created_by">;
+
+export type PartnershipInsert = Partial<
+  Pick<PartnershipRow, "id" | "status" | "message" | "started_at" | "ended_at" | Defaulted>
+> &
+  Pick<PartnershipRow, "a_id" | "b_id" | "proposed_by_id">;
+
+export type GoalInsert = Partial<
+  Pick<GoalRow, "id" | "detail" | "target_date" | "status" | "done_at" | Defaulted>
+> &
+  Pick<GoalRow, "user_id" | "title">;
+
+export type GoalUpdateInsert = Partial<Pick<GoalUpdateRow, "id" | "created_at">> &
+  Pick<GoalUpdateRow, "goal_id" | "author_id" | "body">;
+
 export type VisitInsert = Partial<
   Pick<
     VisitRow,
-    | "id"
-    | "status"
-    | "practice_name"
-    | "proposal_note"
-    | "arrival_note"
-    | "visitor_agreed_at"
-    | "host_agreed_at"
-    | "held_at"
-    | Defaulted
+    "id" | "status" | "practice_name" | "proposal_note" | "arrival_note" | "notes" | Defaulted
   >
 > &
-  Pick<VisitRow, "circle_id" | "visitor_id" | "host_id" | "proposed_by_id" | "scheduled_at">;
-export type VisitNoteInsert = Partial<Pick<VisitNoteRow, "id" | "commitment_id" | Defaulted>> &
-  Pick<VisitNoteRow, "visit_id" | "author_id" | "kind" | "body">;
-export type GoalBlockInsert = Partial<Pick<GoalBlockRow, "id" | "description" | "status" | "template_id" | Defaulted>> &
-  Pick<GoalBlockRow, "user_id" | "title" | "start_date" | "end_date">;
-export type CommitmentInsert = Partial<Pick<CommitmentRow, "id" | "status" | "carried_from" | "sitting_id" | Defaulted>> &
-  Pick<CommitmentRow, "block_id" | "user_id" | "week" | "body">;
-export type CheckInInsert = Partial<
-  Pick<CheckInRow, "id" | "circle_id" | "block_week" | "did_well" | "struggled_with" | "next_focus" | "energy" | "completed_at" | "updated_at">
-> &
-  Pick<CheckInRow, "user_id" | "week_key">;
-export type WinInsert = Partial<Pick<WinRow, "id" | "block_id" | "detail" | "archived_at" | Defaulted>> &
-  Pick<WinRow, "user_id" | "title">;
-export type MessageInsert = Partial<Pick<MessageRow, "id" | "read_at" | Defaulted>> &
-  Pick<MessageRow, "circle_id" | "sender_id" | "body">;
-export type NoteInsert = Partial<Pick<NoteRow, "id" | "commitment_id" | "check_in_id" | Defaulted>> &
-  Pick<NoteRow, "author_id" | "about_user_id" | "body">;
-export type BenchmarkEntryInsert = Partial<Pick<BenchmarkEntryRow, "id" | Defaulted>> &
-  Pick<BenchmarkEntryRow, "user_id" | "period" | "metric_key" | "value">;
-export type ChallengeInsert = Partial<Pick<ChallengeRow, "id" | "description" | Defaulted>> &
-  Pick<ChallengeRow, "title" | "metric_label" | "start_date" | "end_date">;
-export type ChallengeParticipantInsert = Partial<Pick<ChallengeParticipantRow, "progress" | "leaderboard_opt_in" | Defaulted>> &
-  Pick<ChallengeParticipantRow, "challenge_id" | "user_id">;
-export type TemplateInsert = Partial<Pick<TemplateRow, "description" | "audience" | "sort" | Defaulted>> &
-  Pick<TemplateRow, "id" | "slug" | "title">;
-export type TemplateWeekInsert = Partial<Pick<TemplateWeekRow, "id" | "sort">> &
-  Pick<TemplateWeekRow, "template_id" | "week" | "body">;
+  Pick<VisitRow, "visitor_id" | "host_id" | "proposed_by_id" | "scheduled_at">;
+
+export type MessageInsert = Partial<Pick<MessageRow, "id" | "read_at" | "created_at">> &
+  Pick<MessageRow, "from_id" | "to_id" | "body">;
 
 /* ---------- updates (every column is optional; the row types drive them) ---------- */
 
+export type ProfileUpdate = Partial<ProfileRow>;
+export type PartnershipUpdate = Partial<PartnershipRow>;
+export type GoalUpdatePatch = Partial<GoalRow>;
 export type VisitUpdate = Partial<VisitRow>;
-export type VisitNoteUpdate = Partial<VisitNoteRow>;
-
-/* ---------- functions ---------- */
-
-export type CohortStatsRow = {
-  cohort_size: number;
-  median: number;
-  p25: number;
-  p75: number;
-};
-
-export type LeaderboardRpcRow = {
-  user_id: string;
-  display_name: string;
-  progress: number;
-  rank: number;
-};
 
 /* ---------- the schema ---------- */
 
@@ -317,37 +157,16 @@ export type Database = {
     Tables: {
       regions: Table<RegionRow, RegionRow>;
       profiles: Table<ProfileRow, ProfileInsert>;
-      circles: Table<CircleRow, CircleInsert>;
-      circle_members: Table<CircleMemberRow, CircleMemberInsert>;
-      sittings: Table<SittingRow, SittingInsert>;
+      partnerships: Table<PartnershipRow, PartnershipInsert>;
+      goals: Table<GoalRow, GoalInsert>;
+      goal_updates: Table<GoalUpdateRow, GoalUpdateInsert>;
       visits: Table<VisitRow, VisitInsert>;
-      visit_notes: Table<VisitNoteRow, VisitNoteInsert>;
-      goal_blocks: Table<GoalBlockRow, GoalBlockInsert>;
-      commitments: Table<CommitmentRow, CommitmentInsert>;
-      check_ins: Table<CheckInRow, CheckInInsert>;
-      wins: Table<WinRow, WinInsert>;
       messages: Table<MessageRow, MessageInsert>;
-      notes: Table<NoteRow, NoteInsert>;
-      benchmark_entries: Table<BenchmarkEntryRow, BenchmarkEntryInsert>;
-      challenges: Table<ChallengeRow, ChallengeInsert>;
-      challenge_participants: Table<ChallengeParticipantRow, ChallengeParticipantInsert>;
-      templates: Table<TemplateRow, TemplateInsert>;
-      template_weeks: Table<TemplateWeekRow, TemplateWeekInsert>;
     };
     Views: { [_ in never]: never };
     Functions: {
-      is_circle_member: { Args: { p_circle: string }; Returns: boolean };
-      is_mentor_of: { Args: { p_target: string }; Returns: boolean };
-      shares_circle_with: { Args: { p_target: string }; Returns: boolean };
-      is_visit_party: { Args: { p_visit: string }; Returns: boolean };
       is_staff: { Args: Record<PropertyKey, never>; Returns: boolean };
-      benchmark_cohort_stats: {
-        Args: { p_metric: string; p_period: string; p_region?: string | null; p_practice_type?: string | null };
-        Returns: CohortStatsRow[];
-      };
-      challenge_leaderboard: { Args: { p_challenge: string }; Returns: LeaderboardRpcRow[] };
-      recompute_consistency: { Args: { p_user: string }; Returns: number };
-      recompute_all_consistency: { Args: Record<PropertyKey, never>; Returns: undefined };
+      is_partner_of: { Args: { target: string }; Returns: boolean };
     };
     Enums: { [_ in never]: never };
     CompositeTypes: { [_ in never]: never };

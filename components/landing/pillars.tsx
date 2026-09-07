@@ -3,8 +3,8 @@ import { Body, H3 } from "@/components/ui";
 import { LandingSection, SectionHead } from "./furniture";
 
 /* =========================================================================
-   The four objects the Club is made of. Each carries a small drawn mark so
-   the row reads as a set of things rather than four paragraphs.
+   The two things the Club is made of. Each carries a small drawn mark so the
+   row reads as a pair of objects rather than two paragraphs.
    ------------------------------------------------------------------------- */
 
 function Mark({ children }: { children: ReactNode }) {
@@ -17,33 +17,23 @@ function Mark({ children }: { children: ReactNode }) {
 
 const PILLARS = [
   {
-    title: "The circle",
-    body: "A mentor and a mentee, sitting fortnightly. Or a pod of six led by a mentor, sitting monthly. Small on purpose: nobody can hide in a room of six.",
+    title: "The partner",
+    body: "One other principal, found by you in the members directory and asked by you. You share the handful of things you are working on, they share theirs, and each of you can write a word against the other's. Once a month the Club asks how they are getting on. No scoring, no weeks, no structure.",
+    /* Two principals, level with one another, and the line of enquiry between them. */
     mark: (
       <Mark>
-        <circle cx="24" cy="24" r="17" />
-        <circle cx="24" cy="11" r="3.4" />
-        <circle cx="35.3" cy="30.5" r="3.4" />
-        <circle cx="12.7" cy="30.5" r="3.4" />
-      </Mark>
-    ),
-  },
-  {
-    title: "The block",
-    body: "Twelve weeks. One outcome, written down, and under it the one or two things you will do each week, set at a sitting and asked about at the next.",
-    mark: (
-      <Mark>
-        {[0, 1, 2, 3].map((r) =>
-          [0, 1, 2].map((c) => (
-            <rect key={`${r}-${c}`} x={7 + c * 12} y={8 + r * 8.5} width="9" height="5.5" opacity={r * 3 + c < 5 ? 1 : 0.32} />
-          )),
-        )}
+        <circle cx="15" cy="16" r="5" />
+        <path d="M6 38 A9 9 0 0 1 24 38" />
+        <circle cx="33" cy="16" r="5" />
+        <path d="M24 38 A9 9 0 0 1 42 38" />
+        <path d="M20 26 H28" strokeDasharray="2 3" />
       </Mark>
     ),
   },
   {
     title: "The visit",
-    body: "A morning inside another principal's practice, and in turn a morning inside yours. The systems, the diary, the team. Everyone in the circle, in turn.",
+    body: "A morning inside another member's practice — the workflow, the systems, the processes, the feel of how they have built their culture — and in turn a morning inside yours. With any member, by mutual agreement, twice a year at most. You are both host and visitor.",
+    /* Two doorways, and the crossing between them. */
     mark: (
       <Mark>
         <path d="M6 26 L15 18 L24 26" />
@@ -54,22 +44,16 @@ const PILLARS = [
       </Mark>
     ),
   },
-  {
-    title: "The record",
-    body: "Check-ins, wins, and a benchmark of the figures you would otherwise never see. Kept for as long as the Club stands, and never quietly deleted.",
-    mark: (
-      <Mark>
-        <path d="M11 8 H33 A4 4 0 0 1 37 12 V40 H15 A4 4 0 0 1 11 36 Z" />
-        <path d="M18 17 H30M18 24 H30M18 31 H26" />
-      </Mark>
-    ),
-  },
 ];
 
 export function Pillars() {
   return (
     <LandingSection tone="paper">
-      <SectionHead eyebrow="What the Club is" title="A circle, a block, a visit, and a record." />
+      <SectionHead
+        eyebrow="What the Club is"
+        title="A partner, and a morning in each other's practices."
+        lede="Two things, and nothing else. Everything that used to sit around them has been taken out."
+      />
       <div className="lp-pillars">
         {PILLARS.map((p) => (
           <article key={p.title}>
@@ -83,17 +67,16 @@ export function Pillars() {
   );
 }
 
-/* ---------- A quiet strip of the four figures that decide it ---------- */
+/* ---------- A quiet strip of the three figures that decide it ---------- */
 const FIGURES = [
-  { n: "6", label: "to a pod", sub: "Led by a mentor" },
-  { n: "12", label: "week blocks", sub: "One outcome each" },
+  { n: "1", label: "partner", sub: "One at a time, asked by you" },
   { n: "2", label: "visits a year", sub: "A ceiling, not a target" },
-  { n: "£0", label: "for mentors", sub: "The place is given" },
+  { n: "0", label: "scores", sub: "Nothing is ranked or counted" },
 ];
 
 export function Figures() {
   return (
-    <section className="lp-figures" aria-label="The Club in four figures">
+    <section className="lp-figures" aria-label="The Club in three figures">
       <div className="lp-container">
         <dl>
           {FIGURES.map((f) => (

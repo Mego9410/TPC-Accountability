@@ -1,4 +1,4 @@
-import { requireViewer, canSeeSociety } from "@/lib/session";
+import { requireViewer } from "@/lib/session";
 import { initials } from "@/lib/domain";
 import { TopNav, BottomNav } from "@/components/shell/nav";
 import { navFor } from "@/components/shell/nav-items";
@@ -7,9 +7,8 @@ import { Footer, TourBar } from "@/components/shell/chrome";
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const viewer = await requireViewer();
   const { profile, repo, userId } = viewer;
-  const circles = await repo.listCirclesFor(userId);
-  const unread = await repo.countUnread(circles.map((c) => c.id), userId);
-  const items = navFor(profile.role, canSeeSociety(profile));
+  const unread = await repo.countUnread(userId);
+  const items = navFor(profile.role);
 
   return (
     <div className="tpc-frame">
