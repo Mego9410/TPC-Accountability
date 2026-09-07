@@ -1,30 +1,22 @@
 /**
- * The Principals Club — domain model.
+ * Kept — the model.
  *
- * One model for the whole product. A member belongs to one or more *circles*
- * (a pair or a pod). Inside a circle they are a peer, a mentee, a mentor, or
- * the lead. Every member runs twelve-week *goal blocks* of weekly
- * *commitments*, checks in once a week, logs *wins*, and reports figures to
- * the *benchmark*. Mentors see their mentees' progress and leave *notes*.
+ * Two things, and nothing else.
  *
- * All types are camelCase; storage adapters map to and from their own shapes.
+ *  1. A **partner**. You find another principal yourself, ask them, and if
+ *     they agree you share what you are working on and each keeps an eye on
+ *     whether the other is getting on with it. One ongoing relationship.
+ *
+ *  2. A **companion visit**. A morning inside another principal's practice —
+ *     the workflow, the systems, the processes, the feel of the culture —
+ *     and, in turn, a morning inside yours. Twice a year, with any member,
+ *     by mutual agreement. You are both host and visitor.
+ *
+ * Everything is camelCase; storage adapters map to and from their own shapes.
  */
 
-export type MemberRole = "member" | "mentor" | "staff";
-export type Tier = "member" | "society";
-export type CircleKind = "pair" | "pod";
-export type CircleRole = "peer" | "mentee" | "mentor" | "lead";
-export type Cadence = "weekly" | "fortnightly" | "monthly";
-export type CommitmentStatus = "open" | "done" | "partial" | "missed" | "carried";
-export type BlockStatus = "active" | "completed" | "abandoned";
-export type SittingStatus = "scheduled" | "completed" | "cancelled";
-/**
- * A sitting is either held over video, or held inside somebody's practice.
- * Every principal visits every other principal in their circle, and in turn
- * has each of them inside their own practice for a morning.
- */
+export type MemberRole = "member" | "staff";
 export type PracticeType = "NHS" | "Private" | "Mixed";
-export type CircleStatus = "active" | "archived";
 
 export interface Profile {
   id: string;
@@ -37,283 +29,124 @@ export interface Profile {
   chairCount: number | null;
   yearsAsPrincipal: number | null;
   timezone: string;
+  /** A short note on the practice, read by anyone deciding whether to ask you. */
   bio: string | null;
+  /** What you are working on. Shown when someone is looking for a partner. */
+  focusAreas: string[];
+  /** Whether you are willing to receive a visitor at present. */
+  openToVisits: boolean;
+  /** Whether you are looking for a partner at present. */
+  openToPartner: boolean;
   membershipNo: string;
   role: MemberRole;
-  tier: Tier;
   onboarded: boolean;
-  focusAreas: string[];
-  cadence: Cadence;
-  preferredTimes: string[];
-  /** Mentors only: how many mentees they will take, and the note shown to them. */
-  mentorCapacity: number | null;
-  mentorNote: string | null;
-  consistencyScore: number;
+  /** The monthly note asking how the goals are getting on. */
   nudgeOptOut: boolean;
   createdAt: string;
 }
 
-export interface Circle {
+/* ---------- The partner ---------- */
+
+export type PartnershipStatus = "proposed" | "active" | "declined" | "ended";
+
+export interface Partnership {
   id: string;
-  kind: CircleKind;
-  name: string;
-  cadence: Cadence;
-  cohortLabel: string | null;
-  status: CircleStatus;
+  /** The two principals. Order carries no meaning. */
+  aId: string;
+  bId: string;
+  proposedById: string;
+  status: PartnershipStatus;
+  /** A word with the request: why you asked. */
+  message: string | null;
+  startedAt: string | null;
+  endedAt: string | null;
   createdAt: string;
 }
 
-export interface CircleMember {
-  circleId: string;
+export interface PartnershipWithPartner extends Partnership {
+  /** The other principal, from the viewer's side. */
+  partner: Profile;
+}
+
+/* ---------- The goals ---------- */
+
+export type GoalStatus = "open" | "done";
+
+export interface Goal {
+  id: string;
   userId: string;
-  role: CircleRole;
-  joinedAt: string;
-}
-
-export interface CircleWithMembers extends Circle {
-  members: Array<CircleMember & { profile: Profile }>;
-}
-
-export interface Sitting {
-  id: string;
-  circleId: string;
-  scheduledAt: string;
-  status: SittingStatus;
-  joinUrl: string | null;
-  notes: string | null;
-  createdBy: string;
+  title: string;
+  detail: string | null;
+  /** Optional. A goal without a date is still a goal. */
+  targetDate: string | null; // yyyy-mm-dd
+  status: GoalStatus;
+  doneAt: string | null;
   createdAt: string;
 }
 
-/* ---------- Companion practice visits ----------
-   A morning inside another principal's practice, and in turn one inside
-   yours. Either party may propose; the other agrees or declines, and may
-   decline for any reason without giving one. Both give the confidentiality
-   undertaking before it is agreed. What is learned is written down after. */
+/**
+ * A line written against a goal: your own progress, or a word from your
+ * partner. The monthly note asks for one of these.
+ */
+export interface GoalUpdate {
+  id: string;
+  goalId: string;
+  authorId: string;
+  body: string;
+  createdAt: string;
+}
+
+/* ---------- The visit ---------- */
 
 export type VisitStatus = "proposed" | "agreed" | "declined" | "held" | "cancelled";
 
 export interface Visit {
   id: string;
-  circleId: string;
   /** The principal going. */
   visitorId: string;
   /** The principal opening their practice. */
   hostId: string;
   proposedById: string;
-  /** The morning itself. */
   scheduledAt: string;
   status: VisitStatus;
   /** The host's practice, denormalised for display. */
   practiceName: string | null;
-  /** A word with the proposal: what the visitor hopes to see. */
+  /** A word with the request: what you hope to see. */
   proposalNote: string | null;
   /** The host's practicalities: where to park, who to ask for, when to arrive. */
   arrivalNote: string | null;
-  /** The confidentiality undertaking, given by each party before it is agreed. */
-  visitorAgreedAt: string | null;
-  hostAgreedAt: string | null;
-  heldAt: string | null;
+  /** Written afterwards by either of you, and seen by both. */
+  notes: string | null;
   createdAt: string;
 }
 
-/**
- * The record of a visit, kept in four parts so that it is useful afterwards
- * rather than a single box of prose. Three belong to the visitor and one to
- * the host, because both sides learn something.
- */
-export type VisitNoteKind = "observation" | "takeaway" | "for_host" | "host_note";
-
-export interface VisitNote {
-  id: string;
-  visitId: string;
-  authorId: string;
-  kind: VisitNoteKind;
-  body: string;
-  /** Set when a takeaway has been set down as a commitment in a block. */
-  commitmentId: string | null;
-  createdAt: string;
-}
-
-export interface GoalBlock {
-  id: string;
-  userId: string;
-  title: string;
-  description: string | null;
-  startDate: string; // yyyy-mm-dd
-  endDate: string; // yyyy-mm-dd
-  status: BlockStatus;
-  templateId: string | null;
-  createdAt: string;
-}
-
-export interface Commitment {
-  id: string;
-  blockId: string;
-  userId: string;
-  week: number; // 1..12
-  text: string;
-  status: CommitmentStatus;
-  carriedFrom: string | null;
-  sittingId: string | null;
-  createdAt: string;
-}
-
-export interface CheckIn {
-  id: string;
-  userId: string;
-  circleId: string | null;
-  weekKey: string; // "2026-W36"
-  blockWeek: number | null;
-  didWell: string | null;
-  struggledWith: string | null;
-  nextFocus: string | null;
-  energy: number | null; // 1..10
-  completedAt: string;
-}
-
-export interface Win {
-  id: string;
-  userId: string;
-  blockId: string | null;
-  title: string;
-  detail: string | null;
-  archivedAt: string | null;
-  createdAt: string;
-}
+/* ---------- Correspondence ---------- */
 
 export interface Message {
   id: string;
-  circleId: string;
-  senderId: string;
+  fromId: string;
+  toId: string;
   body: string;
   readAt: string | null;
   createdAt: string;
 }
 
-/** A mentor's note about a mentee: on a commitment, a check-in, or general. */
-export interface Note {
-  id: string;
-  authorId: string;
-  aboutUserId: string;
-  commitmentId: string | null;
-  checkInId: string | null;
-  body: string;
-  createdAt: string;
-}
+/* =========================================================================
+   Labels and small helpers
+   ------------------------------------------------------------------------- */
 
-export interface BenchmarkEntry {
-  id: string;
-  userId: string;
-  period: string; // yyyy-mm-01
-  metricKey: string;
-  value: number;
-  createdAt: string;
-}
-
-export interface CohortStat {
-  scope: "cohort" | "club";
-  cohortSize: number;
-  median: number;
-  p25: number;
-  p75: number;
-}
-
-export interface Challenge {
-  id: string;
-  title: string;
-  description: string | null;
-  metricLabel: string; // e.g. "new patients"
-  startDate: string;
-  endDate: string;
-  createdAt: string;
-}
-
-export interface ChallengeParticipant {
-  challengeId: string;
-  userId: string;
-  progress: number;
-  leaderboardOptIn: boolean;
-}
-
-export interface LeaderboardRow {
-  userId: string | null;
-  displayName: string;
-  progress: number;
-  rank: number;
-}
-
-export interface Template {
-  id: string;
-  slug: string;
-  title: string;
-  description: string | null;
-  audience: "mentee" | "any";
-  sort: number;
-  weeks: Array<{ week: number; text: string }>;
-}
-
-/* ---------- Helpers on the model ---------- */
-
-export const BLOCK_WEEKS = 12;
-
-export const CADENCE_LABEL: Record<Cadence, string> = {
-  weekly: "Weekly",
-  fortnightly: "Fortnightly",
-  monthly: "Monthly",
-};
-
-export const COMMITMENT_STATUS_LABEL: Record<CommitmentStatus, string> = {
-  open: "Open",
-  done: "Kept",
-  partial: "Partly kept",
-  missed: "Missed",
-  carried: "Carried forward",
-};
-
-export const BLOCK_STATUS_LABEL: Record<BlockStatus, string> = {
-  active: "Active",
-  completed: "Completed",
-  abandoned: "Set aside",
-};
-
-export const SITTING_STATUS_LABEL: Record<SittingStatus, string> = {
-  scheduled: "Scheduled",
-  completed: "Held",
-  cancelled: "Cancelled",
-};
-
-export const CIRCLE_ROLE_LABEL: Record<CircleRole, string> = {
-  peer: "Partner",
-  mentee: "Mentee",
-  mentor: "Mentor",
-  lead: "Pod lead",
-};
+/** The ceiling. A ceiling, not an ambition. */
+export const VISITS_A_YEAR = 2;
 
 export const MEMBER_ROLE_LABEL: Record<MemberRole, string> = {
   member: "Member",
-  mentor: "Mentor",
   staff: "The House",
 };
 
-export const TIER_LABEL: Record<Tier, string> = {
-  member: "Member",
-  society: "Society",
+export const GOAL_STATUS_LABEL: Record<GoalStatus, string> = {
+  open: "Open",
+  done: "Done",
 };
-
-export function isMentorIn(circle: CircleWithMembers, userId: string): boolean {
-  return circle.members.some(
-    (m) => m.userId === userId && (m.role === "mentor" || m.role === "lead"),
-  );
-}
-
-export function circleRoleOf(circle: CircleWithMembers, userId: string): CircleRole | null {
-  return circle.members.find((m) => m.userId === userId)?.role ?? null;
-}
-
-export function othersIn(circle: CircleWithMembers, userId: string) {
-  return circle.members.filter((m) => m.userId !== userId);
-}
 
 export const VISIT_STATUS_LABEL: Record<VisitStatus, string> = {
   proposed: "Proposed",
@@ -323,105 +156,44 @@ export const VISIT_STATUS_LABEL: Record<VisitStatus, string> = {
   cancelled: "Cancelled",
 };
 
-export const VISIT_NOTE_LABEL: Record<VisitNoteKind, string> = {
-  observation: "What I saw",
-  takeaway: "What I am taking back",
-  for_host: "What struck me, for the host",
-  host_note: "What I took from being asked",
+export const PARTNERSHIP_STATUS_LABEL: Record<PartnershipStatus, string> = {
+  proposed: "Asked",
+  active: "Partners",
+  declined: "Declined",
+  ended: "Ended",
 };
 
-export const VISIT_NOTE_HELP: Record<VisitNoteKind, string> = {
-  observation: "The systems, the diary, the team. Written while it is fresh.",
-  takeaway: "The thing you will actually do at home. Each one can be set down as a commitment.",
-  for_host: "What a stranger noticed in a morning. Say it plainly; it is the reason they opened the door.",
-  host_note: "You learn as much showing someone your practice as you do walking round theirs.",
-};
-
-/** Which note kinds a given principal may add to a visit. */
-export function noteKindsFor(visit: Visit, userId: string): VisitNoteKind[] {
-  if (userId === visit.visitorId) return ["observation", "takeaway", "for_host"];
-  if (userId === visit.hostId) return ["host_note"];
-  return [];
+/** The other principal in a partnership. */
+export function partnerIdOf(p: Partnership, userId: string): string {
+  return p.aId === userId ? p.bId : p.aId;
 }
 
-/** A visit is settled once both parties have given the undertaking. */
-export function undertakingGiven(visit: Visit): boolean {
-  return Boolean(visit.visitorAgreedAt && visit.hostAgreedAt);
+export function isParty(p: Partnership, userId: string): boolean {
+  return p.aId === userId || p.bId === userId;
 }
 
-/** The counterparty: whoever is not the viewer. */
-export function otherPartyId(visit: Visit, userId: string): string {
-  return userId === visit.visitorId ? visit.hostId : visit.visitorId;
-}
-
-/** Whether this principal still owes a response to a proposal. */
-export function awaitingResponseFrom(visit: Visit, userId: string): boolean {
-  return visit.status === "proposed" && visit.proposedById !== userId
-    && (userId === visit.visitorId || userId === visit.hostId);
-}
-
-export interface VisitLedger {
-  /** Members whose practice the viewer has not yet been inside. */
-  toVisit: Profile[];
-  /** Members who have not yet been inside the viewer's practice. */
-  toHost: Profile[];
-  visited: Array<{ profile: Profile; at: string; visitId: string }>;
-  hosted: Array<{ profile: Profile; at: string; visitId: string }>;
-}
-
-/**
- * Who in this circle the viewer has yet to be inside, and who has yet to be
- * inside theirs. Only held visits count, and where a practice has been seen
- * more than once the most recent morning is the one on the ledger.
- */
-export function visitLedger(
-  circle: CircleWithMembers,
-  visits: Visit[],
+/** Whether this principal still owes an answer to a request. */
+export function awaitingAnswerFrom(
+  p: { status: string; proposedById: string },
   userId: string,
-): VisitLedger {
-  const held = visits.filter((v) => v.circleId === circle.id && v.status === "held");
-  const latest = (visitorId: string, hostId: string) =>
-    held
-      .filter((v) => v.visitorId === visitorId && v.hostId === hostId)
-      .sort((a, b) => b.scheduledAt.localeCompare(a.scheduledAt))[0] ?? null;
-
-  const ledger: VisitLedger = { toVisit: [], toHost: [], visited: [], hosted: [] };
-  for (const profile of othersIn(circle, userId).map((m) => m.profile)) {
-    const iWent = latest(userId, profile.id);
-    if (iWent) ledger.visited.push({ profile, at: iWent.scheduledAt, visitId: iWent.id });
-    else ledger.toVisit.push(profile);
-
-    const theyCame = latest(profile.id, userId);
-    if (theyCame) ledger.hosted.push({ profile, at: theyCame.scheduledAt, visitId: theyCame.id });
-    else ledger.toHost.push(profile);
-  }
-  return ledger;
+): boolean {
+  return p.status === "proposed" && p.proposedById !== userId;
 }
 
-/** The mentees a mentor is responsible for, across all their circles. */
-export function menteesOf(circles: CircleWithMembers[], mentorId: string): Profile[] {
-  const seen = new Map<string, Profile>();
-  for (const c of circles) {
-    if (!isMentorIn(c, mentorId)) continue;
-    for (const m of c.members) {
-      if (m.userId !== mentorId && (m.role === "mentee" || (c.kind === "pod" && m.role !== "mentor"))) {
-        seen.set(m.userId, m.profile);
-      }
-    }
-  }
-  return [...seen.values()];
+export function otherPartyOfVisit(v: Visit, userId: string): string {
+  return userId === v.visitorId ? v.hostId : v.visitorId;
 }
 
-/** The mentor a mentee reports to, if any. */
-export function mentorOf(circles: CircleWithMembers[], menteeId: string): Profile | null {
-  for (const c of circles) {
-    if (c.kind !== "pair") continue;
-    const me = c.members.find((m) => m.userId === menteeId);
-    if (me?.role !== "mentee") continue;
-    const mentor = c.members.find((m) => m.role === "mentor");
-    if (mentor) return mentor.profile;
-  }
-  return null;
+/** Visits held in the last twelve months, against the ceiling of two a year. */
+export function visitsThisYear(visits: Visit[], userId: string, now = new Date()): number {
+  const yearAgo = new Date(now);
+  yearAgo.setFullYear(yearAgo.getFullYear() - 1);
+  return visits.filter(
+    (v) =>
+      v.status === "held" &&
+      (v.visitorId === userId || v.hostId === userId) &&
+      new Date(v.scheduledAt) >= yearAgo,
+  ).length;
 }
 
 export function initials(name: string | null | undefined): string {
@@ -447,4 +219,23 @@ export function firstName(profile: Pick<Profile, "fullName">): string {
   if (!name) return "there";
   const parts = name.replace(/^(dr|mr|mrs|ms|prof)\.?\s+/i, "").trim().split(/\s+/);
   return parts[0] ?? "there";
+}
+
+/** "Cheng Dental, Marylebone · London · 4 chairs · Mixed" */
+export function practiceLine(p: Profile): string {
+  return [
+    p.practiceName,
+    p.region,
+    p.chairCount ? `${p.chairCount} ${p.chairCount === 1 ? "chair" : "chairs"}` : null,
+    p.practiceType,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+}
+
+export function yearsLine(p: Profile): string | null {
+  if (p.yearsAsPrincipal == null) return null;
+  if (p.yearsAsPrincipal === 0) return "Not yet a principal";
+  if (p.yearsAsPrincipal === 1) return "First year as a principal";
+  return `${p.yearsAsPrincipal} years a principal`;
 }

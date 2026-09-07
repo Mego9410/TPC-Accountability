@@ -48,6 +48,4 @@ export async function requireViewer(opts: { roles?: MemberRole[]; onboarded?: bo
   return viewer;
 }
 
-export function canSeeSociety(profile: Profile): boolean {
-  return profile.tier === "society" || profile.role === "mentor" || profile.role === "staff";
-}
+

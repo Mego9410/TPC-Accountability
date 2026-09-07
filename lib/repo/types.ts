@@ -1,123 +1,54 @@
 import type {
-  BenchmarkEntry,
-  Challenge,
-  ChallengeParticipant,
-  CheckIn,
-  Circle,
-  CircleRole,
-  CircleWithMembers,
-  CohortStat,
-  Commitment,
-  GoalBlock,
-  LeaderboardRow,
+  Goal,
+  GoalUpdate,
   Message,
-  Note,
+  Partnership,
   Profile,
-  Sitting,
   Visit,
-  VisitNote,
-  Template,
-  Win,
 } from "@/lib/domain";
 
 /**
- * Arranging a sitting. A video sitting needs nothing beyond the circle and the
- * hour, held over video. A practice visit is a Visit, not a sitting.
- */
-export type CreateSittingInput = Pick<Sitting, "circleId" | "scheduledAt" | "createdBy"> & {
-  joinUrl?: string | null;
-};
-
-/**
  * The one door to the data. Pages and actions talk to this interface and
- * nothing else. There are two adapters: `demo` (a furnished world plus the
- * visitor's own changes, held in a session cookie) and `supabase` (the real
- * records once the Club is connected).
+ * nothing else. Two adapters implement it: `demo` (a furnished world plus the
+ * visitor's own changes, held in a session cookie) and `supabase`.
  */
 export interface Repo {
   /* profiles */
   getProfile(id: string): Promise<Profile | null>;
   listProfiles(ids: string[]): Promise<Profile[]>;
-  listAllProfiles(): Promise<Profile[]>;
+  /** Everyone but the House. The members directory. */
+  listMembers(): Promise<Profile[]>;
   updateProfile(id: string, patch: Partial<Profile>): Promise<Profile>;
 
-  /* circles */
-  listCirclesFor(userId: string): Promise<CircleWithMembers[]>;
-  getCircle(id: string): Promise<CircleWithMembers | null>;
-  listAllCircles(): Promise<CircleWithMembers[]>;
-  createCircle(input: Pick<Circle, "kind" | "name" | "cadence" | "cohortLabel">): Promise<Circle>;
-  setCircleMember(circleId: string, userId: string, role: CircleRole | null): Promise<void>;
+  /* the partner */
+  listPartnerships(userId: string): Promise<Partnership[]>;
+  getPartnership(id: string): Promise<Partnership | null>;
+  createPartnership(input: Pick<Partnership, "aId" | "bId" | "proposedById"> & { message?: string | null }): Promise<Partnership>;
+  updatePartnership(id: string, patch: Partial<Partnership>): Promise<Partnership>;
 
-  /* sittings */
-  listSittings(circleIds: string[]): Promise<Sitting[]>;
-  getSitting(id: string): Promise<Sitting | null>;
-  createSitting(input: CreateSittingInput): Promise<Sitting>;
-  updateSitting(id: string, patch: Partial<Sitting>): Promise<Sitting>;
+  /* goals */
+  listGoals(userIds: string[]): Promise<Goal[]>;
+  getGoal(id: string): Promise<Goal | null>;
+  createGoal(input: Pick<Goal, "userId" | "title"> & { detail?: string | null; targetDate?: string | null }): Promise<Goal>;
+  updateGoal(id: string, patch: Partial<Goal>): Promise<Goal>;
+  listGoalUpdates(goalIds: string[]): Promise<GoalUpdate[]>;
+  createGoalUpdate(input: Pick<GoalUpdate, "goalId" | "authorId" | "body">): Promise<GoalUpdate>;
 
-  /* practice visits */
-  listVisits(circleIds: string[]): Promise<Visit[]>;
+  /* visits */
   listVisitsFor(userId: string): Promise<Visit[]>;
   getVisit(id: string): Promise<Visit | null>;
-  createVisit(input: Pick<Visit, "circleId" | "visitorId" | "hostId" | "proposedById" | "scheduledAt"> & {
+  createVisit(input: Pick<Visit, "visitorId" | "hostId" | "proposedById" | "scheduledAt"> & {
     practiceName?: string | null;
     proposalNote?: string | null;
   }): Promise<Visit>;
   updateVisit(id: string, patch: Partial<Visit>): Promise<Visit>;
-  listVisitNotes(visitIds: string[]): Promise<VisitNote[]>;
-  createVisitNote(input: Pick<VisitNote, "visitId" | "authorId" | "kind" | "body">): Promise<VisitNote>;
-  updateVisitNote(id: string, patch: Partial<VisitNote>): Promise<VisitNote>;
-  deleteVisitNote(id: string): Promise<void>;
 
-  /* blocks + commitments */
-  listBlocks(userId: string): Promise<GoalBlock[]>;
-  listBlocksFor(userIds: string[]): Promise<GoalBlock[]>;
-  getBlock(id: string): Promise<GoalBlock | null>;
-  createBlock(input: Pick<GoalBlock, "userId" | "title" | "description" | "startDate" | "templateId">): Promise<GoalBlock>;
-  updateBlock(id: string, patch: Partial<GoalBlock>): Promise<GoalBlock>;
-  listCommitments(blockId: string): Promise<Commitment[]>;
-  listCommitmentsFor(userIds: string[]): Promise<Commitment[]>;
-  createCommitment(input: Pick<Commitment, "blockId" | "userId" | "week" | "text"> & { carriedFrom?: string | null; sittingId?: string | null }): Promise<Commitment>;
-  updateCommitment(id: string, patch: Partial<Commitment>): Promise<Commitment>;
-
-  /* check-ins */
-  listCheckIns(userId: string, limit?: number): Promise<CheckIn[]>;
-  listCheckInsFor(userIds: string[], limit?: number): Promise<CheckIn[]>;
-  createCheckIn(input: Omit<CheckIn, "id" | "completedAt">): Promise<CheckIn>;
-  updateCheckIn(id: string, patch: Partial<CheckIn>): Promise<CheckIn>;
-
-  /* wins */
-  listWins(userId: string, includeArchived?: boolean): Promise<Win[]>;
-  listWinsFor(userIds: string[]): Promise<Win[]>;
-  createWin(input: Pick<Win, "userId" | "title" | "detail" | "blockId">): Promise<Win>;
-  updateWin(id: string, patch: Partial<Win>): Promise<Win>;
-
-  /* messages */
-  listMessages(circleId: string): Promise<Message[]>;
-  createMessage(input: Pick<Message, "circleId" | "senderId" | "body">): Promise<Message>;
-  markRead(circleId: string, readerId: string): Promise<void>;
-  countUnread(circleIds: string[], readerId: string): Promise<number>;
-
-  /* mentor notes */
-  listNotesAbout(userId: string): Promise<Note[]>;
-  listNotesBy(authorId: string): Promise<Note[]>;
-  createNote(input: Pick<Note, "authorId" | "aboutUserId" | "body"> & { commitmentId?: string | null; checkInId?: string | null }): Promise<Note>;
-
-  /* benchmarks */
-  listBenchmarkEntries(userId: string): Promise<BenchmarkEntry[]>;
-  upsertBenchmarkEntry(input: Pick<BenchmarkEntry, "userId" | "period" | "metricKey" | "value">): Promise<BenchmarkEntry>;
-  cohortStats(metricKey: string, period: string, region: string | null, practiceType: string | null): Promise<CohortStat | null>;
-
-  /* challenges */
-  listChallenges(): Promise<Challenge[]>;
-  getChallenge(id: string): Promise<Challenge | null>;
-  createChallenge(input: Pick<Challenge, "title" | "description" | "metricLabel" | "startDate" | "endDate">): Promise<Challenge>;
-  listParticipation(userId: string): Promise<ChallengeParticipant[]>;
-  setParticipation(input: ChallengeParticipant): Promise<ChallengeParticipant>;
-  leaderboard(challengeId: string): Promise<LeaderboardRow[]>;
-
-  /* templates */
-  listTemplates(): Promise<Template[]>;
-  getTemplate(id: string): Promise<Template | null>;
+  /* correspondence */
+  listMessagesWith(userId: string, otherId: string): Promise<Message[]>;
+  listCorrespondents(userId: string): Promise<Message[]>;
+  createMessage(input: Pick<Message, "fromId" | "toId" | "body">): Promise<Message>;
+  markRead(userId: string, otherId: string): Promise<void>;
+  countUnread(userId: string): Promise<number>;
 
   /** Persist any pending changes (the demo adapter writes its cookie here). */
   flush(): Promise<void>;

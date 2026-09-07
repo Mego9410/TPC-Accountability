@@ -35,7 +35,7 @@ export function TopNav({ items, membershipNo, initials, unread }: { items: NavIt
 export function BottomNav({ items }: { items: NavItem[] }) {
   const pathname = usePathname();
   const isActive = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
-  const primary = items.filter((i) => ["/home", "/mentor", "/circle", "/blocks", "/check-in"].includes(i.href)).slice(0, 4);
+  const primary = items.filter((i) => ["/home", "/partner", "/goals", "/visits"].includes(i.href)).slice(0, 4);
   const more: NavItem = { href: "/more", label: "More", icon: "dots" };
   const moreActive = !primary.some((i) => isActive(i.href));
   return (

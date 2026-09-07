@@ -3,7 +3,7 @@ import type { PersonaKey } from "@/lib/repo/demo";
 
 const PERSONA_LABEL: Record<PersonaKey, string> = {
   member: "a member",
-  mentor: "a mentor",
+  partner: "their partner",
   house: "the House",
 };
 
