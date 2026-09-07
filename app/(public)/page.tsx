@@ -1,15 +1,14 @@
 import type { Metadata } from "next";
-import { MenteesSection, MentorsSection } from "@/components/landing/audience";
-import { FurnishedExample } from "@/components/landing/example";
-import { Closing, MembershipStrip, RulesExcerpt } from "@/components/landing/furniture";
+import { Closing, MembershipStrip, RulesExcerpt, SectionHead, Steps, LandingSection } from "@/components/landing/furniture";
 import { Hero } from "@/components/landing/hero";
+import { PartnerSection } from "@/components/landing/partner";
 import { Figures, Pillars } from "@/components/landing/pillars";
 import { VisitsSection } from "@/components/landing/visits";
 
 export const metadata: Metadata = {
-  title: { absolute: "The Principals Club · An accountability society for principal dentists" },
+  title: { absolute: "The Principals Club · An accountability club for principal dentists" },
   description:
-    "A goal said aloud to someone who will ask about it is a goal more often kept. Mentors, pods of six, twelve-week blocks, companion practice visits, and a benchmark of the figures you would otherwise never see.",
+    "A goal said aloud to someone who will ask about it is a goal more often kept. One partner, found and asked by you, and a morning inside each other's practices twice a year.",
 };
 
 export default function LandingPage() {
@@ -19,10 +18,18 @@ export default function LandingPage() {
 
       <Pillars />
       <Figures />
+      <PartnerSection />
       <VisitsSection />
-      <FurnishedExample />
-      <MenteesSection />
-      <MentorsSection />
+
+      <LandingSection tone="paper">
+        <SectionHead
+          eyebrow="How it works"
+          title="Four steps, and the last two are the whole of it."
+          lede="There is nothing to learn and nothing to keep up with. You join, you ask someone, you say what you are working on, and twice a year you open the door."
+        />
+        <Steps />
+      </LandingSection>
+
       <MembershipStrip />
       <RulesExcerpt />
       <Closing />

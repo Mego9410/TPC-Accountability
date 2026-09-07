@@ -180,34 +180,19 @@
 .lp-three .body { color: var(--fg-on-paper-muted); font-size: 16px; }
 .lp-section.midnight .lp-three > div { border-top-color: var(--rule); }
 
-/* ---------- The furnished example ---------- */
-.lp-example { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: 28px; margin-top: 40px; align-items: start; }
-.lp-example .commitment:first-of-type { margin-top: 6px; }
-.lp-example-note { margin-top: 24px; display: flex; gap: 16px; align-items: baseline; flex-wrap: wrap; }
-
-/* ---------- Audience sections ---------- */
-.lp-split { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: clamp(32px, 6vw, 88px); align-items: start; margin-top: 40px; }
-.lp-sequence { margin-top: 64px; }
-.lp-split-aside { display: flex; flex-direction: column; gap: 14px; }
-.lp-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
-.lp-list li { display: grid; grid-template-columns: 200px 1fr; gap: 8px 24px; padding: 18px 0; border-top: 1px solid var(--rule-on-paper); }
-.lp-list li:last-child { border-bottom: 1px solid var(--rule-on-paper); }
-.lp-term { font: 500 19px/1.3 var(--font-serif); color: var(--fg-on-paper); }
-.lp-def { font: 400 15px/1.55 var(--font-sans); color: var(--fg-on-paper-muted); margin: 0; }
+/* ---------- How it works ---------- */
 .lp-steps { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 32px; margin-top: 48px; }
 .lp-step { display: flex; flex-direction: column; gap: 10px; }
 .lp-step-no { font: 400 13px/1 var(--font-mono); letter-spacing: 0.2em; color: var(--tpc-gold-deep); }
 .lp-step .body { color: var(--fg-on-paper-muted); font-size: 15.5px; }
 
-/* ---------- Membership ---------- */
-.lp-tiers { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 40px; }
-.lp-tier { display: flex; flex-direction: column; gap: 14px; }
-.lp-price { font: 400 40px/1 var(--font-display); color: var(--fg-on-paper); letter-spacing: -0.01em; }
-.lp-price small { font: 500 11px/1 var(--font-sans); letter-spacing: 0.18em; text-transform: uppercase; color: var(--fg-on-paper-muted); margin-left: 8px; }
-.lp-tier ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
-.lp-tier li { padding: 10px 0; border-top: 1px solid var(--rule-on-paper); font: 400 16px/1.5 var(--font-serif); color: var(--fg-on-paper); }
-.lp-tier li:last-child { border-bottom: 1px solid var(--rule-on-paper); }
-.lp-tier .lp-tier-foot { margin-top: auto; padding-top: 6px; }
+/* ---------- Membership: what it includes, what it asks ---------- */
+.lp-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 40px; align-items: stretch; }
+.lp-pair > .card { display: flex; flex-direction: column; gap: 14px; }
+.lp-pair ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.lp-pair li { padding: 10px 0; border-top: 1px solid var(--rule-on-paper); font: 400 16px/1.5 var(--font-serif); color: var(--fg-on-paper); }
+.lp-pair li:last-child { border-bottom: 1px solid var(--rule-on-paper); }
+.lp-pair .lp-pair-foot { margin-top: auto; padding-top: 6px; }
 
 /* ---------- Closing ---------- */
 .lp-closing { text-align: center; display: flex; flex-direction: column; align-items: center; gap: 20px; }
@@ -279,7 +264,7 @@
   .lp-steps { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (max-width: 880px) {
-  .lp-three, .lp-split, .lp-example, .lp-tiers, .lp-tour-doors { grid-template-columns: 1fr; }
+  .lp-three, .lp-pair, .lp-tour-doors { grid-template-columns: 1fr; }
   .lp-three { gap: 28px; }
 }
 @media (max-width: 720px) {
@@ -292,7 +277,6 @@
   .lp-actions .btn.ghost { display: none; }
   .lp-doors { grid-template-columns: 1fr; }
   .lp-door { padding: 22px 22px; }
-  .lp-list li { grid-template-columns: 1fr; gap: 4px; }
   .lp-steps { grid-template-columns: 1fr; gap: 24px; }
   .lp-rule { grid-template-columns: 1fr; gap: 4px; }
   .lp-rule-why { grid-column: 1; }
@@ -301,19 +285,22 @@
 }
 
 /* =========================================================================
-   ADDITIONS — pillars, figures, the visit
+   Pillars, figures, the visit
    ------------------------------------------------------------------------- */
 
-/* ---------- Four objects, each with a drawn mark ---------- */
-.lp-pillars { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 36px; margin-top: 46px; }
+/* ---------- The two things, each with a drawn mark ---------- */
+.lp-pillars {
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: clamp(32px, 5vw, 72px); margin-top: 46px; max-width: 1040px;
+}
 .lp-pillars article { display: flex; flex-direction: column; gap: 12px; }
 .lp-mark { width: 44px; height: 44px; color: var(--tpc-gold-deep); margin-bottom: 4px; }
-.lp-pillars .body { color: var(--fg-on-paper-muted); font-size: 15.5px; }
-.lp-pillars .h3 { font-size: 21px; }
+.lp-pillars .body { color: var(--fg-on-paper-muted); font-size: 16px; max-width: 46ch; }
+.lp-pillars .h3 { font-size: 23px; }
 
-/* ---------- The four figures ---------- */
+/* ---------- The three figures ---------- */
 .lp-figures { background: var(--tpc-midnight); color: var(--fg); padding: clamp(30px, 4vw, 44px) clamp(20px, 5vw, 64px); }
-.lp-figures dl { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 24px 32px; margin: 0; }
+.lp-figures dl { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px 32px; margin: 0; }
 .lp-figures dt { display: flex; align-items: baseline; gap: 10px; }
 .lp-fig-n { font: 400 clamp(34px, 4vw, 46px)/1 var(--font-display); color: var(--accent); font-variant-numeric: tabular-nums; }
 .lp-fig-label { font: 500 11px/1.3 var(--font-sans); letter-spacing: 0.18em; text-transform: uppercase; color: var(--fg); }
@@ -351,8 +338,6 @@
 .lp-zone svg { width: 100%; height: auto; overflow: visible; }
 .lp-zone-ring { fill: none; stroke: rgba(197,183,147,0.34); }
 .lp-zone-ring.outer { stroke-dasharray: 3 5; stroke: rgba(197,183,147,0.5); }
-.lp-zone-ring.faint { stroke: rgba(197,183,147,0.18); }
-.lp-zone-tick { stroke: rgba(197,183,147,0.28); stroke-dasharray: 2 4; }
 .lp-zone-label { font: 500 9.5px var(--font-sans); letter-spacing: 0.14em; text-transform: uppercase; fill: rgba(232,223,201,0.58); }
 .lp-zone-pin circle { fill: var(--tpc-gold); }
 .lp-zone-pin text { font: 500 9.5px var(--font-sans); letter-spacing: 0.16em; text-transform: uppercase; fill: var(--tpc-cream); }
@@ -378,10 +363,7 @@
 }
 
 @media (max-width: 1024px) {
-  .lp-pillars { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 32px; }
-  .lp-figures dl { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-}
-@media (max-width: 1024px) {
+  .lp-pillars { gap: 32px; }
   .lp-terms { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 28px; }
 }
 @media (max-width: 880px) {
@@ -391,6 +373,7 @@
 }
 @media (max-width: 720px) {
   .lp-pillars { grid-template-columns: 1fr; gap: 26px; }
+  .lp-figures dl { grid-template-columns: 1fr; gap: 18px; }
   .lp-terms { grid-template-columns: 1fr; margin-top: 32px; }
   .lp-hero-frame { inset: 8px; }
   .lp-kept > span { font-size: clamp(72px, 22vw, 120px); }

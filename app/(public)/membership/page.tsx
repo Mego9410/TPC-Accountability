@@ -4,7 +4,8 @@ import { Closing, LandingSection, SectionHead } from "@/components/landing/furni
 
 export const metadata: Metadata = {
   title: "Membership",
-  description: "Two tiers. A Member, by introduction and without charge, has a circle, sittings and correspondence. The Society, at £95 a month, adds the record: blocks, the check-in, wins, the benchmark and challenges. Mentors pay nothing.",
+  description:
+    "One kind of member, admitted by introduction. A partner, two companion practice visits a year, the members directory and correspondence. Terms are being settled with the founding members.",
 };
 
 export default function MembershipPage() {
@@ -13,40 +14,36 @@ export default function MembershipPage() {
       <LandingSection tone="paper">
         <SectionHead
           eyebrow="Membership"
-          title="Two ways to belong, and one way in."
-          lede="Every principal in the Club is a Member first, and every Member came in by introduction. The Society is what you add when you want the year written down."
+          title="One kind of member, and one way in."
+          lede="There are no tiers, no upgrades and nobody ranked above anybody. Every principal in the Club has the same two things and gives the same undertakings."
         />
 
-        <div className="lp-tiers">
-          <Card as="article" className="lp-tier">
-            <Eyebrow>Member</Eyebrow>
-            <div className="lp-price">By introduction</div>
-            <Body>No monthly charge. A Member is seated in a circle and expected to sit.</Body>
+        <div className="lp-pair">
+          <Card as="article">
+            <Eyebrow>What membership includes</Eyebrow>
             <ul>
-              <li>A circle: a mentor to sit with fortnightly, or a pod of six sitting monthly, often both</li>
-              <li>Sittings held in the Club over video, with the notes from each kept against the next</li>
-              <li>Correspondence with your circle between sittings</li>
-              <li>The calendar, so a sitting is never a surprise</li>
+              <li>A partner: one other principal, found by you and asked by you</li>
+              <li>The monthly note, asking you both how the other is getting on</li>
+              <li>Two companion practice visits a year, with any member who agrees</li>
+              <li>The members directory, so you can see who to ask and who is open to being asked</li>
+              <li>Correspondence with your partner, with a host, and with the House</li>
             </ul>
-            <div className="lp-tier-foot">
-              <Button href="/signup?as=mentee" variant="secondary">Request an introduction</Button>
+            <div className="lp-pair-foot">
+              <Button href="/signup" variant="secondary">Request an introduction</Button>
             </div>
           </Card>
 
-          <Card as="article" className="lp-tier" emphasis>
-            <Eyebrow>Society</Eyebrow>
-            <div className="lp-price">£95<small>a month</small></div>
-            <Body>Everything a Member has, and the record on top. Leave whenever you like; the record stays yours.</Body>
+          <Card as="article" emphasis>
+            <Eyebrow>What membership asks of you</Eyebrow>
             <ul>
-              <li>Twelve-week blocks, begun from a template written by principals or from a blank page</li>
-              <li>The weekly check-in: four questions, four minutes, read by your mentor</li>
-              <li>The win log, kept across every block you have run</li>
-              <li>The benchmark: five figures a month against a cohort of practices like yours</li>
-              <li>Club challenges, with a leaderboard you may opt out of and still take part</li>
-              <li>A twelve-week review at the end of every block, printable, to take to your accountant or your mentor</li>
+              <li>Turn up. Answer the monthly note, even when the answer is that nothing has moved</li>
+              <li>Be honest. A tidy account of a bad quarter helps nobody, least of all you</li>
+              <li>Host when you are asked, or decline freely. Both are proper answers</li>
+              <li>Keep what you see inside somebody else&rsquo;s building inside it</li>
+              <li>Say so when you are done, rather than going quiet</li>
             </ul>
-            <div className="lp-tier-foot">
-              <Button href="/signup?as=mentee">Request an introduction</Button>
+            <div className="lp-pair-foot">
+              <Button href="/tour">Tour the House</Button>
             </div>
           </Card>
         </div>
@@ -55,32 +52,52 @@ export default function MembershipPage() {
       <LandingSection tone="parchment" narrow>
         <div className="lp-doc">
           <div className="lp-doc-section">
-            <H2>What &ldquo;by introduction&rdquo; means</H2>
+            <H2>What it costs</H2>
             <Body>
-              There is no open door. You request an introduction, which is a sign-up the House reads before anything happens. The House may write back with a question or two: what you run, how long you have run it, what you want the next year to do. Then you are seated, or you are told, plainly, why not yet.
-            </Body>
-            <Body>
-              The reason is the room. A pod of six only works if the six are principals at a similar stage who have chosen to be asked hard questions. An introduction is how the House keeps that true. It is not a test of standing and it has never been about who you know.
+              Nothing is stated yet, and this page will not pretend otherwise. Terms and pricing are being
+              settled with the founding members, who are joining now and whose view of what this is worth
+              will decide it. When it is settled it will be written here plainly, in one figure, and
+              existing members will be told before anyone else.
             </Body>
           </div>
 
           <div className="lp-doc-section">
-            <H2>Mentors pay nothing</H2>
+            <H2>What &ldquo;by introduction&rdquo; means</H2>
             <Body>
-              A mentor&rsquo;s place in the Club is given, not sold. Mentors are Members and are in the Society without charge for as long as they mentor: their own block, their own check-in, their own benchmark. Nobody is paid to mentor and nobody pays to be mentored. The exchange is the year.
+              There is no open door. You request an introduction, which is a sign-up the House reads before
+              anything happens. The House may write back with a question or two: what you run, how long you
+              have run it, and what you want the next year to do. Then you are admitted, or you are told,
+              plainly, why not yet.
+            </Body>
+            <Body>
+              The reason is the room. The whole thing rests on principals being willing to ask each other
+              awkward questions and to open their buildings to one another. An introduction is how the House
+              keeps that true. It is not a test of standing and it has never been about who you know.
+            </Body>
+          </div>
+
+          <div className="lp-doc-section">
+            <H2>Finding a partner is your job, not the House&rsquo;s</H2>
+            <Body>
+              Nobody is matched or seated. You read the directory, you choose a principal whose year looks
+              something like yours, and you ask. They accept or they decline, and a decline needs no reason
+              and is not recorded against anyone. One partner at a time, and either of you may end it and
+              ask somebody else.
             </Body>
           </div>
 
           <div className="lp-doc-section">
             <H2>Leaving</H2>
             <Body>
-              Leaving the Society is a single action in your settings and takes effect at the end of the month you are in. Leaving the Club is a message to the House. In either case your record, which is to say every block, check-in and win, remains yours to read and to take.
+              Leaving is a message to the House. Your partner is told that the partnership has ended, and
+              nothing further. Your particulars are removed within thirty days, and what you wrote down is
+              either sent to you or deleted, as you ask.
             </Body>
           </div>
 
           <Card>
             <H3>See it before you ask.</H3>
-            <Caption>The tour is the whole House, furnished, as a member, a mentor, or the House itself. Nothing you do in it is saved anywhere but your own browser.</Caption>
+            <Caption>The tour is the whole House, furnished, as a member, as a partner, or as the House itself. Nothing you do in it is saved anywhere but your own browser.</Caption>
             <div className="row gap-4 wrap">
               <Button href="/tour" variant="secondary" size="sm">Tour the House</Button>
               <Button href="/signup" variant="ghost">Request an introduction</Button>

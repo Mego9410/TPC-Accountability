@@ -3,18 +3,17 @@ import { Body, Caption, Eyebrow, H1, H2, TextLink } from "@/components/ui";
 
 export const metadata: Metadata = {
   title: "House rules",
-  description: "The eight rules of The Principals Club, each with the reason for it. Short, and meant to be read.",
+  description: "The seven rules of The Principals Club, each with the reason for it. Short, and meant to be read.",
 };
 
 const RULES = [
-  { no: "I", rule: "What is said in a sitting stays in it.", why: "A mentor's notes are seen by the mentee they are about, and by nobody else. The pod hears the pod." },
-  { no: "II", rule: "A missed commitment is recorded, not judged.", why: "The record exists so that you can see the pattern, not so that anyone can hold it against you." },
-  { no: "III", rule: "Numbers are shared anonymously or not at all.", why: "The benchmark shows medians across cohorts of five or more. Nobody sees another member's figures, the House included." },
-  { no: "IV", rule: "A sitting is kept, or it is moved. It is not skipped.", why: "A standing hour is the whole point. Move it when you must, and say so before, not after." },
-  { no: "V", rule: "Mentors ask. They advise only when asked.", why: "A question does more than an answer and lasts longer. Advice given unasked is mostly about the giver." },
-  { no: "VI", rule: "One outcome a block.", why: "Twelve weeks is long enough for one thing to change and short enough that you cannot put it off. Two outcomes is none." },
-  { no: "VII", rule: "The check-in is honest, or it is not made.", why: "Four questions, four minutes. A check-in written to look well is worse than none, because it is read." },
-  { no: "VIII", rule: "Nobody is paid and nobody pays to mentor.", why: "A mentor's place is given. The moment there is a fee either way, it is a different arrangement and not this one." },
+  { no: "I", rule: "One partner at a time.", why: "A partner is one other principal, not a panel. Two at once is nobody's, and it is the reason the arrangement stays light enough to keep." },
+  { no: "II", rule: "A partner is there to ask, not to judge.", why: "A question does more than an answer and lasts longer. Nothing you share is scored, ranked or held against you, and advice given unasked is mostly about the giver." },
+  { no: "III", rule: "Any request may be declined, and no reason is owed.", why: "A partnership, a visit, a date: all of them may be refused, at any time. A difficult week is reason enough. Declining is part of the scheme, not a departure from it." },
+  { no: "IV", rule: "Nobody hosts a competitor.", why: "At least twenty to thirty minutes' drive apart. Journey time, not a radius, so it means the same in London and in Norfolk, and it is on the two of you to hold to it." },
+  { no: "V", rule: "Two visits a year.", why: "A ceiling rather than an ambition. It keeps the thing occasional and keeps hosting from becoming an intrusion on a working business." },
+  { no: "VI", rule: "No patient contact.", why: "You are there to see how a practice is run, not its clinical work, unless your host offers otherwise and the consents are in place." },
+  { no: "VII", rule: "What is seen in the building stays in it.", why: "Both principals give the same undertaking before a visit is arranged, and it does not lapse when the morning ends. The same holds for anything a partner tells you." },
 ];
 
 export default function HouseRulesPage() {
@@ -24,11 +23,11 @@ export default function HouseRulesPage() {
         <Eyebrow>The Principals Club</Eyebrow>
         <H1>House rules.</H1>
         <Body lg className="muted">
-          Eight rules, each with its reason. They are short so that they are read, and they are few so that they are kept. Every member, mentor and member of the House holds to them.
+          Seven rules, each with its reason. They are short so that they are read, and they are few so that they are kept. Every member, and every member of the House, holds to them.
         </Body>
       </div>
 
-      <ol className="lp-rules-list" aria-label="The eight house rules">
+      <ol className="lp-rules-list" aria-label="The seven house rules">
         {RULES.map((r) => (
           <li key={r.no} className="lp-rule">
             <span className="lp-step-no" aria-hidden="true">{r.no}</span>
@@ -41,7 +40,7 @@ export default function HouseRulesPage() {
       <div className="lp-doc-section">
         <H2>When a rule is broken</H2>
         <Body>
-          Tell the House. A first breach is a conversation; the House will hear both sides and, where it can, re-seat rather than remove. A breach of the first or third rule, which concern what is private, is the one thing the House will not re-seat around.
+          Tell the House. A first breach is a conversation; the House will hear both sides and, where it can, put it right rather than remove anybody. A breach of the seventh rule, which is the one that concerns what is private, is the thing the House will not work around.
         </Body>
         <Caption>Last revised September 2026.</Caption>
       </div>

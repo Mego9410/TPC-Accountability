@@ -5,7 +5,7 @@ import { LandingSection } from "@/components/landing/furniture";
 
 export const metadata: Metadata = {
   title: "Tour the House",
-  description: "Walk through the furnished example as a member, a mentor, or the House. Nothing you do in the tour is saved anywhere but your own browser.",
+  description: "Walk through the furnished example as a member, as a partner, or as the House. Nothing you do in the tour is saved anywhere but your own browser.",
 };
 
 const SEATS = [
@@ -13,21 +13,21 @@ const SEATS = [
     as: "member",
     eyebrow: "As a member",
     title: "Dr Jordan Cheng",
-    detail: "Three years a principal at Cheng Dental, Marylebone. In week five of a twelve-week turnover block, mentored by Dr Adesanya, and one of the Marylebone Six.",
+    detail: "Three years a principal at Cheng Dental, Marylebone. Partnered with Dr Adesanya, a morning in the diary, and a request from another principal waiting to be answered.",
     go: "Sit as Dr Cheng",
   },
   {
-    as: "mentor",
-    eyebrow: "As a mentor",
+    as: "partner",
+    eyebrow: "As a partner",
     title: "Dr Amara Adesanya",
-    detail: "Fourteen years a principal in Leeds. Mentor to two, lead of the Marylebone Six, and running a block of her own on opening a second site.",
+    detail: "Fourteen years a principal in Leeds, six chairs and a second site half open. Jordan's partner, and coming to Marylebone next month.",
     go: "Sit as Dr Adesanya",
   },
   {
     as: "house",
     eyebrow: "As the House",
     title: "The House",
-    detail: "The staff who seat members, form circles, and see the Club whole: who has checked in, who is waiting for a seat, and which pair needs a word.",
+    detail: "The small staff who read the introductions and answer the correspondence, and who see the Club whole: who has been admitted, who is still looking for a partner, and which mornings are in the diary.",
     go: "Open the House",
   },
 ];
@@ -39,7 +39,7 @@ export default function TourPage() {
         <Eyebrow>The furnished example</Eyebrow>
         <H1>Tour the House.</H1>
         <Body lg className="muted">
-          The whole Club, furnished with a small world of principals so that every page looks lived in. Choose a seat. You can change seats at any time from the bar at the top, and see what you did in one seat from another.
+          The whole Club, furnished with a small world of invented principals so that every page looks lived in. Choose a seat. You can change seats at any time from the bar at the top, and see from one seat what you did in another.
         </Body>
       </div>
 
