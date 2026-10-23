@@ -23,7 +23,7 @@ export function Programme() {
     <div className="lp-programme">
       <div className="lp-programme-head">
         <Eyebrow onDark>A morning, as it tends to go</Eyebrow>
-        <span className="lp-indicative">Indicative</span>
+        <span className="lp-indicative">Roughly</span>
       </div>
       <ol className="lp-hours">
         {PROGRAMME.map((row) => (
@@ -35,8 +35,8 @@ export function Programme() {
         ))}
       </ol>
       <p className="lp-programme-foot">
-        The visitor sets the agenda, within whatever the host is willing to show. Some days run to the
-        surgeries and no further.
+        Your host decides what they are happy to show, and you ask for whatever you came to see. Plenty of
+        mornings never get past the surgeries.
       </p>
     </div>
   );
@@ -64,7 +64,7 @@ export function ExclusionZone() {
         {/* Your practice, named inside the empty core. */}
         <g className="lp-zone-pin">
           <circle cx="104" cy="102" r="4.5" />
-          <text x="104" y="126" textAnchor="middle">Your practice</text>
+          <text x="104" y="124" textAnchor="middle">You</text>
         </g>
 
         {/* The match, beyond the outer ring. */}
@@ -75,18 +75,20 @@ export function ExclusionZone() {
         </g>
       </svg>
       <figcaption>
-        Journey time, not mileage. Twenty minutes in London is three miles; twenty minutes in Norfolk is
-        twenty. Nobody visits, or hosts, a practice inside their own catchment.
+        Measured in journey time rather than miles, so it holds wherever you are: twenty minutes in London
+        covers about three miles, and in Norfolk about twenty. Nobody visits or hosts inside their own
+        catchment.
       </figcaption>
     </figure>
   );
 }
 
 const TERMS = [
-  { term: "Nobody hosts a competitor", def: "At least twenty to thirty minutes' drive apart. Journey time, not a radius, and it is on the two of you to hold to it." },
-  { term: "Any request may be declined", def: "For any reason, at any time, without explanation. A difficult week is reason enough." },
-  { term: "Two visits a year", def: "A ceiling rather than an ambition, with any member and by mutual agreement. It keeps hosting from becoming an intrusion on a working business." },
-  { term: "No patient contact", def: "You are there to see how a practice is run, not its clinical work." },
+  { term: "You host as well as visit", def: "Anyone who spends a morning in someone else's practice is expected to open their own in return. That is the whole arrangement." },
+  { term: "Nobody hosts a competitor", def: "At least twenty to thirty minutes' drive apart. It is measured in journey time rather than miles, which is why it works as well in Norfolk as in London." },
+  { term: "Any request may be declined", def: "For any reason, at any time, and you do not have to say why. A busy week is reason enough." },
+  { term: "Two visits a year at most", def: "Enough to be useful, few enough that hosting never becomes a drain on a working practice." },
+  { term: "No patient contact", def: "You are there to watch how the practice runs. The clinical work is not part of the visit." },
 ];
 
 /** The visit as a pillar of the Club, on baize. */
@@ -97,7 +99,7 @@ export function VisitsSection() {
         onDark
         eyebrow="Companion practice visits"
         title="A morning inside someone else's practice. And, in turn, a morning inside yours."
-        lede="With any member, by mutual agreement, twice a year at most. One principal, one practice, one honest look around: the workflow, the systems, the processes, and the feel of how someone else has built their culture. No consultant, and nothing to buy at the end of the afternoon."
+        lede="You spend a morning watching another member run their practice: how the day is set, how the diary holds together, how reception talks to patients, how the team works. Then you do the same for them. If you visit someone, you are expected to host in return, and the Club asks for no more than two of these a year."
       />
 
       <div className="lp-visit-grid">
@@ -124,31 +126,35 @@ export function VisitsSection() {
   );
 }
 
-/* ---------- What a visit returns: used in full on /visits ---------- */
+/* ---------- What a visit returns ----------
+   Ordered deliberately. The first two are what the visitor learns from the
+   host, because that is what the morning is for. The host's own return comes
+   third, and the fresh pair of eyes last: it is a happy side effect of having
+   someone in the building, not the reason to open the door. */
 export const RETURNS = [
   {
-    name: "The blind spot",
-    line: "Fresh eyes on a practice you stopped seeing years ago",
-    body: "A visitor arrives with no history, no loyalty to the way it has always been done, and one question they cannot help asking: why do you do it like that? Some of the time there is a good answer. The rest of the time is the point.",
-    pull: "No invoice follows. Nobody is selling you a system at four o'clock.",
+    name: "Seeing it done",
+    line: "An hour watching someone else's practice run teaches more than a day of being told about it",
+    body: "You can read about huddles, treatment coordinators and recall systems for years without knowing what any of them look like on a Tuesday morning. Standing in the corridor while it happens is different. You see how long the huddle really takes, who speaks, what reception says when the phone goes, and how the diary absorbs a cancellation.",
+    pull: "Most principals have never watched another practice work. Not once since they qualified.",
   },
   {
-    name: "The rehearsal",
-    line: "The walkthrough a buyer will one day do, years before it counts",
-    body: "Every practice that changes hands is eventually walked round by a stranger looking for what is wrong with it: the reliance on one clinician, the systems that live only in the principal's head, the undocumented processes that quietly move the price.",
-    pull: "The first person to walk your practice and ask why should not be the person buying it.",
+    name: "The current answer",
+    line: "What is actually working now, from someone who is doing it",
+    body: "Scanners and whether they have paid for themselves. Treatment coordinators and what they are really worth. Where the good associates are looking this year and what makes them stay. Your host has a current answer to at least one thing you are guessing about, and they will give it to you in a doorway rather than from a stage.",
+    pull: "No invoice follows, because nobody is selling you anything.",
   },
   {
-    name: "The catch-up",
-    line: "What has changed since you last had to learn it",
-    body: "Scanners and their actual return. Treatment coordinators, and whether they earn their salary. Private conversion. Where the good associates are genuinely looking, and what makes them stay. Every visitor carries the current answer to something.",
-    pull: "Handed over in a surgery doorway rather than from a stage.",
+    name: "Showing your own",
+    line: "Explaining how you do it is how you find out why you do it",
+    body: "Hosting turns out to be the half people underestimate. Walking someone through your morning makes you say out loud things you have never had to put into words, and some of them will not survive the saying. Most hosts find they learn as much from the questions as their visitor learns from the answers.",
+    pull: "Nobody has asked you why you do it that way in years. It is a good question.",
   },
   {
-    name: "The pipeline",
-    line: "The next generation, in your building, before they are your buyer",
-    body: "Whoever eventually buys your practice, partners in it, or turns out to be the best hire you ever made is at present working in somebody else's. This puts you in front of that room years early, in the one setting where character is actually visible.",
-    pull: "What you know took thirty years to learn, and at present it leaves the profession when you do.",
+    name: "A second pair of eyes",
+    line: "And occasionally, something you had stopped noticing",
+    body: "Twenty years in the same building and some things go invisible: the surgery nobody wants to be put in, the script that stopped working four years ago. A visitor sometimes mentions one of them. Take it or leave it — nobody arrives to audit your practice, and anything they notice is a bonus rather than the purpose.",
+    pull: "Mentioned over lunch, if at all. You will not be handed a report.",
   },
 ];
 

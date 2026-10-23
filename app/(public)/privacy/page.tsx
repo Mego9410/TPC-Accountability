@@ -19,27 +19,27 @@ export default function PrivacyPage() {
 
       <div className="lp-doc-section">
         <H2>What is collected</H2>
-        <Body>Five kinds of thing, and nothing else.</Body>
+        <Body>Five kinds of thing.</Body>
         <ul>
           <li><b>Your particulars.</b> Your name and honorific, your email address, your practice&rsquo;s name, region, type and chair count, how long you have been a principal, your time zone, a short note about yourself, what you are working on, and whether you are open to a partner or to a visitor. All of it comes from you, at onboarding and in your settings.</li>
           <li><b>Your goals.</b> The handful of things you have said you are working on: a title, whatever detail you choose to add, an optional date, and whether you have marked it done.</li>
-          <li><b>The updates written against them.</b> The lines you write about your own goals, and the lines your partner writes about them. Every one of them is shown to both of you as it is written; there is nothing written about you that you cannot read.</li>
+          <li><b>The updates written against them.</b> The lines you write about your own goals, and the lines your partner writes about them. Both of you can see every one of them as it is written, so there is nothing written about you that you cannot read.</li>
           <li><b>Your visits.</b> Who visited whom, the practice, the date, where it stands, the arrival note, and whatever the two of you wrote down afterwards.</li>
           <li><b>Your correspondence.</b> Messages between you and another member, and between you and the House.</li>
         </ul>
         <Body>
-          The Club keeps no scores, no streaks and no figures from your practice. There is nothing to report each month and no number you are asked for.
+          The Club keeps no scores or streaks, and no figures from your practice. There is no monthly number you are asked for.
         </Body>
       </div>
 
       <div className="lp-doc-section">
         <H2>Who sees what</H2>
         <ul>
-          <li><b>Your partner</b> sees your particulars, the goals you have shared, and every update written against them, including their own. Nothing is hidden from them and nothing is hidden from you.</li>
+          <li><b>Your partner</b> sees your particulars, the goals you have shared, and every update written against them, including their own. You and your partner see the same things.</li>
           <li><b>Any member</b> sees what is in the members directory: your name, your practice, your region, how long you have been a principal, your note about yourself, what you are working on in general terms, and whether you are open to a partner or a visitor. Your goals and your updates are not in the directory.</li>
           <li><b>A host or a visitor</b> sees the arrangements for the morning you have agreed, and whatever either of you writes down afterwards. Nobody else sees a visit note.</li>
           <li><b>The House</b>, meaning the small staff who admit members and answer correspondence, sees your particulars, whether you have a partner, and your visits. The House does not read the updates written against your goals unless you ask it to look at something.</li>
-          <li><b>You</b> see all of it, as it is written.</li>
+          <li><b>You</b> see all of it.</li>
         </ul>
       </div>
 
@@ -53,14 +53,14 @@ export default function PrivacyPage() {
       <div className="lp-doc-section">
         <H2>The tour</H2>
         <Body>
-          The furnished example on this site is held entirely in your own browser, in a cookie. The principals in it are invented. Nothing you do in the tour reaches a server, is seen by the House, or can be recovered by anyone but you, and leaving the tour clears it.
+          The furnished example on this site is held entirely in your own browser, in a cookie, and the principals in it are invented. Nothing you do in the tour reaches a server or is seen by the House, and leaving the tour clears it.
         </Body>
       </div>
 
       <div className="lp-doc-section">
         <H2>How to leave</H2>
         <Body>
-          To end a partnership, do it in your settings and your partner is told that it has ended, and nothing further. To leave the Club, write to the House. To have what you wrote sent to you before it is deleted, say so in the same message. There is no form and no notice period.
+          You can end a partnership in your settings; your partner is told that it has ended, and nothing further. To leave the Club, write to the House, and say in the same message if you want what you wrote sent to you before it is deleted. There is no form and no notice period.
         </Body>
         <Caption>Questions about any of this go to the House. Last revised September 2026.</Caption>
       </div>

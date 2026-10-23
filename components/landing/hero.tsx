@@ -35,8 +35,8 @@ export function Hero() {
             <Eyebrow onDark>The partner</Eyebrow>
             <span className="lp-door-title">Someone who asks how it is going.</span>
             <span className="lp-door-detail">
-              Another principal you find yourself and ask. You share what you are working on, they share
-              theirs, and once a month the Club asks you both how the other is getting on.
+              Another principal you pick out of the directory and ask yourself. You each share what you are
+              working on, and once a month we ask you both how the other is getting on.
             </span>
             <span className="lp-door-go">Read on</span>
           </a>

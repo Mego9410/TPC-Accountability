@@ -13,11 +13,11 @@ const MOMENTS = [
   },
   {
     title: "You share what you are working on",
-    body: "Not a plan. The handful of things you are actually trying to do this year, written in a line each. Your partner can see them and write a word against them, and you against theirs.",
+    body: "The handful of things you are actually trying to do this year, written in a line each. Your partner can see them and write a word against them, and you against theirs.",
   },
   {
     title: "Once a month, a note",
-    body: "The Club writes to you both and asks how the other is getting on. Answer it in a sentence or ignore it. That is the whole mechanism, and there is nothing else underneath it.",
+    body: "The Club writes to you both and asks how the other is getting on. Answer it in a sentence, or leave it. There is nothing else to keep up with.",
   },
 ];
 
@@ -27,24 +27,22 @@ export function PartnerSection() {
       <SectionHead
         eyebrow="The partner"
         title="Someone who asks how it is going."
-        lede="Ownership is a solitary job. There is nobody in the building who can ask whether you did the thing you said you would do in January."
+        lede="Most principals have nobody in the building who can ask whether they did the thing they said they would do in January. A partner is one other principal who will."
       />
 
       <div className="lp-prose" style={{ marginTop: 28 }}>
         <Body>
           A partner is one other principal. You find them yourself in the members directory, you ask them,
-          and they accept or they decline. Nobody is matched, seated or assigned, and nothing happens over
-          your head.
+          and they accept or they decline. Nobody is matched or assigned by the House.
         </Body>
         <Body>
           Between you, you share the few things you are working on. They can see yours and write a word
-          against them; you can see theirs and do the same. It is not advice and it is not a review. It is
-          one person who knows what you said you would do, and who is close enough to notice when you quietly
-          stop doing it.
+          against them; you can see theirs and do the same. Your partner is not there to give advice. They
+          know what you said you would do, and are close enough to notice if you stop doing it.
         </Body>
         <Body>
-          Once a month the Club sends you both a note asking how the other is getting on. That is the entire
-          arrangement. There are no weeks to keep up with, no score, and nothing to fall behind on.
+          Once a month the Club sends you both a note asking how the other is getting on. That is the whole
+          arrangement: no weekly check-ins, no score and nothing to fall behind on.
         </Body>
       </div>
 
@@ -59,7 +57,7 @@ export function PartnerSection() {
 
       <div className="lp-cta">
         <Button href="/signup" variant="secondary">Request an introduction</Button>
-        <Caption>A goal said aloud to someone who will ask about it is a goal more often kept.</Caption>
+        <Caption>One partner at a time, and either of you can end it and ask somebody else.</Caption>
       </div>
     </LandingSection>
   );
