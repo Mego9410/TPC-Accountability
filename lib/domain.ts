@@ -135,7 +135,7 @@ export interface Message {
    Labels and small helpers
    ------------------------------------------------------------------------- */
 
-/** The ceiling. A ceiling, not an ambition. */
+/** The most visits a member may have in any twelve months. */
 export const VISITS_A_YEAR = 2;
 
 export const MEMBER_ROLE_LABEL: Record<MemberRole, string> = {
