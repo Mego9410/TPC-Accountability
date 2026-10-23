@@ -383,3 +383,15 @@
 @media (prefers-reduced-motion: reduce) {
   .lp-door:hover { transform: none; }
 }
+
+/* ---------- The founding host ---------- */
+.lp-host { display: grid; grid-template-columns: minmax(0, 200px) minmax(0, 1fr); gap: clamp(24px, 4vw, 48px); align-items: center; }
+.lp-host-portrait { margin: 0; }
+.lp-host-portrait img { width: 100%; height: auto; border: 1px solid var(--rule-on-paper); filter: grayscale(1) contrast(1.05); }
+.lp-host-placeholder { width: 100%; aspect-ratio: 4 / 5; border: 1px solid var(--rule-on-paper); background: var(--bg-paper); }
+.lp-host-words { display: flex; flex-direction: column; gap: 14px; }
+.lp-host-words .h2 { font-size: clamp(22px, 2.6vw, 30px); line-height: 1.35; font-style: italic; font-weight: 400; }
+@media (max-width: 720px) {
+  .lp-host { grid-template-columns: 1fr; gap: 24px; }
+  .lp-host-portrait { max-width: 180px; }
+}

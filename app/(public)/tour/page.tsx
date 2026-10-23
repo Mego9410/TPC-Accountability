@@ -27,7 +27,7 @@ const SEATS = [
     as: "house",
     eyebrow: "As the House",
     title: "The House",
-    detail: "The small staff who read the introductions and answer the correspondence, and who see the Club whole: who has been admitted, who is still looking for a partner, and which mornings are in the diary.",
+    detail: "The small staff who read the introductions and answer the correspondence. The House can see who has been admitted, who is still looking for a partner and which mornings are in the diary.",
     go: "Open the House",
   },
 ];
@@ -39,7 +39,7 @@ export default function TourPage() {
         <Eyebrow>The furnished example</Eyebrow>
         <H1>Tour the House.</H1>
         <Body lg className="muted">
-          The whole Club, furnished with a small world of invented principals so that every page looks lived in. Choose a seat. You can change seats at any time from the bar at the top, and see from one seat what you did in another.
+          The whole Club, furnished with invented principals so that the pages are not empty. Choose a seat below. You can change seats at any time from the bar at the top, and what you do in one seat shows up in the others.
         </Body>
       </div>
 

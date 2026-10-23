@@ -32,7 +32,7 @@ const STEPS = [
   { no: "I", title: "You join", text: "Request an introduction. The House reads it, asks you a question or two, and writes back within the week." },
   { no: "II", title: "You find a partner", text: "Read the members directory, choose a principal whose year looks something like yours, and ask them. They accept, or they decline without a reason." },
   { no: "III", title: "You share what you are working on", text: "The few things you are actually trying to do this year. Your partner can see them and write a word against them, and you against theirs." },
-  { no: "IV", title: "You visit each other", text: "A morning inside their practice, and in turn a morning inside yours. Any member, by mutual agreement, twice a year at most." },
+  { no: "IV", title: "You visit each other", text: "A morning inside their practice, seeing how they run the day, and in turn a morning inside yours. Any member, by mutual agreement, twice a year at most." },
 ];
 
 export function Steps() {
@@ -70,14 +70,14 @@ export function MembershipStrip() {
       <SectionHead
         eyebrow="Membership"
         title="One kind of member, admitted by introduction."
-        lede="There are no tiers and nobody is ranked above anybody. Every member has the same two things."
+        lede="There are no tiers or upgrades. Every member has the same two things."
       />
       <div className="lp-pair">
         <Card as="article">
           <Eyebrow>What it includes</Eyebrow>
           <ul>
-            <li>A partner, when you find one and they agree</li>
-            <li>Two companion practice visits a year, with any member</li>
+            <li>A partner, once you find one and they agree</li>
+            <li>Two companion visits a year, with any member</li>
             <li>The members directory, so you can see who to ask</li>
             <li>Correspondence with your partner and with the House</li>
           </ul>
@@ -85,12 +85,12 @@ export function MembershipStrip() {
         <Card as="article" emphasis>
           <Eyebrow>What it asks</Eyebrow>
           <ul>
-            <li>Turn up, and answer the monthly note</li>
+            <li>Answer the monthly note</li>
             <li>Be honest about what has not moved</li>
-            <li>Host when you are asked, or decline freely</li>
+            <li>Host a morning in return if you spend one in another member&rsquo;s practice</li>
             <li>Keep what you see in someone else&rsquo;s building inside it</li>
           </ul>
-          <Caption>Terms and pricing are being settled with the founding members, and are not yet stated.</Caption>
+          <Caption>Terms and pricing are being settled with the founding members.</Caption>
         </Card>
       </div>
       <div className="lp-cta">
@@ -102,8 +102,8 @@ export function MembershipStrip() {
 
 /* ---------- House rules excerpt ---------- */
 const THREE_RULES = [
-  { rule: "A partner is there to ask, not to judge.", why: "A question does more than an answer and lasts longer. Nothing you share is scored, ranked or held against you." },
-  { rule: "Any request may be declined, without a reason.", why: "A partnership, a visit, a date: all of them may be refused. Declining is part of the scheme, not a departure from it." },
+  { rule: "A partner is there to ask questions.", why: "A question is usually more use than advice nobody asked for. Nothing you share is scored or ranked, and none of it is held against you." },
+  { rule: "Any request may be declined, without a reason.", why: "A partnership, a visit or a proposed date can all be refused. Declining is expected and is not recorded against you." },
   { rule: "What is seen in the building stays in it.", why: "Both principals give the same undertaking before a visit is arranged, and it does not lapse afterwards." },
 ];
 
@@ -132,7 +132,7 @@ export function Closing({ eyebrow = "The Principals Club" }: { eyebrow?: string 
     <LandingSection tone="midnight">
       <div className="lp-closing">
         <Eyebrow onDark>{eyebrow}</Eyebrow>
-        <H2>The work is yours. The keeping of it, we share.</H2>
+        <H2>A partner, and two mornings a year.</H2>
         <div className="lp-cta">
           <Button href="/signup">Request an introduction</Button>
           <Button href="/tour" variant="secondary" onDark>Tour the House</Button>

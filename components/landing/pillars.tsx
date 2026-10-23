@@ -18,7 +18,7 @@ function Mark({ children }: { children: ReactNode }) {
 const PILLARS = [
   {
     title: "The partner",
-    body: "One other principal, found by you in the members directory and asked by you. You share the handful of things you are working on, they share theirs, and each of you can write a word against the other's. Once a month the Club asks how they are getting on. No scoring, no weeks, no structure.",
+    body: "One other principal, picked out of the members directory and asked by you. You each write down the handful of things you are working on, and either of you can add a line against the other's. Once a month we email you both to ask how they are getting on. There is nothing to score and nothing to keep up with.",
     /* Two principals, level with one another, and the line of enquiry between them. */
     mark: (
       <Mark>
@@ -32,7 +32,7 @@ const PILLARS = [
   },
   {
     title: "The visit",
-    body: "A morning inside another member's practice — the workflow, the systems, the processes, the feel of how they have built their culture — and in turn a morning inside yours. With any member, by mutual agreement, twice a year at most. You are both host and visitor.",
+    body: "A morning watching another member run their practice: how they set the day, what reception says to patients, how the diary copes. Then they spend a morning in yours. Everyone does both, with any member they agree it with, and no more than twice a year.",
     /* Two doorways, and the crossing between them. */
     mark: (
       <Mark>
@@ -52,7 +52,7 @@ export function Pillars() {
       <SectionHead
         eyebrow="What the Club is"
         title="A partner, and a morning in each other's practices."
-        lede="Two things, and nothing else. Everything that used to sit around them has been taken out."
+        lede="Two things. You will not find a programme, a scoring system or a set of weekly targets anywhere in it."
       />
       <div className="lp-pillars">
         {PILLARS.map((p) => (
@@ -69,8 +69,8 @@ export function Pillars() {
 
 /* ---------- A quiet strip of the three figures that decide it ---------- */
 const FIGURES = [
-  { n: "1", label: "partner", sub: "One at a time, asked by you" },
-  { n: "2", label: "visits a year", sub: "A ceiling, not a target" },
+  { n: "1", label: "partner", sub: "One at a time, and you choose them" },
+  { n: "2", label: "visits a year", sub: "At most, and you host as well as go" },
   { n: "0", label: "scores", sub: "Nothing is ranked or counted" },
 ];
 
