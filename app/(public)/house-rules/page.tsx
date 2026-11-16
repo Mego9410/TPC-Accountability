@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Body, Caption, Eyebrow, H1, H2, TextLink } from "@/components/ui";
+import { PublicShell } from "@/components/landing/public-shell";
 
 export const metadata: Metadata = {
   title: "House rules",
@@ -16,8 +17,9 @@ const RULES = [
   { no: "VII", rule: "What is seen in the building stays in it.", why: "Both principals give the same undertaking before a visit is arranged, and it does not lapse when the morning ends. The same holds for anything a partner tells you." },
 ];
 
-export default function HouseRulesPage() {
+export default async function HouseRulesPage() {
   return (
+    <PublicShell>
     <article className="tpc-page prose lp-doc fade-enter">
       <div className="lp-doc-head">
         <Eyebrow>The Principals Club</Eyebrow>
@@ -51,5 +53,6 @@ export default function HouseRulesPage() {
         <TextLink href="/" back>The Club</TextLink>
       </div>
     </article>
+    </PublicShell>
   );
 }

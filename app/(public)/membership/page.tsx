@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Body, Button, Caption, Card, Eyebrow, H2, H3 } from "@/components/ui";
 import { Closing, LandingSection, SectionHead } from "@/components/landing/furniture";
+import { PublicShell } from "@/components/landing/public-shell";
 
 export const metadata: Metadata = {
   title: "Membership",
@@ -8,8 +9,9 @@ export const metadata: Metadata = {
     "One kind of member, admitted by introduction. A partner, two companion visits a year, the members directory and correspondence. Terms are being settled with the founding members.",
 };
 
-export default function MembershipPage() {
+export default async function MembershipPage() {
   return (
+    <PublicShell>
     <>
       <LandingSection tone="paper">
         <SectionHead
@@ -106,5 +108,6 @@ export default function MembershipPage() {
 
       <Closing eyebrow="Membership" />
     </>
+    </PublicShell>
   );
 }

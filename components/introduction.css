@@ -1,0 +1,121 @@
+/* =========================================================================
+   Request an introduction.
+
+   A full-bleed two-column scene: the photograph and the four steps on the
+   left, the form on the right. Ported from the Design canvas.
+   ------------------------------------------------------------------------- */
+
+.ri {
+  --ease: cubic-bezier(.22, .61, .12, 1);
+  font-family: var(--font-sans);
+  color: #0C1217;
+  background: #F6F1E6;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100dvh;
+  display: flex;
+  flex-wrap: wrap;
+}
+.ri * { box-sizing: border-box; }
+.ri h1, .ri h2, .ri p, .ri ul, .ri ol { margin: 0; }
+.ri .serif { font-family: var(--font-serif); font-weight: 300; }
+.ri .disp { font-family: var(--font-display); font-weight: 400; }
+.ri .eb { font: 500 11px/1.4 var(--font-sans); letter-spacing: .22em; text-transform: uppercase; }
+
+.ri .side {
+  position: relative; flex: 1 1 520px; min-height: 100dvh; overflow: hidden;
+  background: #0C1217; color: #F6F1E6;
+  display: flex; flex-direction: column; justify-content: space-between;
+  padding: 44px 56px 56px;
+}
+.ri .side img.bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; animation: ri-kb 18s var(--ease) both; }
+.ri .side .shade {
+  position: absolute; inset: 0;
+  background: linear-gradient(180deg, rgba(12,18,23,.6) 0%, rgba(12,18,23,.15) 35%, rgba(12,18,23,.55) 65%, rgba(12,18,23,.94) 100%);
+}
+
+.ri .main { flex: 999 1 560px; min-width: 0; display: flex; justify-content: center; padding: 56px 56px 64px; }
+.ri .form { width: 100%; max-width: 600px; display: flex; flex-direction: column; }
+
+.ri .prog { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+.ri .prog button {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 8px;
+  padding: 14px 0 0; min-height: 44px; background: transparent; border: 0;
+  border-top: 2px solid rgba(12,18,23,.27); cursor: pointer; font: inherit;
+  color: #746D5F; text-align: left; transition: border-color .4s, color .4s;
+}
+.ri .prog button.done { border-top-color: #71654B; color: #574F42; }
+.ri .prog button.now { border-top-color: #0C1217; color: #0C1217; }
+.ri .prog button:disabled { cursor: default; }
+
+.ri .field { display: flex; flex-direction: column; gap: 8px; }
+.ri .field label, .ri .field .lbl {
+  font: 500 11px/1.4 var(--font-sans); letter-spacing: .18em; text-transform: uppercase; color: #574F42;
+}
+.ri .field input, .ri .field textarea, .ri .field select {
+  width: 100%; min-height: 52px; padding: 14px 16px;
+  border: 1px solid rgba(12,18,23,.46); border-radius: 2px; background: #FBF8F1;
+  font: 16px/1.5 var(--font-sans); color: #0C1217;
+  transition: border-color .3s, box-shadow .3s;
+}
+.ri .field input:focus, .ri .field textarea:focus, .ri .field select:focus {
+  outline: none; border-color: #0C1217; box-shadow: 0 0 0 3px rgba(122,109,81,.22);
+}
+.ri .field.bad input, .ri .field.bad textarea { border-color: #8B3A3A; }
+.ri .field .hint { font-size: 13px; line-height: 1.55; color: #746D5F; }
+.ri .field .err { font-size: 13px; line-height: 1.55; color: #8B3A3A; }
+
+.ri .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.ri .chips button {
+  min-height: 46px; min-width: 56px; padding: 0 18px;
+  border: 1px solid rgba(12,18,23,.46); border-radius: 2px; background: #FBF8F1;
+  font: 500 13px/1 var(--font-sans); color: #0C1217; cursor: pointer;
+  transition: background .3s, color .3s;
+}
+.ri .chips button:hover { border-color: #0C1217; }
+.ri .chips button.on { background: #0C1217; color: #F6F1E6; border-color: #0C1217; }
+
+.ri .line { display: grid; grid-template-columns: 40px 1fr; align-items: center; gap: 8px; }
+.ri .check {
+  display: grid; grid-template-columns: 28px 1fr; gap: 14px; align-items: start;
+  padding: 18px 0; border-top: 1px solid rgba(12,18,23,.27); cursor: pointer;
+}
+.ri .check input { width: 22px; height: 22px; margin: 2px 0 0; accent-color: #0C1217; }
+
+.ri .btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 12px;
+  min-height: 54px; padding: 0 30px;
+  font: 500 11px/1 var(--font-sans); letter-spacing: .22em; text-transform: uppercase;
+  text-decoration: none; border: 1px solid #0C1217; color: #0C1217; background: transparent;
+  cursor: pointer; border-radius: 2px;
+  transition: background .35s var(--ease), color .35s var(--ease);
+}
+.ri .btn:hover { background: #0C1217; color: #F6F1E6; }
+.ri .btn.solid { background: #0C1217; color: #F6F1E6; }
+.ri .btn.solid:hover { background: #1B2830; }
+.ri .btn.ghost { border-color: transparent; padding: 0 8px; }
+.ri .btn.ghost:hover { background: transparent; color: #71654B; }
+.ri .btn[disabled] { opacity: .5; cursor: default; }
+.ri .btn[disabled]:hover { background: transparent; color: #0C1217; }
+.ri .btn.solid[disabled]:hover { background: #0C1217; color: #F6F1E6; }
+
+.ri .pane { animation: ri-in .7s var(--ease) both; }
+.ri .seal {
+  width: 96px; height: 96px; border-radius: 50%; border: 1px solid #71654B;
+  display: flex; align-items: center; justify-content: center;
+  animation: ri-seal 1.1s var(--ease) both;
+}
+.ri a:focus-visible, .ri button:focus-visible { outline: 2px solid #71654B; outline-offset: 3px; }
+
+@keyframes ri-kb { from { transform: scale(1.12); } to { transform: scale(1.02); } }
+@keyframes ri-in { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+@keyframes ri-seal { from { opacity: 0; transform: scale(.9); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) {
+  .ri .side img.bg, .ri .pane, .ri .seal { animation: none; }
+}
+
+@media (max-width: 900px) {
+  .ri .side { min-height: 360px; flex-basis: 100%; padding: 24px 24px 32px; }
+  .ri .main { padding: 36px 24px 56px; }
+  .ri .big { font-size: 36px !important; }
+  .ri .prog .lbl-text { display: none; }
+}

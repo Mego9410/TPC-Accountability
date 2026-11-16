@@ -3,6 +3,7 @@ import { Body, Button, Caption, Eyebrow, H3, TextLink } from "@/components/ui";
 import { Closing, Faq, LandingSection, SectionHead } from "@/components/landing/furniture";
 import { ExclusionZone, Programme, Returns } from "@/components/landing/visits";
 import { FoundingHost } from "@/components/landing/founding-host";
+import { PublicShell } from "@/components/landing/public-shell";
 
 export const metadata: Metadata = {
   title: "Companion practice visits",
@@ -29,8 +30,9 @@ const FAQS = [
   { q: "How long does it take?", a: "A morning, usually. Some people stay for lunch and into the afternoon, and plenty of visits never get past the surgeries. The running order below is a rough guide rather than a timetable." },
 ];
 
-export default function VisitsPage() {
+export default async function VisitsPage() {
   return (
+    <PublicShell>
     <>
       <LandingSection tone="midnight">
         <div className="lp-head">
@@ -168,5 +170,6 @@ export default function VisitsPage() {
 
       <Closing eyebrow="Companion practice visits" />
     </>
+    </PublicShell>
   );
 }

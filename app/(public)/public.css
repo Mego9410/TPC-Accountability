@@ -4,37 +4,26 @@
    design system in globals.css. Every class here is prefixed .lp-.
    ------------------------------------------------------------------------- */
 
-/* ---------- Shell: header, main, footer ---------- */
-.lp-shell { min-height: 100dvh; display: flex; flex-direction: column; }
+/* ---------- Shell ----------
+   The document pages share the home page's sticky head and big-wordmark
+   foot (both styled under .h in home.css); all that is left here is the
+   column they sit in. */
+.lp-doc-shell { min-height: 100dvh; display: flex; flex-direction: column; }
 .lp-main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+.lp-doc-shell .lp-main { background: var(--bg-paper); color: var(--fg-on-paper); }
 .lp-main > .tpc-page { flex: 0 0 auto; }
 
-.lp-header {
-  background: var(--tpc-midnight);
-  color: var(--fg);
-  border-bottom: 1px solid var(--rule);
-  padding: 18px clamp(20px, 5vw, 48px);
-  display: flex; align-items: center; gap: 20px 32px; flex-wrap: wrap;
-}
-.lp-brand { display: flex; align-items: center; gap: 14px; text-decoration: none; margin-right: auto; }
-.lp-brand .lp-mark { height: 34px; width: auto; }
-.lp-brand .lp-word { height: 13px; width: auto; opacity: 0.92; }
-.lp-nav { display: flex; gap: 26px; }
-.lp-nav a {
-  font: 500 11px/1 var(--font-sans); letter-spacing: 0.2em; text-transform: uppercase;
-  color: var(--fg); text-decoration: none; padding: 6px 0;
-  border-bottom: 1px solid transparent; white-space: nowrap;
-  transition: color var(--dur-2) var(--ease-out), border-color var(--dur-2) var(--ease-out);
-}
-.lp-nav .lp-nav-short { display: none; }
-.lp-nav a:hover { color: var(--accent); }
-.lp-nav a[aria-current="page"] { color: var(--accent); border-bottom-color: var(--accent); }
-.lp-actions { display: flex; align-items: center; gap: 20px; }
-
-/* ---------- Sections ---------- */
-.lp-section { padding: clamp(64px, 8vw, 104px) clamp(20px, 5vw, 64px); }
-.lp-section.paper { background: var(--bg-paper); }
-.lp-section.parchment { background: var(--bg-paper-raise); }
+/* ---------- Sections ----------
+   Three sizes, not one. The `tight`/`loose` variants let adjacent bands
+   differ in pace, which is what the old page had no way of doing: seven of
+   its nine sections were padded 104/104. */
+.lp-section { padding: var(--sec-base) clamp(20px, 5vw, 64px); }
+.lp-section.tight { padding-block: var(--sec-tight); }
+.lp-section.loose { padding-block: var(--sec-loose); }
+/* These sit inside `.h`, which sets a cream-on-ink default for the chrome,
+   so a paper ground has to say what colour its text is. */
+.lp-section.paper { background: var(--bg-paper); color: var(--fg-on-paper); }
+.lp-section.parchment { background: var(--bg-paper-raise); color: var(--fg-on-paper); }
 .lp-section.midnight { background: var(--tpc-midnight); color: var(--fg); }
 /* The card room. Gold on bottle green is the club-bindery pairing, and it
    breaks the paper/midnight alternation exactly once, where the visit is. */

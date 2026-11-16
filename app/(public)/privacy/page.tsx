@@ -1,13 +1,15 @@
 import type { Metadata } from "next";
 import { Body, Caption, Eyebrow, H1, H2, TextLink } from "@/components/ui";
+import { PublicShell } from "@/components/landing/public-shell";
 
 export const metadata: Metadata = {
   title: "Privacy",
   description: "What the Club records about you, who can see it, how long it is kept, and how to leave.",
 };
 
-export default function PrivacyPage() {
+export default async function PrivacyPage() {
   return (
+    <PublicShell>
     <article className="tpc-page prose lp-doc fade-enter">
       <div className="lp-doc-head">
         <Eyebrow>The Principals Club</Eyebrow>
@@ -71,5 +73,6 @@ export default function PrivacyPage() {
         <TextLink href="/" back>The Club</TextLink>
       </div>
     </article>
+    </PublicShell>
   );
 }
