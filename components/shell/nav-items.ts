@@ -6,11 +6,11 @@ export type NavItem = { href: string; label: string; short?: string; icon: NavIc
 /** Server-safe: which destinations a viewer can reach. */
 export function navFor(role: MemberRole): NavItem[] {
   const items: NavItem[] = [
-    { href: "/home", label: "Home", icon: "house" },
-    { href: "/partner", label: "Partner", icon: "people" },
-    { href: "/goals", label: "Goals", icon: "target" },
+    { href: "/home", label: "The Ledger", short: "Ledger", icon: "house" },
+    { href: "/partner", label: "Your partner", short: "Partner", icon: "people" },
+    { href: "/goals", label: "Your list", short: "List", icon: "target" },
     { href: "/visits", label: "Visits", icon: "door" },
-    { href: "/members", label: "Members", icon: "dots" },
+    { href: "/members", label: "Directory", icon: "dots" },
     { href: "/messages", label: "Correspondence", short: "Post", icon: "message" },
   ];
   if (role === "staff") items.push({ href: "/house", label: "The House", short: "House", icon: "key" });

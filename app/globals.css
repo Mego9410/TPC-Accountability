@@ -4,13 +4,15 @@
    (ported and extended from ui_kits/member-portal/styles.css).
    ------------------------------------------------------------------------- */
 
-@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400;1,500&family=Italiana&family=Inter:wght@300;400;500;600&display=swap');
+/* Faces are loaded by `next/font` in app/fonts.ts, which exposes them as
+   --f-serif, --f-sans and --f-display on <html>. Nothing is fetched from a
+   third party at runtime. */
 
 :root {
   /* ---------- Brand colors ---------- */
   --tpc-gold:           #C5B793;
   --tpc-gold-bright:    #D8C9A1;
-  --tpc-gold-deep:      #9A8A66;
+  --tpc-gold-deep:      #71654B;  /* 5.06:1 on cream, 4.53:1 on bone. Was #9A8A66 at 3.01:1. */
   --tpc-gold-faint:     #E8DFC9;
 
   --tpc-midnight:       #1B2830;
@@ -22,7 +24,9 @@
   --tpc-bone:           #ECE5D2;
   --tpc-parchment:      #FBF8F1;
   --tpc-stone:          #C7BFAE;
-  --tpc-stone-soft:     #A39A86;
+  --tpc-stone-soft:     #A39A86;  /* decorative only — fails as text on paper */
+  --tpc-slate:          #574F42;  /* 7.4:1 on cream — body copy on paper */
+  --tpc-slate-soft:     #746D5F;  /* 4.55:1 on cream — captions on paper */
 
   /* ---------- Semantic surfaces ---------- */
   --bg:                 var(--tpc-midnight);
@@ -32,10 +36,11 @@
   --bg-paper-raise:     var(--tpc-parchment);
 
   --fg:                 var(--tpc-cream);
-  --fg-muted:           color-mix(in oklab, var(--tpc-cream) 70%, transparent);
-  --fg-faint:           color-mix(in oklab, var(--tpc-cream) 45%, transparent);
+  --fg-muted:           color-mix(in oklab, var(--tpc-cream) 74%, transparent);
+  --fg-faint:           color-mix(in oklab, var(--tpc-cream) 58%, transparent);
   --fg-on-paper:        var(--tpc-ink);
-  --fg-on-paper-muted:  var(--tpc-stone-soft);
+  --fg-on-paper-body:   var(--tpc-slate);
+  --fg-on-paper-muted:  var(--tpc-slate-soft);
 
   --accent:             var(--tpc-gold);
   --accent-hover:       var(--tpc-gold-bright);
@@ -43,7 +48,10 @@
 
   --rule:               color-mix(in oklab, var(--tpc-gold) 35%, transparent);
   --rule-strong:        var(--tpc-gold);
-  --rule-on-paper:      color-mix(in oklab, var(--tpc-ink) 18%, transparent);
+  /* Two weights, not one. 18% ink over cream came out at 1.47:1 — below the
+     threshold of sight on a laptop in daylight. */
+  --rule-on-paper:      rgba(12, 18, 23, 0.27);
+  --rule-on-paper-strong: rgba(12, 18, 23, 0.46);
 
   /* ---------- Status ---------- */
   --ok:                 #7E9A6A;
@@ -52,23 +60,27 @@
   --info:               #6E8AAA;
 
   /* ---------- Type families ---------- */
-  --font-display:       'Italiana', 'Cormorant Garamond', 'Cormorant', Georgia, serif;
-  --font-serif:         'Cormorant Garamond', 'Cormorant', Georgia, 'Times New Roman', serif;
-  --font-sans:          'Inter', -apple-system, 'Helvetica Neue', Arial, sans-serif;
+  --font-display:       var(--f-display), 'Cormorant Garamond', Georgia, serif;
+  --font-serif:         var(--f-serif), Georgia, 'Times New Roman', serif;
+  --font-sans:          var(--f-sans), -apple-system, 'Helvetica Neue', Arial, sans-serif;
   --font-mono:          ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
 
-  /* ---------- Type scale ---------- */
-  --fs-display-2xl:     clamp(64px, 9vw, 144px);
-  --fs-display-xl:      clamp(48px, 6vw, 96px);
-  --fs-display-lg:      clamp(40px, 4.5vw, 72px);
-  --fs-display-md:      36px;
+  /* ---------- Type scale ----------
+     Seven steps, plus the hero as its own case. Nine sizes used to sit
+     between 16 and 27px doing barely distinguishable jobs; everything now
+     maps onto one of these. */
+  --fs-hero:            clamp(150px, 19vw, 300px);
+  --fs-display-2xl:     clamp(56px, 7vw, 110px);
+  --fs-display-xl:      clamp(44px, 5vw, 84px);
+  --fs-display-lg:      clamp(36px, 4vw, 68px);
+  --fs-display-md:      48px;
   --fs-h1:              48px;
-  --fs-h2:              32px;
-  --fs-h3:              24px;
+  --fs-h2:              34px;
+  --fs-h3:              26px;
   --fs-h4:              20px;
-  --fs-eyebrow:         12px;
+  --fs-eyebrow:         11px;
   --fs-body-lg:         20px;
-  --fs-body:            17px;
+  --fs-body:            16px;
   --fs-body-sm:         15px;
   --fs-caption:         13px;
   --fs-micro:           11px;
@@ -122,10 +134,20 @@
   --dur-4:      700ms;
 
   /* ---------- Layout ---------- */
-  --container:        1280px;
+  --container:        1440px;
+  --container-mid:    1280px;
   --container-narrow: 880px;
   --container-prose:  640px;
   --gutter:           24px;
+
+  /* ---------- Section rhythm ----------
+     Three sizes, assigned deliberately. Seven of nine bands used to be
+     padded 104/104, so the page scrolled at exactly one speed for 5,870px. */
+  --sec-tight:        64px;
+  --sec-base:         104px;
+  --sec-loose:        160px;
+
+  --ease-lp:          cubic-bezier(.22, .61, .12, 1);
 }
 
 * { box-sizing: border-box; }
@@ -153,7 +175,7 @@ img { max-width: 100%; display: block; }
   color: var(--tpc-gold-deep);
   margin: 0;
 }
-.eyebrow.on-dark { color: var(--accent); }
+.eyebrow.on-dark, .eyebrow.gold { color: var(--accent); }
 .display {
   font-family: var(--font-display);
   font-size: clamp(48px, 8vw, 112px);
@@ -269,21 +291,29 @@ img { max-width: 100%; display: block; }
 /* =========================================================================
    CARD
    ------------------------------------------------------------------------- */
+/* A card sits on the paper rather than being drawn on it: an inner
+   top highlight, a hairline the eye can actually find, and a shadow soft
+   enough to read as weight rather than as a border. */
 .card {
-  border: 1px solid var(--rule);
+  border: 1px solid rgba(12, 18, 23, 0.2);
+  border-radius: 6px;
   background: var(--bg-paper-raise);
-  padding: 28px;
+  padding: 30px 32px;
   display: flex; flex-direction: column; gap: 14px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 14px 34px rgba(12, 18, 23, 0.05);
 }
 .card.emphasis {
   border-color: var(--tpc-gold-deep);
-  box-shadow: 0 0 0 1px var(--tpc-gold-deep), 0 8px 32px rgba(154,138,102,0.16);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.8), 0 0 0 1px var(--tpc-gold-deep), 0 14px 34px rgba(122,109,81,0.14);
 }
 .card.dark {
-  background: var(--tpc-midnight-soft);
+  background: var(--tpc-midnight-deep);
   border-color: var(--rule);
   color: var(--fg);
+  box-shadow: 0 14px 34px rgba(12, 18, 23, 0.14);
 }
+.card.dark .person-name, .card.dark .goal-title { color: var(--fg); }
+.card.dark .person-meta, .card.dark .caption { color: var(--fg-muted); }
 .card.pad-sm { padding: 18px; }
 
 /* =========================================================================
@@ -384,9 +414,77 @@ img { max-width: 100%; display: block; }
 .cal .day.selected .ev { color: var(--accent); }
 
 /* =========================================================================
-   PAGE CHROME — TOP NAV + FRAME
+   PAGE CHROME — THE LEDGER'S RAIL
+
+   The members' side is a two-column frame: a dark rail holding the
+   destinations and the membership card, and the work itself on paper. The
+   rail lies down into a scrolling strip below 900px, which is why there is
+   no separate bottom bar.
    ------------------------------------------------------------------------- */
-.tpc-frame { min-height: 100dvh; display: flex; flex-direction: column; }
+.tpc-frame { min-height: 100dvh; display: flex; flex-wrap: wrap; }
+.tpc-col { flex: 999 1 640px; min-width: 0; display: flex; flex-direction: column; }
+
+.lg-nav {
+  flex: 0 0 272px;
+  background: var(--tpc-midnight-deep);
+  color: var(--fg);
+  display: flex; flex-direction: column;
+  padding: 32px 22px 28px; gap: 36px;
+  /* A full-height rail that stays with you as the work scrolls past it. */
+  position: sticky; top: 0; align-self: flex-start; height: 100dvh; overflow-y: auto;
+}
+.lg-brand {
+  display: flex; align-items: center; gap: 12px;
+  text-decoration: none; min-height: 44px; padding: 0 8px;
+}
+.lg-brand img { width: 30px; height: auto; }
+.lg-wordmark { font: 400 26px/1 var(--font-display); color: var(--accent); }
+
+.lg-list { display: flex; flex-direction: column; gap: 4px; }
+.lg-list a {
+  display: flex; align-items: center; gap: 14px;
+  min-height: 48px; padding: 0 14px;
+  border-radius: 4px; text-decoration: none;
+  color: var(--fg-muted); font: 500 14px/1 var(--font-sans);
+  transition: background var(--dur-3), color var(--dur-3);
+}
+.lg-list a:hover { color: var(--fg); background: rgba(197, 183, 147, 0.08); }
+.lg-list a.on { background: rgba(197, 183, 147, 0.14); color: var(--fg); }
+.lg-list a.on svg { color: var(--accent); }
+.lg-list svg { flex: none; }
+.lg-badge {
+  margin-left: auto; min-width: 22px; height: 22px; padding: 0 7px;
+  border-radius: 999px; background: var(--accent); color: var(--tpc-midnight-deep);
+  font-size: 11px; display: inline-flex; align-items: center; justify-content: center;
+}
+
+.lg-foot { margin-top: auto; display: flex; flex-direction: column; gap: 16px; }
+.lg-member { padding: 18px; border: 1px solid var(--rule); border-radius: 6px; }
+.lg-no { margin: 8px 0 0; font: 400 13px/1.4 var(--font-mono); color: var(--fg-muted); }
+.lg-visits { margin: 4px 0 0; font: 400 12px/1.4 var(--font-sans); color: var(--fg-faint); }
+.lg-foot-links { display: flex; flex-direction: column; }
+.lg-foot-links a {
+  display: inline-flex; align-items: center; min-height: 44px; padding: 0 8px;
+  font-size: 13px; color: var(--fg-muted); text-decoration: none;
+}
+.lg-foot-links a:hover { color: var(--accent); }
+
+@media (max-width: 900px) {
+  .lg-nav {
+    flex: 1 1 100%; position: static; height: auto; overflow: visible;
+    padding: 14px 16px; gap: 12px;
+    /* Without this the scrolling strip inside stretches the rail instead of
+       scrolling, and the whole page gains a horizontal scrollbar. */
+    min-width: 0;
+  }
+  .lg-list { flex-direction: row; overflow-x: auto; scrollbar-width: none; min-width: 0; }
+  .lg-list::-webkit-scrollbar { display: none; }
+  .lg-list a { white-space: nowrap; }
+  .lg-foot { margin-top: 0; flex-direction: row; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .lg-member { display: none; }
+  .lg-foot-links { flex-direction: row; gap: 16px; }
+}
+
 .tpc-topnav {
   display: flex; align-items: center; gap: 32px;
   padding: 18px 48px;
@@ -424,8 +522,68 @@ img { max-width: 100%; display: block; }
   flex-shrink: 0;
 }
 
+/* =========================================================================
+   THE LEDGER — the front page of the members' side
+   ------------------------------------------------------------------------- */
+.lg-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 24px; flex-wrap: wrap; }
+.lg-hello { margin: 12px 0 0; font: 300 clamp(38px, 5vw, 60px)/1.02 var(--font-serif); color: var(--fg-on-paper); }
+.lg-hello-sub { margin: 10px 0 0; font: 400 15px/1.5 var(--font-sans); color: var(--fg-on-paper-body); }
+
+.lg-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(420px, 100%), 1fr)); gap: 24px; }
+.lg-span { grid-column: 1 / -1; }
+
+.lg-partner { position: relative; overflow: hidden; }
+.lg-partner-bg { position: absolute; right: 0; top: 0; width: 55%; height: 100%; object-fit: cover; opacity: 0.28; }
+.lg-partner-veil { position: absolute; inset: 0; background: linear-gradient(90deg, var(--tpc-midnight-deep) 45%, rgba(18, 27, 34, 0.4)); }
+.lg-partner-body { position: relative; }
+.lg-partner-name { margin: 0; font: 400 clamp(26px, 3vw, 34px)/1.05 var(--font-serif); color: var(--fg); }
+
+.lg-card-title { margin: 10px 0 0; font: 400 clamp(24px, 2.6vw, 34px)/1.1 var(--font-serif); color: inherit; }
+.lg-list-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; flex-wrap: wrap; }
+.chip-row { display: flex; gap: 8px; }
+.chip {
+  display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 16px;
+  border: 1px solid rgba(12, 18, 23, 0.3); border-radius: 999px; background: transparent;
+  font: 500 13px/1 var(--font-sans); color: var(--fg-on-paper-body); cursor: pointer;
+  transition: background var(--dur-2), color var(--dur-2), border-color var(--dur-2);
+}
+.chip:hover { border-color: var(--fg-on-paper); }
+.chip.on { background: var(--tpc-ink); border-color: var(--tpc-ink); color: var(--fg); }
+
+.tag {
+  display: inline-flex; align-items: center; min-height: 26px; padding: 0 10px;
+  border-radius: 999px; font: 400 11px/1 var(--font-sans); letter-spacing: 0.06em;
+  border: 1px solid var(--rule-on-paper); color: var(--fg-on-paper-body); white-space: nowrap;
+}
+.tag.ok { border-color: var(--tpc-gold-deep); color: #5E5340; background: rgba(197, 183, 147, 0.18); }
+.card.dark .tag { border-color: var(--rule); color: var(--fg-muted); }
+
+.lg-goals { margin-top: 18px; }
+.lg-goal {
+  display: grid; grid-template-columns: 36px 1fr; gap: 4px 14px;
+  padding: 18px 0; border-top: 1px solid var(--rule-on-paper);
+}
+.lg-goal-n { font: 400 26px/1.2 var(--font-display); color: var(--tpc-gold-deep); }
+.lg-goal-title { margin: 0 0 6px; font: 400 clamp(20px, 2.1vw, 24px)/1.2 var(--font-serif); color: var(--fg-on-paper); }
+
+.lg-mornings { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr)); gap: 18px; margin-top: 22px; }
+.lg-morning {
+  display: grid; grid-template-columns: 160px 1fr; gap: 18px; align-items: center;
+  padding: 14px; border: 1px solid var(--rule-on-paper); border-radius: 4px;
+}
+.lg-morning.empty { border-style: dashed; border-color: var(--rule-on-paper-strong); }
+.lg-morning img, .lg-morning-slot { width: 160px; height: 110px; border-radius: 2px; object-fit: cover; }
+.lg-morning-slot { background: var(--tpc-bone); display: grid; place-items: center; }
+.disp-num { font: 400 40px/1 var(--font-display); color: var(--tpc-gold-deep); }
+.lg-morning-title { margin: 10px 0 4px; font: 400 22px/1.2 var(--font-serif); color: var(--fg-on-paper); }
+
+@media (max-width: 560px) {
+  .lg-morning { grid-template-columns: 1fr; }
+  .lg-morning img, .lg-morning-slot { width: 100%; }
+}
+
 /* Page body */
-.tpc-page { flex: 1; padding: 56px 48px 120px; max-width: 1280px; width: 100%; margin: 0 auto; }
+.tpc-page { flex: 1; padding: 44px 56px 72px; max-width: 1280px; width: 100%; margin: 0 auto; }
 .tpc-page.narrow { max-width: 880px; }
 .tpc-page.prose  { max-width: 640px; }
 

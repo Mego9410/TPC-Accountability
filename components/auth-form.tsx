@@ -8,12 +8,9 @@ import { Body, Button, Eyebrow, Field, H2, Notice } from "@/components/ui";
 import { env } from "@/lib/env";
 
 type Mode = "signin" | "signup";
+/* Kept as the account's metadata key because the records read it; it is no
+   longer shown to anyone, and the Club has one kind of member. */
 type Wants = "mentee" | "mentor";
-
-const WANTS: Record<Wants, string> = {
-  mentee: "You are asking for a mentor",
-  mentor: "You are offering to mentor",
-};
 
 /** A same-origin path, or nothing. Mirrors safeNext in lib/supabase/middleware. */
 function safePath(value: string | null): string | null {
@@ -123,9 +120,8 @@ export function AuthForm({ mode }: { mode: Mode }) {
         <Body className="muted" style={{ color: "var(--fg-muted)", maxWidth: 380, margin: "0 auto" }}>
           {isSignup
             ? "An introduction is a sign-up the House reads before you are seated. Leave your particulars below; the House writes back within the week."
-            : "Members and mentors of the Club sign in below. If you have not been introduced, the door is to the right."}
+            : "Members of the Club sign in below. If you have not been introduced, you can ask for one."}
         </Body>
-        {isSignup && wants && <div className="lp-auth-who">{WANTS[wants]}</div>}
 
         {!configured ? (
           <>
@@ -187,7 +183,11 @@ export function AuthForm({ mode }: { mode: Mode }) {
           </>
         )}
 
-        <Button href="/tour" variant="ghost" onDark className="lp-auth-tour">Tour the House instead</Button>
+        {/* Only offered once: when the records are not connected the notice
+            above already carries the tour as the primary way in. */}
+        {configured && (
+          <Button href="/tour" variant="ghost" onDark className="lp-auth-tour">Tour the House instead</Button>
+        )}
 
         <div className="lp-auth-foot">
           {isSignup ? (

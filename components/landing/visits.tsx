@@ -1,5 +1,4 @@
-import { Body, Button, Caption, Eyebrow, H3, TextLink } from "@/components/ui";
-import { LandingSection, SectionHead } from "./furniture";
+import { Body, Eyebrow, H3 } from "@/components/ui";
 
 /* =========================================================================
    Companion practice visits. A morning inside another member's practice, and
@@ -83,48 +82,6 @@ export function ExclusionZone() {
   );
 }
 
-const TERMS = [
-  { term: "You host as well as visit", def: "Anyone who spends a morning in someone else's practice is expected to open their own in return. That is the whole arrangement." },
-  { term: "Nobody hosts a competitor", def: "At least twenty to thirty minutes' drive apart. It is measured in journey time rather than miles, which is why it works as well in Norfolk as in London." },
-  { term: "Any request may be declined", def: "For any reason, at any time, and you do not have to say why. A busy week is reason enough." },
-  { term: "Two visits a year at most", def: "Enough to be useful, few enough that hosting never becomes a drain on a working practice." },
-  { term: "No patient contact", def: "You are there to watch how the practice runs. The clinical work is not part of the visit." },
-];
-
-/** The visit as a pillar of the Club, on baize. */
-export function VisitsSection() {
-  return (
-    <LandingSection id="visits" tone="baize">
-      <SectionHead
-        onDark
-        eyebrow="Companion practice visits"
-        title="A morning inside someone else's practice. And, in turn, a morning inside yours."
-        lede="You spend a morning watching another member run their practice: how the day is set, how the diary holds together, how reception talks to patients, how the team works. Then you do the same for them. If you visit someone, you are expected to host in return, and the Club asks for no more than two of these a year."
-      />
-
-      <div className="lp-visit-grid">
-        <Programme />
-        <div className="lp-visit-aside">
-          <ExclusionZone />
-        </div>
-      </div>
-
-      <ul className="lp-terms">
-        {TERMS.map((t) => (
-          <li key={t.term}>
-            <span className="lp-term-name">{t.term}</span>
-            <span className="lp-term-def">{t.def}</span>
-          </li>
-        ))}
-      </ul>
-
-      <div className="lp-cta">
-        <Button href="/practice-visits" variant="secondary" onDark>How a visit works</Button>
-        <Caption>Twenty years in the same building, and you stop seeing it.</Caption>
-      </div>
-    </LandingSection>
-  );
-}
 
 /* ---------- What a visit returns ----------
    Ordered deliberately. The first two are what the visitor learns from the
@@ -169,15 +126,6 @@ export function Returns() {
           <p className="lp-pull">{r.pull}</p>
         </article>
       ))}
-    </div>
-  );
-}
-
-export function VisitsCta() {
-  return (
-    <div className="lp-cta">
-      <Button href="/signup">Request an introduction</Button>
-      <TextLink href="/membership">What membership includes</TextLink>
     </div>
   );
 }

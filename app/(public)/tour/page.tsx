@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Body, Button, Caption, Eyebrow, H1, Notice } from "@/components/ui";
 import { env } from "@/lib/env";
 import { LandingSection } from "@/components/landing/furniture";
+import { PublicShell } from "@/components/landing/public-shell";
 
 export const metadata: Metadata = {
   title: "Tour the House",
@@ -32,8 +33,9 @@ const SEATS = [
   },
 ];
 
-export default function TourPage() {
+export default async function TourPage() {
   return (
+    <PublicShell>
     <LandingSection tone="paper">
       <div className="lp-head">
         <Eyebrow>The furnished example</Eyebrow>
@@ -65,5 +67,6 @@ export default function TourPage() {
         <Caption>Nothing you do in the tour is saved anywhere but your own browser.</Caption>
       </div>
     </LandingSection>
+    </PublicShell>
   );
 }
