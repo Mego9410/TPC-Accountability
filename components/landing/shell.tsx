@@ -1,39 +1,6 @@
 "use client";
 
-import { useRef, type ReactNode } from "react";
-
-/* =========================================================================
-   The page's ground.
-
-   It carries three classes the stylesheet keys off — `motion`, `intro` and
-   `cur` — and tracks the pointer so the ring cursor can follow it. Every one
-   of them is gated in CSS: `motion` does nothing under a reduced-motion
-   preference, and `cur` does nothing without a fine pointer, so a touch
-   device and a careful reader both get the plain page.
-
-   Children are rendered on the server and passed through, so making this a
-   client component costs the page nothing.
-   ------------------------------------------------------------------------- */
-
-export function HomeShell({ children }: { children: ReactNode }) {
-  const ref = useRef<HTMLDivElement>(null);
-
-  return (
-    <div
-      ref={ref}
-      className="h motion intro cur"
-      id="top"
-      onMouseMove={(e) => {
-        const el = e.currentTarget;
-        el.style.setProperty("--cx", `${e.clientX}px`);
-        el.style.setProperty("--cy", `${e.clientY}px`);
-      }}
-    >
-      <div className="cursor" aria-hidden="true"><span /></div>
-      {children}
-    </div>
-  );
-}
+import { type ReactNode } from "react";
 
 /**
  * A link that leans very slightly towards the pointer. Decorative only: it
