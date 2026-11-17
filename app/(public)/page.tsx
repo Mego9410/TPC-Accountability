@@ -9,7 +9,6 @@ import { Pillars } from "@/components/landing/panels";
 import { PartnerSection } from "@/components/landing/partner";
 import { HouseRules } from "@/components/landing/rules";
 import { Closing, HowItWorks, Marquee, PullQuote, Thesis } from "@/components/landing/sections";
-import { HomeShell } from "@/components/landing/shell";
 import { getViewer } from "@/lib/session";
 
 export const metadata: Metadata = {
@@ -34,7 +33,9 @@ export default async function LandingPage() {
   const signedIn = viewer !== null;
 
   return (
-    <HomeShell>
+    // `motion` and `intro` are the two classes the stylesheet keys off, and
+    // both are gated behind a reduced-motion query in CSS.
+    <div className="h motion intro" id="top">
       <SiteHeader signedIn={signedIn} />
       <Hero />
       <Thesis />
@@ -50,6 +51,6 @@ export default async function LandingPage() {
       <HouseRules />
       <Closing signedIn={signedIn} />
       <SiteFooter signedIn={signedIn} />
-    </HomeShell>
+    </div>
   );
 }

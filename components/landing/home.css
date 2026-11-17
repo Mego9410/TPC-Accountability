@@ -429,42 +429,12 @@
   outline: 2px solid var(--gold); outline-offset: 3px;
 }
 
-/* ---------- The cursor ---------- */
-.h .cursor {
-  display: none; position: fixed; left: 0; top: 0; z-index: 200; width: 0; height: 0;
-  pointer-events: none; transform: translate3d(var(--cx, -200px), var(--cy, -200px), 0);
-  transition: transform .14s cubic-bezier(.2,.8,.2,1), opacity .3s;
-}
-.h .cursor span {
-  position: absolute; left: 0; top: 0; width: 34px; height: 34px; margin: -17px 0 0 -17px;
-  border-radius: 50%; border: 1px solid var(--gold); box-shadow: 0 0 0 1px rgba(12,18,23,.18);
-  display: flex; align-items: center; justify-content: center;
-  font: 500 10px/1 var(--font-sans); letter-spacing: .2em; text-transform: uppercase; color: var(--deep);
-  transition: width .45s var(--ease), height .45s var(--ease), margin .45s var(--ease), background .45s var(--ease);
-}
-.h .cursor span::before {
-  content: ""; position: absolute; left: 50%; top: 50%; width: 4px; height: 4px;
-  margin: -2px 0 0 -2px; border-radius: 50%; background: var(--gold); transition: opacity .3s;
-}
-.h .cursor span::after { content: ""; opacity: 0; transition: opacity .25s; }
-.h:not(:hover) .cursor { opacity: 0; }
-.h:has(a:hover, button:hover) .cursor span { width: 58px; height: 58px; margin: -29px 0 0 -29px; background: rgba(197,183,147,.16); }
-.h:has(.panel:hover) .cursor span,
-.h:has(.film:hover) .cursor span,
-.h:has(.compare:hover) .cursor span,
-.h:has(.flipwrap:hover) .cursor span { width: 92px; height: 92px; margin: -46px 0 0 -46px; background: var(--gold); border-color: var(--gold); }
-.h:has(.panel:hover) .cursor span::before,
-.h:has(.film:hover) .cursor span::before,
-.h:has(.compare:hover) .cursor span::before,
-.h:has(.flipwrap:hover) .cursor span::before { opacity: 0; }
-.h:has(.panel:hover) .cursor span::after { content: "Open"; opacity: 1; }
-.h:has(.film:hover) .cursor span::after { content: "Drag"; opacity: 1; }
-.h:has(.compare:hover) .cursor span::after { content: "Slide"; opacity: 1; }
-.h:has(.flipwrap:hover) .cursor span::after { content: "Turn"; opacity: 1; }
-@media (hover: hover) and (pointer: fine) {
-  .h.cur .cursor { display: block; }
-  .h.cur, .h.cur a, .h.cur button, .h.cur input { cursor: none; }
-}
+/* The pointer is the reader's own, at the reader's own speed. The design
+   had a gold ring following it on a .14s ease, with the real cursor hidden
+   underneath; it lagged behind the hand, which is exactly the thing a
+   pointer must never do. The grab, pointer and ew-resize cursors on the
+   filmstrip, the panels and the comparison slider do the same work and are
+   the ones people already know. */
 
 /* The magnetic buttons sit still until a pointer is actually over them. */
 .h .lpbtn.mag {
@@ -565,7 +535,6 @@
   .h .mid { font-size: 34px !important; }
   .h .flipwrap { justify-self: stretch; height: 640px; }
   .h .rfloat { display: none; }
-  .h .cursor { display: none !important; }
 }
 
 @media (max-width: 620px) {
